@@ -1,0 +1,114 @@
+* Language (46)
+** Behavior definitions
+
+Each time an actor accepts a communication, it computes a replacementbehavior.
+
+Therefore a behavior definition is expressed as a function of the incoming communication.
+
+Acquaintance list (parameters)
+Communication List (messages to be received)
+
+** New Expressions (create actors)
+
+Actors are created using _new expressions_ which return the mail address of a newly created actor.
+
+#+begin_lang options
+
+<new expression> ::= new <beh name> ( expr {, expr} *)
+
+#+end_lang
+
+- <beh name> corresponds to a behavior definition
+- Parameters are instantiated to the values of the expressions in the parenthesis.
+
+Can be bound using a *let command*
+
+(default behavior?)
+
+** Send Commands (create tasks)
+
+#+begin_lang options
+
+<send command> ::= send <communication> to <target>
+
+#+end_lang
+
+Communication is a secuence of expression, could be empty.
+
+** Receptionist declarations
+
+Actors that receive communication from the outside.
+
+** External declarations
+
+Composition?
+
+** Commands
+
+Specify a replacement.
+
+#+begin_lang options
+
+become <expr>
+
+#+end_lang
+
+<expr> is bounded to a Mailbox.
+
+* Model (112)
+
+** Configurations
+
+*** (T)asks
+
+T = Ι x M x K
+
+(all possible)
+I = tags
+M = mail addr
+K = communications
+
+Tags/Mail addr int, comm tuples
+
+t = (t,m,k) (a task)
+
+*** Local States Functions
+
+l : M -> B
+
+M is a finite set, and M ⊂ (All possible mail addr). B is the set of all possible behaviors.
+
+*** Configurations
+
+two tuple of (l,T)
+
+l (local state function)
+T (finite set of Tasks, no task has a tag which is the prefix of another tag or mail address )
+
+*** Requirements for a Transition Relation
+
+- A behaviors maps a finit list of variables to a 'behavior'
+- Mail addr and topology???
+
+Having defined a scheme which guarantees the uniqueness of tags and mail addresses,
+we can transform the instantiations, of the behavior definition into a
+transition relation from each actor and task to a system of actors and tasks.
+
+
+** Initial configuration
+
+An actor, is a function from possible incoming communication to a 3-tuple (new tasks, new actors, replacement behavior)
+
+A = M x B (Actors = Mailboxes x Behaviors).
+
+B = (I x {m} x K) -> F_s(T) x F_s(A) x A)
+
+F_s(T) the set of all finite subsets of T
+F_s(A) the set of all finite subsets of A.
+
+let *b* a behavior of an actor at mail address *m*, and t be the tag and k be the communication of the trask processed:
+
+b(k) = (T, A, γ)
+
+T = { t_1, ..., t_n}
+A = { a_1, ..., a_n}
