@@ -1,0 +1,5 @@
+channel up, down
+
+P1 = up -> down -> P2
+P2 = up -> down -> P1
+
