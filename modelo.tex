@@ -1,0 +1,142 @@
+\documentclass{beamer}
+
+\usepackage{mathtools}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+\begin{frame}
+  
+  Tareas
+  \begin{center}
+    \Huge $\mathcal{T} = \mathcal{I} \times \mathcal{M} \times \mathcal{K}$ 
+  \end{center}
+  
+  \begin{itemize}
+
+  \item $\mathcal{I}$ el conjunto de todos los posibles etiquetas
+  \item $\mathcal{M}$ el conjunto de todas las posibles direcciones de correo
+  \item $\mathcal{K}$ el conjunto de todas las posibles comunicaciones
+    
+  \end{itemize}
+
+  
+\end{frame}
+
+\begin{frame}
+  
+  Funcion de estados locales
+  \begin{center}
+    \Huge $ \mathrm{l} : \mathsf{M} \rightarrow \mathcal{B}$ 
+  \end{center}
+  
+  \begin{itemize}
+
+  \item $\mathsf{M}$ es un conjunto finito de direcciones de mail y $ \mathsf{M} \subset \mathcal{M} $ 
+  \item $\mathcal{B}$ es e conjunto de todos los posibles \textbf{Comportamientos} 
+    
+  \end{itemize}
+
+  
+\end{frame}
+
+
+\begin{frame}
+   
+  Configuraciones
+  \begin{center}
+    \Huge $ ( \mathrm{l}, \mathrm{T} ) $ 
+  \end{center}
+  
+  \begin{itemize}
+   
+
+  \item $\mathrm{l}$ es una funcion de estados locales
+  \item $\mathrm{T}$ es un conjunto de tareas tal que ningun tag o mail adres es prefijo de otra 
+    
+  \end{itemize}
+
+  
+\end{frame}
+
+\begin{frame}
+   
+  Actores
+  \begin{center}
+    \Huge $\mathcal{A} = \mathcal{M} \times \mathcal{B}$
+  \end{center}
+  
+  \begin{itemize}
+   
+
+  \item $\mathcal{M}$ es una funcion de estados locales
+  \item $\mathcal{B}$ son todos los posibles *Comportamientos*
+    
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+   
+  Comportamientos
+  \begin{center}
+    \Large $\mathcal{B} = ( \mathcal{I} \times \{\mathrm{m}\} \times \mathcal{K} \rightarrow \mathrm{F}_s(\mathcal{T}) \times \mathrm{F}_s(\mathcal{A}) \times \mathcal{A} ) $
+  \end{center}
+  
+  \begin{itemize}
+   
+
+  \item $\mathrm{F}_s(\mathcal{T})$ nuevas tareas  
+  \item $\mathrm{F}_s(\mathcal{A})$ nuevos actores
+    
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+  
+  \[ \varphi(t,m,[k_1,k_2]) = \\
+  \begin{cases}
+    \langle \{ (t.1, k_2, [1]) \}, \emptyset, (m, \varphi) \rangle                          & \quad \text{if } k_1 = 0\\
+    \langle \{ (t.1, m, [k_1 - 1, t.2])\}, \{(t.2, \phi^{k_1}_{k_2})\}, (m, \varphi) \rangle  & \quad \text{otherwise}\\
+  \end{cases}
+  \]
+
+  \[ \phi^{k_1}_{k_2}(t', t.2, [n]) = \langle \{(t'.1, k_2, [n * k])\}, \emptyset, (t.2, \mathcal{B}_\bot) \rangle \]
+  
+\end{frame}
+
+\begin{frame}
+
+  \textbf{Transición posible.} Sean $c_1$ y $c_2$ dos configuraciónes, $c_1$ tiene una posible transición a $c_2$ procesando la tarea $\tau = (t,m,k)$, simbolicamente:
+
+  \begin{center}
+    $c_1 \xrightarrow{\tau} c_2$
+  \end{center}
+
+  Si $\tau \in tasks(c_1)$, si también $state(c_1)(m) = \beta$ donde
+  $\mathcal{B}(t,m,k) = \langle T,A,\gamma \rangle$ \\
+
+  \[
+  \begin{cases}
+    tasks(c_2) = (tasks(c_1) - \{ \tau \} ) \cup T \\
+    states(c_2) = (states(c_1) - \{ (m, \beta) \} \cup A \cup \{ \gamma \}
+  \end{cases}
+  \]
+  
+\end{frame}
+
+\begin{frame}
+
+  \textbf{Transición subsiguiente.}  $c$ subsiguientemente va a $c'$ con respecto a $\tau$ en simbolos $c \xhookrightarrow{\tau} c'$, si:
+
+  \[
+  \tau \in tasks(c) \land c \rightarrow^* c' \land \phy \notin tasks(c') \land \\
+  \neg \exists c'' (\tau \notin tasks(c'') \land c \rightarrow^* c'' \land \rightarrow^* c') 
+  \]
+    
+\end{frame}
+
+
+\end{document}
+

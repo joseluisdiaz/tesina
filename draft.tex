@@ -1,0 +1,59 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{cspsymb}
+\usepackage{amsmath}
+
+
+\begin{document}
+
+
+La definicion de Q desacopla la sincronización que habitual en $CSP$, recordemos que la naturaleza de los actores es inherentemente asincrona.  Cuenta con dos canales, \textit{internal} el cual está destinado a la comunicación entre la cola y el actor apareado a esa cola y \textit{external} que es una suerte de canal broadcast, recibe los mensajes que envian todos los actores, luego Q se encarga de quedarse con los mensajes que les son propios. Esto puede verse en \ref{eq:1} y \ref{eq:2}.\\
+Los parametros no son mas que una lista de mensajes propios y un mailbox.
+
+\begin{align}
+Q(\nil, m) = & external?mailbox.msg \rightarrow \nonumber  \\
+& Q(\trace{msg}, m) \lceil m == mailbox \rceil \label{eq:1} \\
+& Q(\nil, m) \nonumber 
+\end{align}
+
+
+\begin{align}
+  Q(\trace{h} \roundcat TAIL, m) = & external?mailbox.msg \rightarrow \nonumber \\
+  & Q(\trace{msg} \roundcat \trace{h} \roundcat TAIL, m) \lceil m == mailbox \rceil Q(\trace{h} \roundcat TAIL, m)  \label{eq:2} \\
+  & \Extchoice internal!m.h \rightarrow Q(TAIL, m) \nonumber 
+\end{align}
+
+  
+\begin{align}
+  A_{n}^{client}(m) = internal?m.(i) \rightarrow external!client.(i*n) \rightarrow \STOP \label{eq:3}
+\end{align}
+
+Cuando \textbf{A} recibe un mensaje por su canal interno, envia un mensaje a \textit{client} con el valor del entero que recibio por el canal (i), multiplicado por el parametro \textbf{n}.Esta multiplicación que es claramente engorrosa, intenta describir el espiritu del paralelismo un actor que es una suerte de proceso efectua una computación y envia el resultado, si bien por como se envian los mensajes todo es secuencial es una aproximación a la idea de paralelismo. 
+
+\begin{align}
+  B(m) = & internal?m.(k,client) \rightarrow \nonumber \\
+& B0_{client} \lceil k == 0 \rceil B1_{client}^{k}(m, f_{newMailbox}(m)) \label{eq:4}
+\end{align}
+
+En el caso de \textbf{B} recibe una tupla, un valor entero \textit{k} y un mailbox \textit{client} si el valor que recibe un cero, instancia un proceso que envia a \textit{client} el valor 1. $F_{newMailbox}$ es una función externa que dado un mailbox me devuelve un nuevo.
+
+\begin{align}
+B0_{client}(m) = external!client.(1) \rightarrow B(m)
+  \end{align}
+
+Si el valor fuera distinto de cero, se comporta como \textbf{B1} y envía un mensaje por el canal externo al mailbox \textit{m}, con la tupla (k -1, nuevoMailbox). Luego compone en paralelo el nuevo actor \textbf{A} con la cola Q apareada al nuevo mailbox creado. 
+
+\begin{align}
+B1_{client}^{k}(m, nuevoMailbox) = & external!m.(k - 1, nuevoMailbox) \rightarrow B(m) \label{eq:5} \\
+&\Parallel Q(m_{nuevo}, \nil) \Parallel A_{k}^{m_{client}}(nuevoMailbox)
+\end{align}
+
+Se puede notar tanto en \ref{eq:3} como en \ref{eq:5} que despues de enviar el mensaje adquiren el nuevo comportamiento, en el primer caso es $\STOP$ y en el segundo caso es volver a la compotarse de la misma manera $B(m)$.
+
+
+\bibliography{references}{}
+\bibliographystyle{plain}
+\end{document}
