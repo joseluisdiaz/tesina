@@ -26,14 +26,14 @@ Q_i(\myList{h} \myCons TAIL) = external.i?msg \rightarrow Q_i(\myList{msg} \myCo
 Queue = \paralleln{1}{m} actors?start_q(i) \rightarrow Q_i(\myList{})
 \end{gather*}
 
-Cuenta con dos canales, $internal$ el cual está destinado a la comunicación entre la cola y el actor apareado a esa cola y $external$ que es canal por el cual se reciben los mensajes que envian otros actores. Notar que la sincronización se hace en términos de ``i'' que es el mailbox con el cual es identificado este proceso.
+Este modelo cuenta con dos canales, $internal$ el cual está destinado a la comunicación entre la cola y el actor apareado a la misma y $external$ que es canal por el cual se reciben los mensajes que envian otros actores. Notar que la sincronización se hace en términos de ``i'' que es el mailbox con el cual es identificado este proceso.
 
 \begin{gather*}
 recCustomer_i(n, client) = internal.i?(k) \rightarrow external.client!(k*n) \rightarrow STOP \\
 recCustomer = \paralleln{1}{m} actors?start_{rc}(i, n, client) \rightarrow recCustomer_i(n, client)
 \end{gather*}
 
-$recCustomer_i$ recibe un mensaje por su canal interno. Su única funcion es envia un mensaje a $client$ con el valor del entero que recibio por el canal, es decir el valor $k$, multiplicado por el parametro $n$. Esta multiplicación que es claramente engorrosa, intenta describir el espiritu del paralelismo un actor que es una suerte de proceso efectua una computación y envia el resultado, si bien por como se envian los mensajes todo es secuencial es una aproximación a la idea de paralelismo.
+$recCustomer_i$ recibe un mensaje por su canal interno. Su única funcion es enviar un mensaje a $client$ con el valor del entero que recibio, $k$ multiplicado por el parametro $n$ el cual oportunamente recibio cuando fue creado. Esta multiplicación claramente engorrosa, intenta describir el espiritu del paralelismo un actor que es una suerte de proceso efectua una computación y envia el resultado, si bien por como se envian los mensajes todo es secuencial es una aproximación a la idea de paralelismo.
 
 \begin{gather*}
 factorialRec_i = internal.i?(k,client) \rightarrow \\
@@ -48,7 +48,7 @@ $factorialRec_i$ recibe una tupla con dos valores, un entero $k$ y un mailbox $c
 factorialRecCaso0_i(client) = external.client!1 \rightarrow factorialRec_i 
 \end{gather*}
 
-Cuando se comporta como $factorialRecCaso0_i$ envía al mailbox que recibio como parametro el valor $1$ y luego se vuelve a comportar como $factorialRec_i$
+Cuando se comporta como $factorialRecCaso0_i$ envía al mailbox que recibio como parametro el valor $1$ y luego se vuelve a comportar como $factorialRec_i$. Sería el fin de la recursión, para el valor $0$ enviar al cliente $1$.
 
 \begin{gather*}
 factorialRecCasoN_i(client,k, newMailbox) = \\
@@ -56,7 +56,7 @@ factorialRecCasoN_i(client,k, newMailbox) = \\
   \qquad external.i!(k - 1, newMailBox) \rightarrow factorialRec_i
 \end{gather*}
 
-En el caso $factorialRecCasoN$, este se llama con tres parametros, mailbox del cliente, el valor entero que recibio y un nuevo mailbox creado en el paso anterior. Este paso ``instancia'' un actor y una cola utilizando el mensaje espacial $start_q$ y $start_{rc}$. Una vez enviado estos mensajes, se envia a si mismo un mensaje que contiene $k - 1$ y el valor del nuevo mailbox creado.\\
+En el caso $factorialRecCasoN$, este se llama con tres parametros, mailbox del cliente, el valor entero que recibio y un nuevo mailbox creado en el paso anterior. Este paso ``instancia'' un actor y una cola utilizando los mensajes espaciales $start_q$ y $start_{rc}$. Una vez enviado estos mensajes, se auto-envia un mensaje que contiene $k - 1$ y el valor del nuevo mailbox creado.\\
 
 \begin{gather*}
 factorialRec =
