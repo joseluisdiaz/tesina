@@ -1,58 +1,73 @@
-\documentclass{article}
+\documentclass[fleqn]{article}
 
 \usepackage[utf8]{inputenc}
-\usepackage{hyperref}
 \usepackage{cite}
-\usepackage{cspsymb}
+
+\usepackage{amsfonts}
 \usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{hyperref}
+
+\newcommand{\myList}[1]{\langle #1 \rangle}          
+\newcommand{\myCons}[0]{\mathbin{\raise 0.8ex\hbox{$\smallfrown$}}}
+\newcommand{\paralleln}[2]{\overset{#2}{\underset{i = #1}{\parallel}}}
+\newcommand{\boxn}[2]{\overset{#2}{\underset{i = #1}{\Box}}}
 
 
 \begin{document}
 
+Los actores son naturalmente asincronos, la recepcion del mensaje y cuando se consume ocurren en momentos diferentes. Q es quien recibe el mensaje que luego será consumido por el actor en cuestion. Ningún proceso de CSP envia directamente un mensaje a otro actor, todos los mensajes se envian utilizando Q. Cada proceso $Q_i$ cumple la funcion de ``mailbox'' para un actor especficio, toda comunicacion pasa por el. \\
 
-La definicion de Q desacopla la sincronización que habitual en $CSP$, recordemos que la naturaleza de los actores es inherentemente asincrona.  Cuenta con dos canales, \textit{internal} el cual está destinado a la comunicación entre la cola y el actor apareado a esa cola y \textit{external} que es una suerte de canal broadcast, recibe los mensajes que envian todos los actores, luego Q se encarga de quedarse con los mensajes que les son propios. Esto puede verse en \ref{eq:1} y \ref{eq:2}.\\
-Los parametros no son mas que una lista de mensajes propios y un mailbox.
+\begin{gather*}
+Q_i(\myList{}) = external.i?msg \rightarrow Q_i(\myList{msg}) \\
+Q_i(\myList{h} \myCons TAIL) = external.i?msg \rightarrow Q_i(\myList{msg} \myCons \myList{h} \myCons TAIL) \\ 
+\qquad \square \; internal.i?!h \rightarrow Q_i(TAIL) \\  
+Queue = \paralleln{1}{m} actors?start_q(i) \rightarrow Q_i(\myList{})
+\end{gather*}
 
-\begin{align}
-Q(\nil, m) = & external?mailbox.msg \rightarrow \nonumber  \\
-& Q(\trace{msg}, m) \lceil m == mailbox \rceil \label{eq:1} \\
-& Q(\nil, m) \nonumber 
-\end{align}
+Cuenta con dos canales, $internal$ el cual está destinado a la comunicación entre la cola y el actor apareado a esa cola y $external$ que es canal por el cual se reciben los mensajes que envian otros actores. Notar que la sincronización se hace en términos de ``i'' que es el mailbox con el cual es identificado este proceso.
 
+\begin{gather*}
+recCustomer_i(n, client) = internal.i?(k) \rightarrow external.client!(k*n) \rightarrow STOP \\
+recCustomer = \paralleln{1}{m} actors?start_{rc}(i, n, client) \rightarrow recCustomer_i(n, client)
+\end{gather*}
 
-\begin{align}
-  Q(\trace{h} \roundcat TAIL, m) = & external?mailbox.msg \rightarrow \nonumber \\
-  & Q(\trace{msg} \roundcat \trace{h} \roundcat TAIL, m) \lceil m == mailbox \rceil Q(\trace{h} \roundcat TAIL, m)  \label{eq:2} \\
-  & \Extchoice internal!m.h \rightarrow Q(TAIL, m) \nonumber 
-\end{align}
+$recCustomer_i$ recibe un mensaje por su canal interno. Su única funcion es envia un mensaje a $client$ con el valor del entero que recibio por el canal, es decir el valor $k$, multiplicado por el parametro $n$. Esta multiplicación que es claramente engorrosa, intenta describir el espiritu del paralelismo un actor que es una suerte de proceso efectua una computación y envia el resultado, si bien por como se envian los mensajes todo es secuencial es una aproximación a la idea de paralelismo.
 
-  
-\begin{align}
-  A_{n}^{client}(m) = internal?m.(i) \rightarrow external!client.(i*n) \rightarrow \STOP \label{eq:3}
-\end{align}
+\begin{gather*}
+factorialRec_i = internal.i?(k,client) \rightarrow \\
+\qquad factorialRecCaso0_i(client) \\
+\qquad \qquad \lceil k == 0 \rceil \\
+\qquad factorialRecCasoN_i(client, k, createNewMailbox(i))
+\end{gather*}
 
-Cuando \textbf{A} recibe un mensaje por su canal interno, envia un mensaje a \textit{client} con el valor del entero que recibio por el canal (i), multiplicado por el parametro \textbf{n}.Esta multiplicación que es claramente engorrosa, intenta describir el espiritu del paralelismo un actor que es una suerte de proceso efectua una computación y envia el resultado, si bien por como se envian los mensajes todo es secuencial es una aproximación a la idea de paralelismo. 
+$factorialRec_i$ recibe una tupla con dos valores, un entero $k$ y un mailbox $client$. Si este valor fuera cero, se comporta como $factorialRecCaso0$ sino como $factorialRecCasoN$. 
 
-\begin{align}
-  B(m) = & internal?m.(k,client) \rightarrow \nonumber \\
-& B0_{client} \lceil k == 0 \rceil B1_{client}^{k}(m, f_{newMailbox}(m)) \label{eq:4}
-\end{align}
+\begin{gather*}
+factorialRecCaso0_i(client) = external.client!1 \rightarrow factorialRec_i 
+\end{gather*}
 
-En el caso de \textbf{B} recibe una tupla, un valor entero \textit{k} y un mailbox \textit{client} si el valor que recibe un cero, instancia un proceso que envia a \textit{client} el valor 1. $F_{newMailbox}$ es una función externa que dado un mailbox me devuelve un nuevo.
+Cuando se comporta como $factorialRecCaso0_i$ envía al mailbox que recibio como parametro el valor $1$ y luego se vuelve a comportar como $factorialRec_i$
 
-\begin{align}
-B0_{client}(m) = external!client.(1) \rightarrow B(m)
-  \end{align}
+\begin{gather*}
+factorialRecCasoN_i(client,k, newMailbox) = \\
+  \qquad actors!start_q(newMailbox) \rightarrow actors!start_{rc}(newMailbox, k, client) \rightarrow \\
+  \qquad external.i!(k - 1, newMailBox) \rightarrow factorialRec_i
+\end{gather*}
 
-Si el valor fuera distinto de cero, se comporta como \textbf{B1} y envía un mensaje por el canal externo al mailbox \textit{m}, con la tupla (k -1, nuevoMailbox). Luego compone en paralelo el nuevo actor \textbf{A} con la cola Q apareada al nuevo mailbox creado. 
+En el caso $factorialRecCasoN$, este se llama con tres parametros, mailbox del cliente, el valor entero que recibio y un nuevo mailbox creado en el paso anterior. Este paso ``instancia'' un actor y una cola utilizando el mensaje espacial $start_q$ y $start_{rc}$. Una vez enviado estos mensajes, se envia a si mismo un mensaje que contiene $k - 1$ y el valor del nuevo mailbox creado.\\
 
-\begin{align}
-B1_{client}^{k}(m, nuevoMailbox) = & external!m.(k - 1, nuevoMailbox) \rightarrow B(m) \label{eq:5} \\
-&\Parallel Q(m_{nuevo}, \nil) \Parallel A_{k}^{m_{client}}(nuevoMailbox)
-\end{align}
+\begin{gather*}
+factorialRec =
+  actors!start_q(1) \rightarrow factorialRec_1 \\
+CLIENT =
+  actors!start_q(2) \rightarrow external.1!(2,5) \rightarrow \\
+\qquad internal.2?k \rightarrow HACERALGOCON(k) \\
+SISTEMA = Queue \parallel recCustomer \parallel FACT \parallel CLIENT
+\end{gather*}
 
-Se puede notar tanto en \ref{eq:3} como en \ref{eq:5} que despues de enviar el mensaje adquiren el nuevo comportamiento, en el primer caso es $\STOP$ y en el segundo caso es volver a la compotarse de la misma manera $B(m)$.
-
+En este caso $factorialRec$ es el actor representando el factorial, con el mailbox $1$. $CLIENT$ es, quien tiene el mailbox $2$, consulta por el mailbox de $5$ y se queda esperando por el canal interno la respuesta.
 
 \bibliography{references}{}
 \bibliographystyle{plain}
