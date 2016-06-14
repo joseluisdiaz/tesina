@@ -100,57 +100,57 @@ La anterior formula surge de cambiar en $client$, $NUM$ por el valor 0. Este ser
 MAILBOX \parallel factorialRec \parallel S
 \end{gather*}
 
-$\qquad \qquad \equiv$
+Expandiendo definiciones de $MAILBOX$, $factorialRec$ y $S$
 
 \begin{gather*}
-actors?start_q(i) \rightarrow Mailbox_i(\myList{})  \parallel \\
+actors?start_q(1) \rightarrow Mailbox_1(\myList{})  \parallel \\
+actors?start_q(2) \rightarrow Mailbox_2(\myList{})  \parallel \\
 START(createNewMailbox, createNewMailbox) 
 \end{gather*}
 
-$\qquad \qquad \equiv$
+Expandiendo expandiendo $START(1,2)$
 
 \begin{gather*}
 ( \\ 
 \quad actors?start_q(1) \rightarrow Mailbox_1(\myList{}) \parallel \\
-\quad actors?start_q(2) \rightarrow Mailbox_2(\myList{}) .. )  \\
+\quad actors?start_q(2) \rightarrow Mailbox_2(\myList{})  \\
 ) \parallel \\
 ( \\
-\quad factorialRecStart(mailboxFactorial) \parallel \\
-\quad client(mailboxClient, mailboxFactorial) \\ 
+\quad factorialRecStart(2) \parallel \\
+\quad client(1, 2) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv$
+Expandiendo $factorialRectart$ y $client$ 
 
 \begin{gather*}
 ( \\ 
 \quad actors?start_q(1) \rightarrow Mailbox_1(\myList{}) \parallel \\
-\quad actors?start_q(2) \rightarrow Mailbox_2(\myList{}) .. )  \\
+\quad actors?start_q(2) \rightarrow Mailbox_2(\myList{})  \\
 ) \parallel \\
-\quad ( actors!start_q(1) \rightarrow factorialRec_1 ) \parallel \\
+\quad ( actors!start_q(2) \rightarrow factorialRec_2 ) \parallel \\
 ( \\
-\quad actors!start_q(2) \rightarrow  \\
-\quad external.1!(2,0) \rightarrow \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad actors!start_q(1) \rightarrow  \\
+\quad external.2!(1,0) \rightarrow \\
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-
-$\qquad \qquad \equiv$
+Sincronizando en $actors?start_q(1)$ 
 
 \begin{gather*}
 ( \\ 
 \quad external.1?msg \rightarrow Mailbox_1(\myList{msg})  \parallel \\
 \quad actors?start_q(2) \rightarrow Mailbox_2(\myList{}) )  \\
 ) \parallel \\
-\quad ( actors!start_q(1) \rightarrow factorialRec_1 ) \parallel \\
+\quad ( actors!start_q(2) \rightarrow factorialRec_2 ) \parallel \\
 ( \\
-\quad external.1!(2,0) \rightarrow \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad external.2!(1,0) \rightarrow \\
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv$
+Sincronizando en $actors?start_q(2)$ y exapndiendo $factorialRec_2$
 
 \begin{gather*}
 ( \\ 
@@ -158,38 +158,38 @@ $\qquad \qquad \equiv$
 \quad external.2?msg \rightarrow Mailbox_2(\myList{msg})  \\
 ) \parallel \\
 (
-\quad internal.i?(k,client) \rightarrow \\
-\quad factorialRecCaso0_i(client) \\
+\quad internal.2?(k,client) \rightarrow \\
+\quad factorialRecCaso0_2(client) \\
 \quad \qquad \lceil k == 0 \rceil \\
-\quad factorialRecCasoN_i(client, k, createNewMailbox()) \\
+\quad factorialRecCasoN_2(client, k, createNewMailbox()) \\
 ) \parallel \\
 ( \\
-\quad external.1!(2,0) \rightarrow \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad external.2!(1,0) \rightarrow \\
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv$
+Sincronizando en $external.2!(1, 0)$
 
 \begin{gather*}
 ( \\ 
-external.1?msg \rightarrow Mailbox_1(\myList{msg} \myCons \myList{(2,0)} \myCons TAIL) \\ 
-\quad \square \; internal.1!(2,0) \rightarrow Mailbox_1(TAIL) \\  
-) \parallel \\
-\quad external.2?msg \rightarrow Mailbox_2(\myList{msg})  \\
+\quad external.1?msg \rightarrow Mailbox_1(\myList{msg}) \parallel  \\
+\quad external.2?msg \rightarrow Mailbox_2(\myList{msg} \myCons \myList{(1,0)} \myCons TAIL) \\ 
+\quad \square \; internal.2!(1,0) \rightarrow Mailbox_2(TAIL) \\  
+) \\
 ) \parallel \\
 (
-\quad internal.i?(k,client) \rightarrow \\
-\quad factorialRecCaso0_1(client) \\
+\quad internal.2?(k,client) \rightarrow \\
+\quad factorialRecCaso0_2(client) \\
 \quad \qquad \lceil k == 0 \rceil \\
-\quad factorialRecCasoN_1(client, k, createNewMailbox()) \\
+\quad factorialRecCasoN_2(client, k, createNewMailbox()) \\
 ) \parallel \\
 ( \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv sincronizando en internal.1!(2,0)$
+Sincronizando en $internal.2!(1,0)$
 
 \begin{gather*}
 ( \\ 
@@ -197,16 +197,16 @@ $\qquad \qquad \equiv sincronizando en internal.1!(2,0)$
 \quad external.2?msg \rightarrow Mailbox_2(\myList{msg})  \\
 ) \parallel \\
 (
-\quad factorialRecCaso0_1(2) \\
+\quad factorialRecCaso0_2(1) \\
 \quad \qquad \lceil 0 == 0 \rceil \\
-\quad factorialRecCasoN_1(1, 0, createNewMailbox()) \\
+\quad factorialRecCasoN_2(1, 0, createNewMailbox()) \\
 ) \parallel \\
 ( \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv$
+Expandiendo $factorialRecCaso0_2(1)$
 
 \begin{gather*}
 ( \\ 
@@ -214,34 +214,33 @@ $\qquad \qquad \equiv$
 \quad external.2?msg \rightarrow Mailbox_2(\myList{msg})  \\
 ) \parallel \\
 ( \\
-\quad external.2!1 \rightarrow factorialRec_1
+\quad external.1!1 \rightarrow factorialRec_2
 ) \parallel \\
 ( \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv sincronizando external.2?1$
+Sincronizando $external.1?1$
 
 \begin{gather*}
 ( \\ 
-\quad external.1?msg \rightarrow Mailbox_1(\myList{msg}) \parallel \\
-( \\
-external.2?msg \rightarrow Mailbox_2(\myList{msg} \myCons \myList{1} \myCons TAIL) \\ 
-\quad \square \; internal.2!1 \rightarrow Mailbox_2(TAIL) ) \\
+external.1?msg \rightarrow Mailbox_1(\myList{msg} \myCons \myList{1} \myCons TAIL) \\ 
+\quad \square \; internal.1!1 \rightarrow Mailbox_1(TAIL)  \parallel \\
+\quad external.2?msg \rightarrow Mailbox_2(\myList{msg}) \parallel \\
 ) \parallel \\
 ( \\
-\quad internal.i?(k,client) \rightarrow \\
-\quad factorialRecCaso0_1(client) \\
+\quad internal.2?(k,client) \rightarrow \\
+\quad factorialRecCaso0_2(client) \\
 \quad \qquad \lceil k == 0 \rceil \\
-\quad factorialRecCasoN_1(client, k, createNewMailbox()) \\
+\quad factorialRecCasoN_2(client, k, createNewMailbox()) \\
 ) \parallel \\
 ( \\
-\quad internal.2?k \rightarrow HACERALGOCON(k) \\ 
+\quad internal.1?k \rightarrow HACERALGOCON(k) \\ 
 )
 \end{gather*}
 
-$\qquad \qquad \equiv sincronizando internal.2?1$
+Sincronizando en $internal.1?1$
 
 \begin{gather*}
 ( \\ 
@@ -249,15 +248,14 @@ $\qquad \qquad \equiv sincronizando internal.2?1$
 \quad external.2?msg \rightarrow Mailbox_2(\myList{msg})  \\
 ) \parallel \\
 ( \\
-\quad internal.i?(k,client) \rightarrow \\
-\quad factorialRecCaso0_1(client) \\
+\quad internal.2?(k,client) \rightarrow \\
+\quad factorialRecCaso0_2(client) \\
 \quad \qquad \lceil k == 0 \rceil \\
-\quad factorialRecCasoN_1(client, k, createNewMailbox()) \\
+\quad factorialRecCasoN_2(client, k, createNewMailbox()) \\
 ) \parallel \\
 \quad  \rightarrow HACERALGOCON(1) \\ 
 )
 \end{gather*}
-
 
 
 \bibliography{references}{}
