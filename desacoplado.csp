@@ -1,0 +1,33 @@
+-- General types
+T = {0,1,2}
+V = {0,1,2}
+
+-- Channels
+channel ex:T.(V, V)
+channel in:T.(V, V)
+
+-- Msg Types
+inMsg(x) =  { in.x.(i,j) | i <- V, j <- V }
+exMsg(x) =  { ex.x.(i,j) | i <- V, j <- V }
+
+
+BUFFER(i,  <>) = ex?i.x -> BUFFER(i, <x>)
+BUFFER(i, <x>) = in!i.x -> BUFFER(i,<>)
+
+--
+server = in?2.(client, k) -> ex!client.(2, 0) -> server
+
+S = server [|inMsg(2)|] BUFFER(2, <>)
+
+--
+client = ex!2.(1, 0) -> in?1.(2, 0) -> STOP
+
+C = client [|inMsg(1)|] BUFFER(1, <>)
+
+--
+System = S [|union(exMsg(1), exMsg(2))|] C
+
+--
+Impl = ex!2.(1, 0) -> in?2.(1, 0) -> ex!1.(2,0) -> in?1.(2, 0) -> STOP
+
+assert System [T= Impl
