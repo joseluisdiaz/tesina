@@ -1,0 +1,51 @@
+channel Fact
+channel Client
+
+
+T = {Fact, Client}
+V = {0,1,2}
+
+
+datatype M = Actor.T | Value.V | None
+
+--
+
+channel ex:T.(M, M)
+channel in:T.(M, M)
+
+MAILBOX(i,  <>) = ex?i.x -> MAILBOX(i, <x>)
+
+MAILBOX(i, <x>) =
+                in!i.x -> MAILBOX(i,<>) []
+                ex?i.y -> MAILBOX(i, <x, y>)
+
+MAILBOX(i, <x,y>) = in!i.x -> MAILBOX(i,<y>)
+
+--
+
+factorialRec = in?Fact.(Actor.mc, Value.k) -> if (k == 0) then factorialRecCaso0(mc) else factorialRec
+factorialRecCaso0(mc) = ex!mc.(Value.1, None) -> factorialRec
+
+--
+
+consumer = ex!Fact.(Actor.Client, Value.0) -> in?Client.(Value.1, None) -> STOP
+
+-- System
+
+inMsg(x) =  { in.x.(i,j) | i <- M, j <- M }
+exMsg(x) =  { ex.x.(i,j) | i <- M, j <- M }
+
+F = factorialRec [|inMsg(Fact)|] MAILBOX(Fact, <>)
+
+C = consumer [|inMsg(Client)|] MAILBOX(Client, <>)
+
+S = C [|union(exMsg(Client), exMsg(Fact))|] F
+
+
+Impl = ex!Fact.(Actor.Client, Value.0) -> 
+     in?Fact.(Actor.Client, Value.0) ->
+     ex!Client.(Value.1, None) ->
+     in?Client.(Value.1, None) ->
+     STOP
+
+assert S [T= Impl
