@@ -3,7 +3,7 @@ channel Client
 
 
 T = {Fact, Client}
-V = {0,1,2}
+V = {0,1,2,3}
 
 
 datatype M = Actor.T | Value.V | None
@@ -23,12 +23,14 @@ MAILBOX(i, <x,y>) = in!i.x -> MAILBOX(i,<y>)
 
 --
 
-factorialRec = in?Fact.(Actor.mc, Value.k) -> if (k == 0) then factorialRecCaso0(mc) else factorialRec
+factorialRec = in?Fact.(Actor.mc, Value.k) -> if (k == 0) then factorialRecCaso0(mc) else factorialRecCaso1(mc)  
 factorialRecCaso0(mc) = ex!mc.(Value.1, None) -> factorialRec
+factorialRecCaso1(mc) = ex!mc.(Value.2, None) -> factorialRec
 
 --
 
 consumer(n) = ex!Fact.(Actor.Client, Value.n) -> in?Client.(Value.k, None) -> STOP
+
 
 -- System
 
@@ -50,6 +52,10 @@ Impl = ex!Fact.(Actor.Client, Value.0) ->
 
 assert S(0) [T= Impl
 
-Impl2 = ex!Fact.(Actor.Client, Value.0) -> in?Client.(Value.1, None) -> STOP
+Impl2 = ex!Fact.(Actor.Client, Value.3) -> 
+     in?Fact.(Actor.Client, Value.3) ->
+     ex!Client.(Value.2, None) ->
+     in?Client.(Value.2, None) ->
+     STOP
 
-assert S(0) [T= Impl2
+assert S(3) [T= Impl2
