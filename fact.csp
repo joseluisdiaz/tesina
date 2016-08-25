@@ -48,5 +48,8 @@ Impl = ex!Fact.(Actor.Client, Value.0) ->
      in?Client.(Value.1, None) ->
      STOP
 
-
 assert S(0) [T= Impl
+
+Impl2 = in?Client.(Value.1, None) -> STOP
+
+assert S(0) [T= Impl2
