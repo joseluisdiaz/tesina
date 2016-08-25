@@ -28,7 +28,7 @@ factorialRecCaso0(mc) = ex!mc.(Value.1, None) -> factorialRec
 
 --
 
-consumer = ex!Fact.(Actor.Client, Value.0) -> in?Client.(Value.1, None) -> STOP
+consumer(n) = ex!Fact.(Actor.Client, Value.n) -> in?Client.(Value.k, None) -> STOP
 
 -- System
 
@@ -37,9 +37,9 @@ exMsg(x) =  { ex.x.(i,j) | i <- M, j <- M }
 
 F = factorialRec [|inMsg(Fact)|] MAILBOX(Fact, <>)
 
-C = consumer [|inMsg(Client)|] MAILBOX(Client, <>)
+C(n) = consumer(n) [|inMsg(Client)|] MAILBOX(Client, <>)
 
-S = C [|union(exMsg(Client), exMsg(Fact))|] F
+S(n) = C(n) [|union(exMsg(Client), exMsg(Fact))|] F
 
 
 Impl = ex!Fact.(Actor.Client, Value.0) -> 
@@ -48,4 +48,5 @@ Impl = ex!Fact.(Actor.Client, Value.0) ->
      in?Client.(Value.1, None) ->
      STOP
 
-assert S [T= Impl
+
+assert S(0) [T= Impl
