@@ -1,0 +1,77 @@
+V = {0,1,2,3}
+
+datatype T = Fact | FactCont | Client
+
+datatype M = Actor.T | Value.V | None
+
+
+
+datatype Comm = Komm.T.(M, M) | KommEmpty
+datatype NewActor = ActorInit.T.(M, M) | ActorEmpty
+datatype Next = Behaviour.T.(M, M) | BehaviourEmpty
+
+--
+
+
+--
+factorial(ActorInit.Fact.(None, None))(Actor.a, Value.k) = if (k == 0)
+  then (ActorEmpty, Komm.a.(Value.1, None), (Behaviour.Fact.(None, None)))
+  else (ActorInit.FactCont.(Actor.a, Value.k), Komm.FactCont.(Actor.a, Value.1), Behaviour.Fact.(None, None))
+
+factorialCont(ActorInit.FactCont.(Actor.a, Value.k))(Value.arg, None) =
+  (ActorEmpty, Komm.a.(Value.(k * arg), None), BehaviourEmpty)
+
+functionEnv = (| Fact => factorial, FactCont => factorialCont |)
+
+actors = (| Fact => factorial(ActorInit.Fact.(None, None)) |)
+
+channel comm:T.(M, M)
+
+t1((x,y,z)) = x
+t2((x,y,z)) = y
+t3((x,y,z)) = z
+
+proc(Komm.a.(x,y)) = let
+  results = mapLookup(actors, a)(x,y)
+   act = t2(results)
+   kom = t1(results)
+   beh = t3(results)
+  within
+    (act, kom, beh)
+--
+
+
+
+-- factorialRecCaso0(mc) = ex!mc.(Value.1, None) -> factorialRec
+-- factorialRecCaso1(mc) = ex!mc.(Value.2, None) -> factorialRec
+
+--
+-- consumer(n) = ex!Fact.(Actor.Client, Value.n) -> in?Client.(Value.k, None) -> STOP
+
+
+
+-- System
+
+
+-- F = factorialRec [|inMsg(Fact)|] MAILBOX(Fact, <>)
+
+-- C(n) = consumer(n) [|inMsg(Client)|] MAILBOX(Client, <>)
+
+-- S(n) = C(n) [|union(exMsg(Client), exMsg(Fact))|] F
+
+
+-- Impl = ex!Fact.(Actor.Client, Value.0) ->
+--      in?Fact.(Actor.Client, Value.0) ->
+--      ex!Client.(Value.1, None) ->
+--      in?Client.(Value.1, None) ->
+--      STOP
+--
+-- assert S(0) [T= Impl
+--
+-- Impl2 = ex!Fact.(Actor.Client, Value.3) ->
+--      in?Fact.(Actor.Client, Value.3) ->
+--      ex!Client.(Value.2, None) ->
+--      in?Client.(Value.2, None) ->
+--      STOP
+--
+-- assert S(3) [T= Impl2
