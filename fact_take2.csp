@@ -1,43 +1,53 @@
 V = {0,1,2,3}
+TAGV = {1,2}
 
-datatype T = Fact | FactCont | Client
+
+datatype B = Fact | FactCont
+
+datatype T = Tag.(TAGV, T) | End
 
 datatype M = Actor.T | Value.V | None
 
+-- Representa una Comunicacion a un Actor T con valores (M, M)
+datatype Comm = Komm.T.T.(M, M) | KommEmpty
 
+-- Representa la creación de un nuevo actor T, con Parametros (M, M)
+datatype NewActor = ActorInit.B.T.(M, M) | ActorEmpty
 
-datatype Comm = Komm.T.(M, M) | KommEmpty
-datatype NewActor = ActorInit.T.(M, M) | ActorEmpty
-datatype Next = Behaviour.T.(M, M) | BehaviourEmpty
+-- Representa el futuro Behaviour para un actor T y Parametros (M, M)
+datatype Next = Behaviour.B.T.(M, M) | BehaviourEmpty
+
+-- Son todo siguales; pero decidi (por ahora) dejarlos separados.
+
+datatype I = Init.(M, M)
 
 --
+factorial(Init.(None, None))(Komm.myTag.mBox.(Actor.a, Value.k)) = if (k == 0)
 
+  then (Komm.(Tag.(1, myTag)).a.(Value.1, None), ActorEmpty, Behaviour.Fact.mBox.(None, None))
 
+  else (Komm.(Tag.(1, myTag)).mBox.(Value.(k - 1), Actor.(Tag.(2, myTag))), ActorInit.FactCont.(Tag.(2, myTag)).(Actor.a, Value.k), Behaviour.Fact.mBox.(None, None))
+
+factorialCont (Init.(Actor.k1, Value.k2)) (Komm.myTag.mBox.(Value.n, None)) =
+   (Komm.(Tag.(1, myTag)).k1.(Value.(k2 * n), None), ActorEmpty, BehaviourEmpty)
+
+-- functionEnv = (| Fact => factorial, FactCont => factorialCont |)
 --
-factorial(ActorInit.Fact.(None, None))(Actor.a, Value.k) = if (k == 0)
-  then (ActorEmpty, Komm.a.(Value.1, None), (Behaviour.Fact.(None, None)))
-  else (ActorInit.FactCont.(Actor.a, Value.k), Komm.FactCont.(Actor.a, Value.1), Behaviour.Fact.(None, None))
+-- actors = (| Fact => factorial(ActorInit.Fact.(None, None)) |)
 
-factorialCont(ActorInit.FactCont.(Actor.a, Value.k))(Value.arg, None) =
-  (ActorEmpty, Komm.a.(Value.(k * arg), None), BehaviourEmpty)
-
-functionEnv = (| Fact => factorial, FactCont => factorialCont |)
-
-actors = (| Fact => factorial(ActorInit.Fact.(None, None)) |)
-
-channel comm:T.(M, M)
-
-t1((x,y,z)) = x
-t2((x,y,z)) = y
-t3((x,y,z)) = z
-
-proc(Komm.a.(x,y)) = let
-  results = mapLookup(actors, a)(x,y)
-   act = t2(results)
-   kom = t1(results)
-   beh = t3(results)
-  within
-    (act, kom, beh)
+-- channel comm:T.(M, M)
+--
+-- t1((x,y,z)) = x
+-- t2((x,y,z)) = y
+-- t3((x,y,z)) = z
+--
+-- proc(Komm.a.(x,y)) = let
+--   results = mapLookup(actors, a)(x,y)
+--    act = t2(results)
+--    kom = t1(results)
+--    beh = t3(results)
+--   within
+--     (act, kom, beh)
 --
 
 
