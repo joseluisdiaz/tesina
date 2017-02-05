@@ -24,18 +24,14 @@ g(m) = Start?G.m.(None, None) -> started_g(m)
 started_g(m) = Comm?m.(Value.V, None) -> started_g(m) -- (same Behaviour)
 started_G(_, _, _) = STOP
 
-START = Start!F.(Tag1.2).(T.Tag1.1, Value.SI.0) -> Start!F.(Tag1.1).(T.Tag1.2, Value.SI.0)  -> Start!G.(Tag1.1).(None, None) -> Start!G.(Tag1.2).(None, None) -> STOP
+START = Start!F.(Tag1.2).(T.Tag1.1, Value.SI.0) -> Start!G.(Tag1.1).(None, None) -> STOP
 
 Alpha(actor) = { Start.actor.t.(v1, v2) | t <- Tag, v1 <- M, v2 <- M }
 Comms = { Comm.t.(v1, v2) | t <- Tag, v1 <- M, v2 <- M }
 
-afs = union(Alpha(F), Comms)
-ags = union(Alpha(G), Comms)
-all = union(afs,ags)
+fs = [|union(Alpha(F), Comms)|] i:Tag @ f(i)
+gs = [|union(Alpha(G), Comms)|] i:Tag @ g(i)
 
-fs = [|afs|] i:Tag @ f(i)
-gs = [|ags|] i:Tag @ g(i)
-
-ACTORS = fs [afs||ags] gs
+ACTORS = fs [|Comms|] gs
 
 SYSTEM = START [|union(Alpha(F), Alpha(G))|] ACTORS
