@@ -1,0 +1,74 @@
+V = {0,1,2}
+
+TAGV = {1,2}
+
+datatype SmallInt = SI.V | IntOverflow
+
+datatype ActorName = Fact | FactWorker | Client
+
+datatype Tag = Tag1.(TAGV) | Tag2.(TAGV, TAGV) | Tag3.(TAGV, TAGV, TAGV) | TagOverflow
+
+datatype M = T.Tag | Value.SmallInt | None
+
+channel Start:ActorName.Tag.(M,M)
+channel Comm:Tag.Tag.(M,M)
+
+add(SI.a, SI.b) = let sum = a + b within if sum <= 2 then SI.sum else IntOverflow
+add(_, _) = IntOverflow
+
+minus_1(SI.a) = let val = a - 1 within if val >= 0 then SI.val else IntOverflow
+
+mult(SI.a, SI.b) = let mult = a * b within if mult <= 2 then SI.mult else IntOverflow
+mult(_, _) = IntOverflow
+
+eq(SI.a, SI.b) = a == b
+
+
+tag(zzzz, Tag1.i) = Tag2.(zzzz, i)
+tag(a, Tag2.(i,j)) = Tag3.(a,i,j)
+-- tag(a, Tag3.(i,j,k)) = Tag4.(a,i,j,k)
+tag(_, _) = TagOverflow
+
+fact(m) = Start?F.m.(None,None) -> started_fact(m)
+started_fact(m) = Comm?m.t.(T.client, Value.k) ->
+
+if (eq(k, SI.0))
+  then Comm!client.tag(1, t).(Value.SI.1, None) -> started_fact(m)
+  else
+    let
+        newActorMailBox = tag(2, t)
+        newComm = tag(1, t)
+        newK = minus_1(k)
+    within
+        Start!FactWorker.newActorMailBox.(Value.k, T.client) ->
+        Comm!m.newComm.(Value.newK, T.newActorMailBox) ->
+        started_fact(m)
+started_fact(_) = STOP
+
+factworker(m) = Start?FactWorker.m.(V.k1, T.k2) -> started_factworker(m, k1, k2)
+started_factworker(m, k1, k2) = Comm?m.t.(Value.n, None) ->
+  let
+    newComm = tag(1, t)
+    val = mult(n, k1)
+  within
+    Comm!k2.newComm.(Value.val, None) -> factworker(m)
+started_factworker(_, _, _) = STOP
+
+CLIENT(v) = let
+    factMailbox = Tag1.1
+    commTag = Tag1.2
+    clientMailBox = Tag1.3
+  within
+  Start!Fact.factMailbox.(None, None) ->
+  Comm!factMailbox.commTag.(T.clientMailBox, Value.v) ->
+  Comm?clientMailBox.xx.(V, None) -> STOP
+--
+Alpha(actor) = { Start.actor.t.(v1, v2) | t <- Tag, v1 <- M, v2 <- M }
+Comms = { Comm.m.t.(v1, v2) | m <- Tag, t <- Tag, v1 <- M, v2 <- M }
+--
+facts = [|union(Alpha(Fact), Comms)|] i:Tag @ fact(i)
+factworkers = [|union(Alpha(FactWorker), Comms)|] i:Tag @ factworker(i)
+--
+ACTORS = facts [|Comms|] factworkers
+--
+SYSTEM = CLIENT(SI.0) [|union(Alpha(Fact), Alpha(FactWorker))|] ACTORS

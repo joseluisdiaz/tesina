@@ -1,0 +1,41 @@
+V = {0,1,2,3,4,5,6,7,8,9,10}
+
+TAGV = {1,2}
+
+
+datatype SmallInt = SI.V | Overflow
+
+datatype ActorName = F | G
+datatype Tag = Tag1.(TAGV)
+
+datatype M = T.Tag | Value.SmallInt | None
+
+channel Start:ActorName.Tag.(M,M)
+channel Comm:Tag.(M,M)
+
+add(SI.a, SI.b) = let sum = a + b within if sum <= 10 then SI.sum else Overflow
+add(_, _) = Overflow
+
+f(m) = Start?F.m.(a,v) -> started_f(m,a,v)
+started_f(m, T.a1, Value.v) = Comm!a1.(Value.(add(v, SI.1)), None) -> f(m) -- (botton Behaviour)
+started_f(_, _, _) = STOP
+
+g(m) = Start?G.m.(None, None) -> started_g(m)
+started_g(m) = Comm?m.(Value.V, None) -> started_g(m) -- (same Behaviour)
+started_G(_, _, _) = STOP
+
+START = Start!F.(Tag1.2).(T.Tag1.1, Value.SI.0) -> Start!F.(Tag1.1).(T.Tag1.2, Value.SI.0)  -> Start!G.(Tag1.1).(None, None) -> Start!G.(Tag1.2).(None, None) -> STOP
+
+Alpha(actor) = { Start.actor.t.(v1, v2) | t <- Tag, v1 <- M, v2 <- M }
+Comms = { Comm.t.(v1, v2) | t <- Tag, v1 <- M, v2 <- M }
+
+afs = union(Alpha(F), Comms)
+ags = union(Alpha(G), Comms)
+all = union(afs,ags)
+
+fs = [|afs|] i:Tag @ f(i)
+gs = [|ags|] i:Tag @ g(i)
+
+ACTORS = fs [afs||ags] gs
+
+SYSTEM = START [|union(Alpha(F), Alpha(G))|] ACTORS
