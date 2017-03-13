@@ -23,7 +23,7 @@ datatype ActorID = Id.ActorName.PID
 -- Possible types for actors
 datatype M = T.ActorID | Value.SmallInt | None
 
--- Start message
+-- Create message
 channel Create:ActorID.(M,M)
 
 -- External ( actor to mailbox ) and Internal ( mailbox to actor ) communication
@@ -51,7 +51,7 @@ table = pidtable(F, < 1 >) ||| ( pidtable(G, < 1 >) ||| pidtable(H, < 1 >) )
 f(m) = Create?m.(None, None) -> working_f(m, None, None)
 working_f(m, None, None) =
   newPid?Id.G.t ->
-  Start!Id.G.t.(T.m, Value.SI.0) ->
+  Create!Id.G.t.(T.m, Value.SI.0) ->
   CommIn?m.(Value.V, None) ->
   f(m)
 
@@ -66,7 +66,7 @@ working_g(m, T.a1, Value.v) =
 working_g(_, _, _) = STOP
 
 -- Comportamiento del actor H
-h(m) = newPid?Id.F.t -> Start!Id.F.t.(None, None) -> STOP
+h(m) = newPid?Id.F.t -> Create!Id.F.t.(None, None) -> STOP
 
 --
 -- Comportamiento + Mailbox = Actor
@@ -99,7 +99,7 @@ actor_system_f = actor_f(Id.F.1)
 
 --  * Create.i: crearse a si mismo
 --  * CommEx: Comunicacion con otros actores
-Xg(i) = {|Start.i, CommEx|}
+Xg(i) = {|Create.i, CommEx|}
 
 --  * CommIn.i: Comunicacion interna con el mailbox
 --  * CommEx.i: Comunicacion del mailbox interna con i (CommIn.i) y desde
@@ -112,7 +112,7 @@ alphabet_g = union(Xg(Id.G.1), Yg(Id.G.1))
 actor_system_g = actor_g(Id.G.1)
 --
 -- -- H
-Xh(i) = {|newPid.Id.F, Start.Id.F|}
+Xh(i) = {|newPid.Id.F, Create.Id.F|}
 Yh(i) = {|CommIn.i, CommEx.i|}
 alphabet_h = union(Xh(Id.H.1), Yh(Id.H.1))
 
