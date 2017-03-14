@@ -17,13 +17,15 @@ add(_, _) = Overflow
 datatype ActorName = F | G | H
 
 -- La dentificacion de un Actor esta compuesta por su tipo nombre (F G o H),
--- y un número secuencial.
+-- y un número a.
+--
+--
 datatype ActorID = Id.ActorName.PID
 
 -- Possible types for actors
 datatype M = T.ActorID | Value.SmallInt | None
 
--- Create message
+-- Start message
 channel Create:ActorID.(M,M)
 
 -- External ( actor to mailbox ) and Internal ( mailbox to actor ) communication
@@ -48,25 +50,25 @@ table = pidtable(F, < 1 >) ||| ( pidtable(G, < 1 >) ||| pidtable(H, < 1 >) )
 
 
 -- Comportamiento del actor F
-f(m) = Create?m.(None, None) -> working_f(m, None, None)
-working_f(m, None, None) =
+f(Id.F.i) = Create?Id.F.i.(None, None) -> working_f(Id.F.i, None, None)
+working_f(Id.F.i, None, None) =
   newPid?Id.G.t ->
-  Create!Id.G.t.(T.m, Value.SI.0) ->
+  Create!Id.G.t.(T.Id.F.i, Value.SI.0) ->
   CommIn?m.(Value.V, None) ->
-  f(m)
+  f(Id.F.i)
 
 working_f(_, _, _) = STOP
 
 -- Comportamiento del actor G
-g(m) = Create?m.(p1, p2) -> working_g(m, p1, p2)
-working_g(m, T.a1, Value.v) =
+g(Id.G.i) = Create?Id.G.i.(p1, p2) -> working_g(Id.G.i, p1, p2)
+working_g(Id.G.i, T.a1, Value.v) =
   CommEx!a1.(Value.(add(v, SI.1)), None) ->
-  g(m)
+  g(Id.G.i)
 
 working_g(_, _, _) = STOP
 
 -- Comportamiento del actor H
-h(m) = newPid?Id.F.t -> Create!Id.F.t.(None, None) -> STOP
+h(Id.H.i) = newPid?Id.F.t -> Create!Id.F.t.(None, None) -> STOP
 
 --
 -- Comportamiento + Mailbox = Actor
