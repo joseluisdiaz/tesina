@@ -2,10 +2,10 @@ MAX_INT = 2
 V = {0 .. MAX_INT}
 
 CANTIDAD_F = 1
-CANTIDAD_G = 1
+CANTIDAD_G = 2
 CANTIDAD_H = 1
 
-PID = { 1 }
+PID = { 1, 2 }
 
 -- Small Int representation
 datatype SmallInt = SI.V | Overflow
@@ -45,15 +45,18 @@ mailbox(i, <x,y>) = CommIn!i.x -> mailbox(i,<y>) [] CommIn!i.y -> mailbox(i, <x>
 --
 pidtable(ACTOR, <>) = STOP
 pidtable(ACTOR, <x> ^ xs) = newPid!Id.ACTOR.x -> pidtable(ACTOR, xs)
-table = pidtable(F, < 1 >) ||| ( pidtable(G, < 1 >) ||| pidtable(H, < 1 >) )
+table = pidtable(F, < 1 >) ||| ( pidtable(G, < 1, 2 >) ||| pidtable(H, < 1 >) )
 
 
 
 -- Comportamiento del actor F
 f(Id.F.i) = Create?Id.F.i.(None, None) -> working_f(Id.F.i, None, None)
 working_f(Id.F.i, None, None) =
-  newPid?Id.G.t ->
-  Create!Id.G.t.(T.Id.F.i, Value.SI.0) ->
+  newPid?Id.G.t1 ->
+  Create!Id.G.t1.(T.Id.F.i, Value.SI.0) ->
+  newPid?Id.G.t2 ->
+  Create!Id.G.t2.(T.Id.F.i, Value.SI.1) ->
+  CommIn?m.(Value.V, None) ->
   CommIn?m.(Value.V, None) ->
   f(Id.F.i)
 
@@ -110,8 +113,8 @@ Yg(i) = {|CommIn.i, CommEx.i|}
 
 actor_g(i) = g(i) [Xg(i)||Yg(i)] mailbox(i, <>)
 
-alphabet_g = union(Xg(Id.G.1), Yg(Id.G.1))
-actor_system_g = actor_g(Id.G.1)
+alphabet_g = union(union(Xg(Id.G.1), Yg(Id.G.1)), union(Xg(Id.G.2), Yg(Id.G.2)))
+actor_system_g = actor_g(Id.G.1) ||| actor_g(Id.G.2)
 --
 -- -- H
 Xh(i) = {|newPid.Id.F, Create.Id.F|}
