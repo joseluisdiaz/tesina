@@ -38,16 +38,11 @@ channel CommIn:ActorID.(M, M)
 channel newPid:ActorID
 
 
-mailbox(i, <>) = CommEx?i.x -> mailbox(i, <x>)
-mailbox(i, <x>) = CommIn!i.x -> mailbox(i,<>) [] CommEx?i.y -> mailbox(i, <x, y>)
-mailbox(i, <x,y>) = CommIn!i.x -> mailbox(i,<y>) [] CommIn!i.y -> mailbox(i, <x>)
+mailbox(i, <>) = CommEx.i?x -> mailbox(i, <x>)
+mailbox(i, <x>) = CommIn.i!x -> mailbox(i,<>) [] CommEx.i?y -> mailbox(i, <x, y>)
+mailbox(i, <x,y>) = CommIn.i!x -> mailbox(i,<y>) [] CommIn.i!y -> mailbox(i, <x>)
 
-mb1 = CommEx?Id.Factorial.1.msg -> CommIn!Id.Factorial.1.msg -> mb1
-mb2 = CommEx?Id.FactorialWorker.1.msg -> CommIn!Id.FactorialWorker.1.msg -> mb2
-mb3 = CommEx?Id.FactorialWorker.2.msg -> CommIn!Id.FactorialWorker.2.msg -> mb3
-mb4 = CommEx?Id.FactorialWorker.3.msg -> CommIn!Id.FactorialWorker.3.msg -> mb4
-mb5 = CommEx?Id.Main.1.msg -> CommIn!Id.Main.1.msg -> mb5
-mailboxes = mb1 ||| mb2 ||| mb3 ||| mb4 ||| mb5
+mailboxes = ||| actor: { Id.Main.1, Id.FactorialWorker.1, Id.FactorialWorker.2, Id.FactorialWorker.3, Id.Factorial.1 } @ mailbox(actor, <>)
 
 
 -- aa = {Id.Factorial.1, Id.Main.1, Id.FactorialWorker.1, Id.FactorialWorker.2, Id.FactorialWorker.3 }
@@ -76,12 +71,12 @@ if (eq(k,SI.0))
 factorialRunning(_) = STOP
 
 -- Comportamiento del actor factorialWorker
-factorialWorker_1  = ||| actorId : {|Id.FactorialWorker|} @ Create!actorId?(Value.k, T.mailboxClient) -> factorialWorkerRunning(actorId, Value.k, T.mailboxClient)
-factorialWorkerRunning(self, Value.k, T.mailboxClient) = CommIn?self.(Value.n, None) ->
+factorialWorker  = ||| actorId : {|Id.FactorialWorker|} @ Create!actorId?(Value.k, T.mailboxClient) -> factorialWorkerRunning(actorId, Value.k, T.mailboxClient)
+factorialWorkerRunning(self, Value.k, T.mailboxClient) = CommIn.self?(Value.n, None) ->
     let
       val = mult(n, k)
     within
-      CommEx!mailboxClient.(Value.val, None) ->
+      CommEx.mailboxClient!(Value.val, None) ->
       STOP
 
 factorialWorkerRunning(_, _, _) = STOP
