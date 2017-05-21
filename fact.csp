@@ -1,11 +1,7 @@
+-- Small Int representation
 
 MAX_INT = 6
-V = {0 .. MAX_INT}
-
-PID = { 1, 2, 3 }
-
--- Small Int representation
-datatype SmallInt = SI.V | Overflow
+datatype SmallInt = SI.{0 .. MAX_INT} | Overflow
 --
 add(SI.a, SI.b) = let sum = a + b within if sum <= MAX_INT then SI.sum else Overflow
 add(_, _) = Overflow
@@ -20,10 +16,7 @@ eq(SI.a, SI.b) = a == b
 eq(_, _) = false
 
 -- Possible actor names
-datatype ActorName = Factorial | FactorialWorker | Main
-
---
-datatype ActorID = Id.ActorName.PID
+datatype ActorID = Factorial.{1} | FactorialWorker.{1,2,3} | Main.{1}
 
 -- Possible types for actors
 datatype M = T.ActorID | Value.SmallInt | None
@@ -37,25 +30,15 @@ channel CommIn:ActorID.(M, M)
 
 channel newPid:ActorID
 
-
 mailbox(i, <>) = CommEx.i?x -> mailbox(i, <x>)
 mailbox(i, <x>) = CommIn.i!x -> mailbox(i,<>) [] CommEx.i?y -> mailbox(i, <x, y>)
 mailbox(i, <x,y>) = CommIn.i!x -> mailbox(i,<y>) [] CommIn.i!y -> mailbox(i, <x>)
 
-mailboxes = ||| actor: { Id.Main.1, Id.FactorialWorker.1, Id.FactorialWorker.2, Id.FactorialWorker.3, Id.Factorial.1 } @ mailbox(actor, <>)
-
-
--- aa = {Id.Factorial.1, Id.Main.1, Id.FactorialWorker.1, Id.FactorialWorker.2, Id.FactorialWorker.3 }
--- mb(Id.actor.pid) = CommEx?Id.actor.pid.msg -> CommIn!Id.actor.pid.msg -> mb(Id.actor.pid)
---                     [] CommEx?Id.actor.pid.msg -> CommIn!Id.actor.pid.msg -> mb(Id.actor.pid)
--- mailboxes = ||| actorId: aa @ mb(actorId)
---
--- MB = CommEx?actor.msg -> CommIn!actor.msg -> MB
--- mailboxes = ||| i: {0..3} @ MB
+mailboxes = ||| actor: ActorID @ mailbox(actor, <>)
 
 
 -- Comportamiento del Actor Factorial
-factorial = Create!Id.Factorial.1?(None, None) -> factorialRunning(Id.Factorial.1)
+factorial = Create!Factorial.1?(None, None) -> factorialRunning(Factorial.1)
 factorialRunning(self) = CommIn?self.(T.mailboxClient, Value.k) ->
 if (eq(k,SI.0))
   then
@@ -64,14 +47,14 @@ if (eq(k,SI.0))
     let
       newK = sub(k, SI.1)
     within
-      Create?Id.FactorialWorker.pid!(Value.k, T.mailboxClient) ->
-      CommEx!self.(T.Id.FactorialWorker.pid, Value.newK) ->
+      Create?FactorialWorker.pid!(Value.k, T.mailboxClient) ->
+      CommEx!self.(T.FactorialWorker.pid, Value.newK) ->
       factorialRunning(self)
 
 factorialRunning(_) = STOP
 
 -- Comportamiento del actor factorialWorker
-factorialWorker  = ||| actorId : {|Id.FactorialWorker|} @ Create!actorId?(Value.k, T.mailboxClient) -> factorialWorkerRunning(actorId, Value.k, T.mailboxClient)
+factorialWorker  = ||| actorId : {|FactorialWorker|} @ Create!actorId?(Value.k, T.mailboxClient) -> factorialWorkerRunning(actorId, Value.k, T.mailboxClient)
 factorialWorkerRunning(self, Value.k, T.mailboxClient) = CommIn.self?(Value.n, None) ->
     let
       val = mult(n, k)
@@ -82,18 +65,16 @@ factorialWorkerRunning(self, Value.k, T.mailboxClient) = CommIn.self?(Value.n, N
 factorialWorkerRunning(_, _, _) = STOP
 
 actor_main =
-  Create?Id.Factorial.pid!(None, None) ->
-  CommEx!Id.Factorial.pid.(T.Id.Main.1, Value.SI.3) ->
-  CommIn?Id.Main.1.(Value.SI.6, None) ->
+  Create?Factorial.pid!(None, None) ->
+  CommEx!Factorial.pid.(T.Main.1, Value.SI.3) ->
+  CommIn?Main.1.(Value.SI.6, None) ->
   STOP
 
 --
 COMM = {|CommEx, CommIn|}
 --
 
-CREATES1 = {| Create.Id.FactorialWorker |}
-CREATES2 = {| Create.Id.Factorial |}
+CREATES1 = {| Create.FactorialWorker |}
+CREATES2 = {| Create.Factorial |}
 
 SYSTEM = ((factorial [|CREATES1|] factorialWorker) [|CREATES2|] actor_main) [|COMM|] mailboxes
-
-assert SYSTEM :[deadlock free [F]]
