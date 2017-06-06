@@ -18,8 +18,7 @@ eq(_, _) = false
 -- Possible actor names
 datatype ActorID = Node.{1,2,3} | Main.{1} | NoId
 
-datatype Atoms = PUSH | POP
-
+datatype Atoms = PUSH | POP | F
 
 -- Possible types for actors
 datatype VALUE = ACTOR.ActorID | INT.SmallInt | ATOM.Atoms | None
@@ -58,6 +57,10 @@ nodeRunning(self, content, link) =
   CommRecv.self?(ATOM.POP, ACTOR.client) ->
   CommSend.client!(INT.content, None) ->
   fwd(self, link)
+  []
+  CommRecv.self?(ATOM.F, None) ->
+  CommSend.link!(ATOM.F, None) ->
+  nodeRunning(self, add(content, SI.1), link)
 
 
 actor_main =
@@ -67,6 +70,7 @@ within
     CreateAsk?Node.pid!(INT.SI.3, ACTOR.NoId) ->
     CommSend.Node.pid!(ATOM.PUSH, INT.SI.2) ->
     CommSend.Node.pid!(ATOM.PUSH, INT.SI.1) ->
+    CommSend.Node.pid!(ATOM.F, None) ->
     CommSend.Node.pid!(ATOM.POP, ACTOR.self) ->
     CommRecv.self?(INT.V, None) ->
     CommSend.Node.pid!(ATOM.POP, ACTOR.self) ->
