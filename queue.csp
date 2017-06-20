@@ -89,8 +89,7 @@ actor_main1_r(pid) =
 
 actor_main2 = CreateAsk?Queue.pid!(None, None) -> actor_main2_r(Queue.pid)
 actor_main2_r(pid) =
-      CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> actor_main2_r(pid) |~|
-      CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> actor_main2_r(pid) |~|
+      CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> actor_main2_r(pid) |~|
       CommSend.pid!(ATOM.DEQUEUE, ACTOR.Main.1) -> CommRecv.Main.1?(INT.V, None) -> actor_main2_r(pid)
 
 --
