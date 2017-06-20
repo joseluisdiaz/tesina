@@ -80,24 +80,28 @@ queueRunning(self, ACTOR.first, ACTOR.last) =
   else
     queueRunning(self, ACTOR.newFirst, ACTOR.last)
 
-actor_main =
-let
-  self = Main.1
-within
-    CreateAsk?Queue.pid!(None, None) ->
-    CommSend.Queue.pid!(ATOM.ENQUEUE, INT.SI.1) ->
-    CommSend.Queue.pid!(ATOM.ENQUEUE, INT.SI.2) ->
-    -- CommSend.Queue.pid!(ATOM.ENQUEUE, INT.SI.3) ->
-    -- CommSend.Queue.pid!(ATOM.DEQUEUE, ACTOR.self) ->
-    -- CommRecv.self?(INT.V, None) ->
-    CommSend.Queue.pid!(ATOM.DEQUEUE, ACTOR.self) ->
-    CommRecv.self?(INT.V, None) ->
-    CommSend.Queue.pid!(ATOM.DEQUEUE, ACTOR.self) ->
-    CommRecv.self?(INT.V, None) ->
-    STOP
+actor_main1 = CreateAsk?Queue.pid!(None, None) -> actor_main1_r(Queue.pid)
+
+actor_main1_r(pid) =
+    CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> actor_main1_r(pid) |~|
+    CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> actor_main1_r(pid) |~|
+    CommSend.pid!(ATOM.DEQUEUE, ACTOR.Main.1) -> CommRecv.Main.1?(INT.V, None) -> actor_main1_r(pid)
+
+actor_main2 = CreateAsk?Queue.pid!(None, None) -> actor_main2_r(Queue.pid)
+actor_main2_r(pid) =
+      CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> actor_main2_r(pid) |~|
+      CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> actor_main2_r(pid) |~|
+      CommSend.pid!(ATOM.DEQUEUE, ACTOR.Main.1) -> CommRecv.Main.1?(INT.V, None) -> actor_main2_r(pid)
 
 --
 COMM = {|CommSend, CommRecv, Create, CreateAsk|}
 --
 
-SYSTEM = (queue ||| node ||| actor_main) [|COMM|] ( mailboxes ||| creates )
+SYSTEM1 = (queue ||| node ||| actor_main1) [|COMM|] ( mailboxes ||| creates )
+SYSTEM2 = (queue ||| node ||| actor_main2) [|COMM|] ( mailboxes ||| creates )
+
+assert SYSTEM2 [T= SYSTEM1
+assert SYSTEM2 [F= SYSTEM1
+
+assert SYSTEM1 [T= SYSTEM2
+assert SYSTEM1 [F= SYSTEM2
