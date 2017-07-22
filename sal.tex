@@ -164,6 +164,16 @@ Para empezar a describir como se modeló en CSP, primero es importante hacer
 referencia a que no se utilizó CSPm, que combina los operadores de CSP
 originalmente propuesto por Hoare, y un lenguage funcional.
 
+
+runtime: 
+\begin{enumerate}
+\item  introducir la idea de mailbox y los canales de comunicación
+\item introducir el tipo ActorId y explicar la limitción sobre la red de actores
+(tenemos que saber cuantos actores necesitamos)
+\item introducir la separación entre el pedido de creación y el comienzo del actor.
+\item funcionalidad de main
+\end{enumerate}
+
 En el proceso de traducción de SAL a CSPm, fue necesario construir un pequeño
 \textit{runtime} para emular como los actores corren. Recordemos que la
 naturaleza de CSP es syncrona y los actores no lo son.
@@ -224,14 +234,6 @@ por un canal, si utlizamos \textbf{`!'} estamos enviando. En el comando
 
 
 
-runtime: 
-\begin{enumerate}
-\item  introducir la idea de mailbox y los canales de comunicación
-\item introducir el tipo ActorId y explicar la limitción sobre la red de actores
-(tenemos que saber cuantos actores necesitamos)
-\item introducir la separación entre el pedido de creación y el comienzo del actor.
-\item funcionalidad de main
-\end{enumerate}
 
 \subsection{Generalizando el ejemplo}
 
