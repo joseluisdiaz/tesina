@@ -1,0 +1,309 @@
+\documentclass[fleqn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{hyperref}
+\usepackage{syntax}
+\usepackage{listings}
+
+\lstdefinelanguage{sal}{
+  keywords = {send, become, let, new, in, to, if, then, else, case, def, end, case, of}
+}
+
+\begin{document}
+
+\subsection{Conceptos básicos}
+
+\subsubsection*{Comportamientos}
+
+\subsubsection*{Creando Actores}
+
+\subsubsection*{Creando comunicaciones}
+
+\subsubsection*{Comandos}
+
+\subsection{Lenguage de Actor Minimo}
+
+Este lenguaje minimo fue mostrado por primera vez en la tesis doctoral
+\cite{Agha:1986:AMC:7929}, fue consevido como un lenguaje  con fines pedagógicos.
+Un programa en este lenguaje está compuesto por un conjunto de definiciones de
+\textit{Comportamientos}. Como la mayoría de los lenguaje de programación,
+se agrega un behavior llamado \textbf{main} como punto de entrada.
+Estos definen el comportamiento concreto de cada actor en terminos de
+expresiones y comandos.
+
+\subsubsection{Expresiones}
+
+Existen tres tipos primitivos, booleanos, enteros y mailbox. Las operaciones
+posibles entre los booleanos, \textbf{or}, \textbf{and}, \textbf{not}. Con
+respecto a los enteros se pueden operar utilizando \textbf{+}, \textbf{-},
+\textbf{*}, \textbf{/}. Un mailbox es un identificador que es devuelto cuando se
+crea un nuevo actor.
+
+\subsubsection{Comandos}
+La gramática de los comandos en SAL es la siguiente:
+
+\begin{grammar}
+<command> ::= `send' $e_1, e_2, ..., e_n$ `to' <actor>
+\alt `become' $B(e_1, e_2, ..., e_n)$
+\alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\ 
+ ... $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$        \\
+ `in' <command> 
+\alt `if` <bool-expr> `then' <command> `else' <command> `end if' 
+\alt <command> `;' <command>
+\end{grammar}
+
+\begin{description}
+\item [send]  Este comando permite enviar mensajes a otros actores, toma como
+  parametro una lista separada por coma de las expresiones a enviar, y el actor
+  destino, el envio de mensajes es asincronico. Cada expresion es evaluada antes
+  de ser enviada.
+\item [become] Este comando especifica el siguiente comportamiendo del actor
+  que está procesando el mensaje recicibido. Como en el caso anterior se evaluan
+  las expresiones antes de ser enviadas, y estas apareceran como la listas de
+  parametros del comportamiento. 
+\item[new] Este comando sirve para crear nuevos. El alcance de los
+  identificadores de los nuevos actores creados está sujeto a el cuerpo a
+  el cuerpo del \textbf{let}.
+\item[condicional] La expresion booleana tiene que ser evaluada, si es
+\item[secuenciación] a diferencia de la semantica original de SAL, los
+  comandos separados por punto y coma ocurren secuancialmente. \footnote{hoy
+    tengo escrito que las cosas ocurran secuencialmente dentro del actor, ya que
+  lo reemplazao usando ->, podría usar el operador de interleaving the CSP para
+  guardar la semantica concreata originalmente propuesta por Agah.}
+\end{description}
+  verdadera tiene que ejecutarse el primer comando, en caso contrario el otro.
+-- Agregar la idea de que los comandos ocurren en cualquier orden? ---
+
+\subsubsection{Comportamientos}
+
+La sintaxis de los comportamientos es la siguiente:
+
+\begin{grammar}
+  <behavior> :== `def' <beh name> `(' <param-list> `)' `[`'<communication-list>`]' \\
+            <command>* \\
+  `end def'
+\end{grammar}
+
+La lista de parametros \textit{param-list} es una lista de variables separadas por coma
+que se inicializan cuando el actor es creado. La lista de comunicaciones (communication-list)
+muchas veces depende del tipo de comunicación que se esté enviando, por ejemplo
+si se está enviando un mensaje de \textbf{Retiro} a un actor simulando ser una
+caja de ahorros la comunicación debe especificar la cantidad a retirar. Pero si
+quiere saber cual es el \textbf{Balance} no debe especificar ningun parametro
+adicional.
+Basicamente se bifurca por el valor de uno de los campos llamado
+\textbf{tag-field}, dependiendo de este diferentes identificarores son esperados.
+La sintaxis de esta lista es la siguiente:
+
+\begin{grammar}
+  <params> ::= <id> | <id> `,' <params>
+  <var-list> ::= `case' <tag-field> `of' <variant>+ `end case'
+  <variant> ::= <case label> `:' <params>
+\end{grammar}
+
+El siguiente ejemplo muestra un caso donde es útil utilizar la sintaxis basada
+en \textbf{case}:
+
+\begin{verbatim}
+case request of 
+  depositar : (cliente, monto) 
+  retirar: (cliente, monto) 
+  balance: (cliente) 
+end case
+\end{verbatim}
+
+En este caso \textbf{depositar}, \textbf{retirar} y \textbf{balance} son
+simbolos. 
+No siempre es necesario utilizar esta sintaxis, communication-list puede tener
+la misma estructura que param-list.
+
+\subsubsection{Ejemplo}
+
+SAL no tiene construcciones para control de flujo, pero esto se puede encodear
+dentro como mensajes.
+
+--- INCLUIR UNA IMAGEN DE COMO SE CALCULA EL FACTORIAL DE 3 ---
+
+La implementación dada a continuación esta tomada de \cite{Agha:1986:AMC:7929}.
+
+
+\begin{lstlisting}[language=sal]
+def Factorial()[val, customer]
+  if val = 0 then
+    send [1] to customer
+  else
+    let cont = new FactorialCont(val, customer)
+       in send [val - 1, cont] to self
+  end if
+  become Factorial()
+end def
+
+def FactorialCont(n, customer)[arg] 
+  send [n * arg] to customer
+end def
+\end{lstlisting}
+
+Cuando \textbf{Factorial} recibe un mensaje esté incluye un entero positivo y
+una referencia al actor al que el resultado debe ser enviado. Al recibir el
+mensaje se comporta de la siguiente manera, si el valor que recibe es 0, le
+envia a customer 1. En caso contrario, crea un nuevo actor
+\textbf{FactorialCont} con los parametros, \textbf{val - 1} y \textbf{customer}.
+Cuando eventualmente \textbf{FactorialCont} recibe un entero, le envia a
+\textbf{Customer} la multiplicación de este por el valor que tenía originalmente
+en parametro. Se puede ver en la figura como esto evoluciona para el calculo del
+factorial de 3.
+
+\subsection{CSP y actores}
+Para empezar a describir como se modeló en CSP, primero es importante hacer
+referencia a que no se utilizó CSPm, que combina los operadores de CSP
+originalmente propuesto por Hoare, y un lenguage funcional.
+
+En el proceso de traducción de SAL a CSPm, fue necesario construir un pequeño
+\textit{runtime} para emular como los actores corren. Recordemos que la
+naturaleza de CSP es syncrona y los actores no lo son.
+
+Hay dos construcciones que son necesarias para desacoplar el envio y recepcion
+de mensajes y la construcción de los actores.
+
+Para desacoplar la creación de actores se utilizan dos abstracciones,
+\textbf{ActorID} y un par de canales que desacoplan la acción de crear de la
+creación misma.
+
+\begin{lstlisting}{language=CSPm}
+datatype ActorID = Factorial.{1} | FactorialWorker.{1,2,3} | Main.{1}
+\end{lstlisting}
+
+Este tipo de datos introduce y nombra cada uno de los actores que van ser
+utilizados. Por una limitación propia de CSP, es necesario conocer la cantidad de processos
+que van a ser involucrados en la simulación previamente, por eso se utiliza la
+notacíon que se ve entre llaves, en este caso vamos a contar con un actor del
+tipo \textbf{Factorial}, tres dle tipo \textbf{FactorialWorker} y uno más del
+tipo \textbf{Main}. Resumidamente, esto no solo introduce el nombre sino la
+cantidad de actores que van a estar en juego.
+
+\begin{lstlisting}{language=CSPm}
+channel CreateAsk:ActorID.(VALUE, VALUE)
+channel Create:ActorID.(VALUE, VALUE)
+\end{lstlisting}
+
+Estos dos canales de CSP, son los encargados de desacoplar el pedido de creacion
+y la creación. \textbf{VALUE} representa los valores que son pasados en el
+momento de crear los actores, en este caso tenemos dos, mas adelante se verá con
+un poco mas de detalle.
+Por cada \textbf{ActorID} existen tres construcciónes, un proceso que
+efecticamente separa la intención de crear un actor de la creación misma:
+
+\begin{lstlisting}{language=CSPm}
+CreateAsk!Factorial.1?m -> Create.Factorial.1!m -> STOP
+\end{lstlisting}
+
+Un actor esperando ser creado:
+
+\begin{lstlisting}{language=CSPm}
+Create!Factorial.1?(None, None) -> ...
+\end{lstlisting}
+
+Finalmente un actor que pide la creación.
+
+\begin{lstlisting}[label={lst:createask},language=CSPm]
+  CreateAsk?Factorial.pid!(None, None) -> ...
+\end{lstlisting}
+
+Estas tres patas, esconden no solo como fue remarcado desacoplar la creción que
+sino que, al mismo tiempo, La asignación de un único nombre al actor.
+
+En la semantica de CSP cuando utilizamos \textbf{`?'} estamos esperando un valor
+por un canal, si utlizamos \textbf{`!'} estamos enviando. En el comando
+\ref{lst:createask} adadsad
+
+
+
+runtime: 
+\begin{enumerate}
+\item  introducir la idea de mailbox y los canales de comunicación
+\item introducir el tipo ActorId y explicar la limitción sobre la red de actores
+(tenemos que saber cuantos actores necesitamos)
+\item introducir la separación entre el pedido de creación y el comienzo del actor.
+\item funcionalidad de main
+\end{enumerate}
+
+\subsection{Generalizando el ejemplo}
+
+---- Definir \textbf{translateExp}  ----
+
+La clase \textbf{Cmnd} con elementos de tipo S está dada por:
+
+\begin{verbatim}
+S :== S_1 ; S_2 | if b then S_1 else S_2 | send [e1, .., e_i] to a | become new
+E(e_1, .. ,e_i) | let a_1 = new E_1(e_1,..,e_i) and ... a_j = new
+E_1(e_1,..,e_i) { S } 
+\end{verbatim}
+
+definimos la funcion \textbf{translateCmd} de la siguiente forma:
+
+\begin{verbatim}
+translateCmd (S_1 S_2) = translateCmd(S_1) -> translateCmd(S_2)
+\end{verbatim}
+
+
+\begin{verbatim}
+translateCmd(if b then S_1 else S_2) = 
+   if (translateExp(b)) then
+       translateCmd(S_1) else 
+       translateCmd(S_2)
+\end{verbatim}
+
+\begin{verbatim}
+translateCmd(send[e_1, ..., e_i] to a) = CommSend.a.
+         (translateExp(e_1), ..., 
+          translateExp(e_i)) 
+\end{verbatim}
+
+\begin{verbatim}
+translateCmd(become new Beh(e_1, ..., e_n)) = runningBeh(self, e_1, ..., e_n)
+\end{verbatim}
+
+newEnv es el resultado de agregar a el entorno de las variables de mailbox $a_1
+= E_1.pid_1$ .. $a_n = E_n.pid_n$
+\begin{verbatim}
+translateCmd(let a_1 = new E_1(e_1, ..., e_j) and 
+         ... and a_n = new E_N(e_1, ..., e_j) { S } = 
+
+CreateAsk?E_1.pid_1!(translateExp(e_1), ...,translateExp(e_j)) ->
+CreateAsk?E_N.pid_n!(translateExp(e_1), ...,translateExp(e_j)) ->
+translateCmd(S, newEnv)
+\end{verbatim}
+
+
+La clase \textbf{Beha} con elementos de tipo S está dada por:
+
+\begin{verbatim}
+def behName(a_1 .. a_i)[n_1 ... n_j]
+  S
+end def
+\end{verbatim}
+
+Tendria como equivalente en CSP:
+
+\begin{verbatim}
+
+behName = ||| actorId : {|BehName|} @ Create.actorId?(a_1, ..., a_i) ->
+behNameRunning(actorId, a_1, .., a_n)
+
+behNameRunning(self, a_1, .., a_n) = CommRecv.self(n_1 ... n_j) -> translateCmd(S)
+
+\end{verbatim}
+
+--- Agregar case? ---
+
+
+\bibliography{references}{}
+\bibliographystyle{plain}
+\end{document}
+
