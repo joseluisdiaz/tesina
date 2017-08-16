@@ -15,19 +15,28 @@
   keywords = {send, become, let, new, in, to, if, then, else, case, def, end, case, of}
 }
 
+\lstdefinelanguage{CSPm}{
+  keywords = {send, become, let, new, in, to, if, then, else, case, def, end, case, of}
+}
+
+\lstdefinestyle{simple}{
+  basewidth=0.5em
+}
+
+
 \begin{document}
 
-\subsection{Conceptos básicos}
+\section{Conceptos básicos}
 
-\subsubsection*{Comportamientos}
+\subsection*{Comportamientos}
 
-\subsubsection*{Creando Actores}
+\subsection*{Creando Actores}
 
-\subsubsection*{Creando comunicaciones}
+\subsection*{Creando comunicaciones}
 
-\subsubsection*{Comandos}
+\subsection*{Comandos}
 
-\subsection{Lenguage de Actor Minimo}
+\section{Lenguage de Actor Minimo}
 
 Este lenguaje minimo fue mostrado por primera vez en la tesis doctoral
 \cite{Agha:1986:AMC:7929}, fue consevido como un lenguaje  con fines pedagógicos.
@@ -37,7 +46,7 @@ se agrega un behavior llamado \textbf{main} como punto de entrada.
 Estos definen el comportamiento concreto de cada actor en terminos de
 expresiones y comandos.
 
-\subsubsection{Expresiones}
+\subsection{Expresiones}
 
 Existen tres tipos primitivos, booleanos, enteros y mailbox. Las operaciones
 posibles entre los booleanos, \textbf{or}, \textbf{and}, \textbf{not}. Con
@@ -45,17 +54,17 @@ respecto a los enteros se pueden operar utilizando \textbf{+}, \textbf{-},
 \textbf{*}, \textbf{/}. Un mailbox es un identificador que es devuelto cuando se
 crea un nuevo actor.
 
-\subsubsection{Comandos}
+\subsection{Comandos}
 La gramática de los comandos en SAL es la siguiente:
 
 \begin{grammar}
-<command> ::= `send' $e_1, e_2, ..., e_n$ `to' <actor>
-\alt `become' $B(e_1, e_2, ..., e_n)$
-\alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\ 
- ... $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$        \\
- `in' <command> 
-\alt `if` <bool-expr> `then' <command> `else' <command> `end if' 
-\alt <command> `;' <command>
+  <command> ::= `send' $e_1, e_2, ..., e_n$ `to' <actor>  
+  \alt `become' $B(e_1, e_2, ..., e_n)$
+  \alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\
+  ... $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$        \\
+  `in' <command> 
+  \alt`if`<bool-expr> `then' <command> `else' <command> `end if' 
+  \alt<command> `;' <command>
 \end{grammar}
 
 \begin{description}
@@ -80,7 +89,7 @@ La gramática de los comandos en SAL es la siguiente:
   verdadera tiene que ejecutarse el primer comando, en caso contrario el otro.
 -- Agregar la idea de que los comandos ocurren en cualquier orden? ---
 
-\subsubsection{Comportamientos}
+\subsection{Comportamientos}
 
 La sintaxis de los comportamientos es la siguiente:
 
@@ -123,7 +132,7 @@ simbolos.
 No siempre es necesario utilizar esta sintaxis, communication-list puede tener
 la misma estructura que param-list.
 
-\subsubsection{Ejemplo}
+\subsection{Ejemplo: cálculo de factorial en SAL}
 
 SAL no tiene construcciones para control de flujo, pero esto se puede encodear
 dentro como mensajes.
@@ -132,8 +141,7 @@ dentro como mensajes.
 
 La implementación dada a continuación esta tomada de \cite{Agha:1986:AMC:7929}.
 
-
-\begin{lstlisting}[language=sal]
+\begin{lstlisting}[language=sal, style=simple]
 def Factorial()[val, customer]
   if val = 0 then
     send [1] to customer
@@ -159,80 +167,165 @@ Cuando eventualmente \textbf{FactorialCont} recibe un entero, le envia a
 en parametro. Se puede ver en la figura como esto evoluciona para el calculo del
 factorial de 3.
 
-\subsection{CSP y actores}
+\section{CSP y actores}
 Para empezar a describir como se modeló en CSP, primero es importante hacer
-referencia a que no se utilizó CSPm, que combina los operadores de CSP
+referencia a que se utilizó CSPm, que combina los operadores de CSP
 originalmente propuesto por Hoare, y un lenguage funcional.
-
-
-runtime: 
-\begin{enumerate}
-\item  introducir la idea de mailbox y los canales de comunicación
-\item introducir el tipo ActorId y explicar la limitción sobre la red de actores
-(tenemos que saber cuantos actores necesitamos)
-\item introducir la separación entre el pedido de creación y el comienzo del actor.
-\item funcionalidad de main
-\end{enumerate}
 
 En el proceso de traducción de SAL a CSPm, fue necesario construir un pequeño
 \textit{runtime} para emular como los actores corren. Recordemos que la
-naturaleza de CSP es syncrona y los actores no lo son.
+naturaleza de CSP es sincrona y los actores no lo son. Fue necesario
+concretamente desacoplar el pedido de creación de los actores de la creación
+misma, tambien el envio y la recepción de mensajes. 
 
-Hay dos construcciones que son necesarias para desacoplar el envio y recepcion
-de mensajes y la construcción de los actores.
+\subsection{Creación de nuevos actores}
 
 Para desacoplar la creación de actores se utilizan dos abstracciones,
-\textbf{ActorID} y un par de canales que desacoplan la acción de crear de la
-creación misma.
+\textbf{ActorID} y un par de canales que comunican, la intención de crear un
+actor por parte de otro, y el momento en el que este actor es activado.Se
+menciona activación y creción, dado que CSPm necesita conocer la red completa
+de procesos involucrados al comienzo de la simulación fue necesario simular la creación.
 
-\begin{lstlisting}{language=CSPm}
+Para definir \textbf{ActorID} utilizaremos tipos alegbraicos parecidos a los de haskell.
+
+\begin{lstlisting}{language=CSPm, style=simple}
 datatype ActorID = Factorial.{1} | FactorialWorker.{1,2,3} | Main.{1}
 \end{lstlisting}
 
-Este tipo de datos introduce y nombra cada uno de los actores que van ser
-utilizados. Por una limitación propia de CSP, es necesario conocer la cantidad de processos
-que van a ser involucrados en la simulación previamente, por eso se utiliza la
+Este tipo introduce y nombra cada uno de los actores que van ser utilizados. Es
+decir, no solo incluye el nombre, sino que la cantidad. Para esto se utiliza la
 notacíon que se ve entre llaves, en este caso vamos a contar con un actor del
 tipo \textbf{Factorial}, tres dle tipo \textbf{FactorialWorker} y uno más del
-tipo \textbf{Main}. Resumidamente, esto no solo introduce el nombre sino la
-cantidad de actores que van a estar en juego.
+tipo \textbf{Main}.
 
-\begin{lstlisting}{language=CSPm}
-channel CreateAsk:ActorID.(VALUE, VALUE)
-channel Create:ActorID.(VALUE, VALUE)
+
+\begin{lstlisting}{language=CSPm, style=simple}
+channel CreateAsk:ActorID.(Value, Value)
+channel Create:ActorID.(Value, Value)
 \end{lstlisting}
 
-Estos dos canales de CSP, son los encargados de desacoplar el pedido de creacion
-y la creación. \textbf{VALUE} representa los valores que son pasados en el
-momento de crear los actores, en este caso tenemos dos, mas adelante se verá con
-un poco mas de detalle.
-Por cada \textbf{ActorID} existen tres construcciónes, un proceso que
-efecticamente separa la intención de crear un actor de la creación misma:
+Estos dos canales de CSP, son los encargados de desacoplar la creación,
+\textbf{Value} es un tipo de datos representa los valores que pueden ser pasado
+tanto en la creación de actores como en el envio de mensajes. Los valores a
+utilizar son enteros, \textbf{ActorID} o \textbf{ATOMS}, este último se usa para
+denominar un tipo de cadena de caracteres inmutable.
 
-\begin{lstlisting}{language=CSPm}
-CreateAsk!Factorial.1?m -> Create.Factorial.1!m -> STOP
+Ademas del actor que envia la intención de crear, y el que lo recibe finalmente,
+existe un proceso auxiliar que comunica estas dos accciones.
+
+\begin{lstlisting}{language=CSPm, style=simple}
+CreateAsk!FactorialWorker.1?m -> Create.FactorialWorker.1!m -> STOP
+CreateAsk!FactorialWorker.2?m -> Create.FactorialWorker.2!m -> STOP
+CreateAsk!FactorialWorker.3?m -> Create.FactorialWorker.3!m -> STOP
 \end{lstlisting}
 
-Un actor esperando ser creado:
-
-\begin{lstlisting}{language=CSPm}
-Create!Factorial.1?(None, None) -> ...
-\end{lstlisting}
-
-Finalmente un actor que pide la creación.
-
-\begin{lstlisting}[label={lst:createask},language=CSPm]
-  CreateAsk?Factorial.pid!(None, None) -> ...
-\end{lstlisting}
-
-Estas tres patas, esconden no solo como fue remarcado desacoplar la creción que
-sino que, al mismo tiempo, La asignación de un único nombre al actor.
-
+Este proceso simplemente espera a sincronizar con un evento de tipo
+\textit{CreateAsk} y emite un evento de tipo \textit{Create}.
 En la semantica de CSP cuando utilizamos \textbf{`?'} estamos esperando un valor
-por un canal, si utlizamos \textbf{`!'} estamos enviando. En el comando
-\ref{lst:createask} adadsad
+por un canal, si utlizamos \textbf{`!'} estamos enviando.
+
+En el ejemplo se puede ver que se envia el valor $FactorialWorker.1$ a quien esté
+dispuesto a sincronizar, y se recepciona $m$ que equivale a la tupla de valores
+antes vista. Luego se espera a sincronizar con $Create.FactorialWorker.1$ a
+quien se le envía el valor de $m$.
+
+Esto no desacopla la creción que sino que, al mismo tiempo, La asignación de un
+único nombre al actor. En este caso es el valor que se envía mediante
+$CreateAsk$.
+
+\subsection{Envio de mensajes}
+Para desacoplar el envío de mensajes utilizamos una estructura intermedia que
+actua de \textit{mailbox}, para comunicarase con esta estructura existen dos canales.
+
+\begin{lstlisting}{language=CSPm, style=simple}
+channel CommSend:ActorID.(VALUE, VALUE)
+channel CommRecv:ActorID.(VALUE, VALUE)
+\end{lstlisting}
+
+Un actor se bloquea esperando en $CommRecv$, cuando una nueva comunicación está
+dispuesta a ser sincronizada, desde el mailbox hacia el actor, se procesa.
+Generalmente la primera acción de cualquier actor es esperar la llegada de un
+menasaje.
+
+Un \textit{mailbox} puede guardar más de un mensaje en su interior. Esto
+introduce un tipo de no determinismo, un actor puede sincronizar con cualquiera
+de los mensajes disponibles en su \textit{mailbox}.
+
+Por cada actor creado, existe un \textit{mailbox} con el mismo \textbf{ActorId}
+asociado a este. 
+
+\subsection{Definición de comportamientos}
+La definición de comportamientos es quien utiliza las dos abstracciónes antes
+mencionadas.
+Para mostrar como funciona, se utilizará un ejemplo simple, un actor que cuando
+es creado recive un parametro \textbf{ActorId}, luego se queda esperando un
+mensaje, cuanado lo recive, utiliza el valor entero que recepciona, y lo
+incrementa en uno y lo envia a la referencía del actor que recibió en el
+momento de creación.
+
+\begin{lstlisting}{language=CSPm, style=simple}
+g = Create!G.1?(a1, None) -> g_running(G.1, a1) 
+g_running(self, ACTOR.client) =
+  CommRecv.self!(INT.v, None) ->
+  CommSend.client!(add(v, SI.1), None) ->
+  g_running(self, ACTOR.client)
+\end{lstlisting}
+
+Desarmando el ejemplo, una vez recibido el mensaje $Create!G.1?(a1, None)$,
+podemos decir que el actor está \textit{Corriendo}. Para eso utilizamos la
+funcíon $g\_running$. Cuando un comportamiento reacciona a un mensaje, tiene que
+definir el comportamiento de reemplazo, en este caso puede ser el mismo
+comportamiento que antes. Para esto tambien se utliza esta función, esto se
+puede ver en la última linea del ejemplo, esta tambien podría haber sido $STOP$,
+si no hubiera un nuevo comportamiento (botton behaviour).
+
+$CommRecv$ espera en el mailbox \textit{self} que el mailbox que es el mailbox
+propio al actor, cuando recibe el mesaje $CommSend.client$ Envia un evento al
+mailbox de $client$ con la tupla $(add(v, SI.1), None)$. Como utilizamos una
+represantación mas pequeña de los enteros para evitar //TODO: PROBLEMAS CON LOS
+ENTEROS GRANDES. El proceso de \textit{mailbox} estará esperando sincronizar
+la recepción con el evento $CommSend$ y lo guardará y esperara que el actor esté
+disponible para sincronizar el evento $CommRecv$ que efectuará la entrega.
+
+\subsection{Ejemplo: cálculo de factorial en CSPm}
+Se utilizará el mismo ejemplo del factorial antes visto en sal \textbf{SAL},
+está compuesto por dos comportamientos $Factorial$ y $FactorialWorker$.
+
+\subsubsection*{Comporamiento de Factorial}
+
+\begin{lstlisting}{language=CSPm, style=simple}
+factorial = Create!Factorial.1?(None, None) -> factorialRunning(Factorial.1)
+factorialRunning(self) = CommRecv?self.(ACTOR.mailboxClient, INT.k) ->
+if (eq(k,SI.0))
+  then
+    CommSend!mailboxClient.(INT.SI.1, None) -> factorialRunning(self)
+  else
+    let
+      newK = sub(k, SI.1)
+    within
+      CreateAsk?FactorialWorker.pid!(INT.k, ACTOR.mailboxClient) ->
+      CommSend!self.(ACTOR.FactorialWorker.pid, INT.newK) ->
+      factorialRunning(self)
+\end{lstlisting}
 
 
+\subsubsection*{Comporamiento de Worker}
+
+\begin{lstlisting}{language=CSPm, style=simple}
+factorialWorker  = ||| actorId : {|FactorialWorker|} @ Create!actorId?(k, mailboxClient) -> factorialWorkerRunning(actorId, k, mailboxClient)
+factorialWorkerRunning(self, INT.k, ACTOR.mailboxClient) = CommRecv.self?(INT.n, None) ->
+    let
+      val = mult(n, k)
+    within
+      CommSend.mailboxClient!(INT.val, None) ->
+      STOP
+\end{lstlisting}
+
+
+\subsubsection*{Uniendo todo}
+
+
+\subsection{Ejemplo: cálculo de factorial en CSPm}
 
 
 \subsection{Generalizando el ejemplo}
