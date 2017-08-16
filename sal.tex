@@ -308,6 +308,15 @@ if (eq(k,SI.0))
       factorialRunning(self)
 \end{lstlisting}
 
+El comportamiento del fragmento de código anterior, es exactamente lo mismo que
+hace el código antes visto en SAL. Cuando recibe un mensaje, este contiene dos
+parametros: el mailbox del cliente, y un entero K. Si este entero K fuera 0,
+enviamos el valor uno al mailbox del cliente.
+En caso contrario, crea un actor de tipo \textbf{FactorialWorker} y asigna su
+mailbox a \textit{FactorialWorker.pid} le envia a este un mensaje con un valor
+\textit{newK} que es basicamete $k-1$.
+En ambos caso el comportamiento de reemplazo para el mailbox acutal, es el mismo
+que antes.
 
 \subsubsection*{Comporamiento de Worker}
 
@@ -321,16 +330,27 @@ factorialWorkerRunning(self, INT.k, ACTOR.mailboxClient) = CommRecv.self?(INT.n,
       STOP
 \end{lstlisting}
 
+A diferencia del actor anterior, ya que en este caso necesitamos mas de un actor
+del tipo \textbf{FactorialWorker}, en la primer linea puede verse que se
+comienzan en paralelo utlizando el operador de interliving de $CSPm$ tantos
+procesos como elementos existan \textbf{FactorialWorker}. //TODO: INCLUIR UN
+EJEMPLO DE LA NOTACIÓN.
 
-\subsubsection*{Uniendo todo}
+Utilziando esta notación el tipo de datos \textbf{ActorID}, tiene dos
+responsabilidades: nombrar los actores y enumerarlos. Recordemos que es
+necesario conocer la cantidad total de procesos que va a tener un red de $CSP$
+antes de comenzar la simulación.
 
+Este comportamiento es muy simple, en el momento de creación recibe dos
+parametros, un entero k y un mailbox. En el momento de recibir un mensaje, este
+toma el valor enviado en este mensaje lo multiplica y se lo envía a el mailbox
+que recibio originalmente en el momento de creación.
 
-\subsection{Ejemplo: cálculo de factorial en CSPm}
-
+No tiene comportamiento de reemplazo.
 
 \subsection{Generalizando el ejemplo}
 
----- Definir \textbf{translateExp}  ----
+TODO: Definir \textbf{translateExp}
 
 La clase \textbf{Cmnd} con elementos de tipo S está dada por:
 
