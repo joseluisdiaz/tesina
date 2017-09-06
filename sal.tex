@@ -45,8 +45,6 @@
 \section{Conceptos básicos}
 
 
-$$\interleave$$
-
 \subsection*{Comportamientos}
 
 \subsection*{Creando Actores}
@@ -59,12 +57,9 @@ $$\interleave$$
 
 Este lenguaje minimo fue mostrado por primera vez en la tesis doctoral
 \cite{Agha:1986:AMC:7929}, fue consevido como un lenguaje con fines pedagógicos.
-Un programa en sal está compuesto por un conjunto de definiciones de
-\textit{Comportamientos}. Como la mayoría de los lenguaje de programación,
-se agrega un behavior llamado \textbf{main} como punto de entrada.
-Estos definen el comportamiento concreto de cada actor en terminos de
-expresiones y comandos.
---- MEJORAR MUCHO ESTE PARRAFO ---
+Un programa en sal está compuesto por un conjunto \textit{Comportamientos}.
+Como la mayoría de los lenguaje de programación, se agrega un
+\textit{Comporamiento} llamado \textbf{main} como punto de entrada.
 
 \subsection{Expresiones}
 
@@ -83,8 +78,8 @@ La gramática de los comandos en SAL es la siguiente:
   \alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\
   ... $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$        \\
   `in' <command> 
-  \alt`if`<bool-expr> `then' <command> `else' <command> `end if' 
-  \alt<command> `;' <command>
+  \alt `if`<bool-expr> `then' <command> `else' <command> `end if' 
+  \alt <command> `;' <command>
 \end{grammar}
 
 \begin{description}
@@ -99,15 +94,14 @@ La gramática de los comandos en SAL es la siguiente:
 \item[new] Este comando sirve para crear nuevos. El alcance de los
   identificadores de los nuevos actores creados está sujeto a el cuerpo a
   el cuerpo del \textbf{let}.
-\item[condicional] La expresion booleana tiene que ser evaluada, si es
-\item[secuenciación] a diferencia de la semantica original de SAL, los
-  comandos separados por punto y coma ocurren secuancialmente. \footnote{hoy
-    tengo escrito que las cosas ocurran secuencialmente dentro del actor, ya que
-  lo reemplazao usando ->, podría usar el operador de interleaving the CSP para
-  guardar la semantica concreata originalmente propuesta por Agah.}
+\item[condicional] Luego de evaluar la expresión booleana, si es verdadera
+  ejecuta lo que esta a continuación del \textbf{then}, en caso contrario lo que está a
+  continuación del \textbf{else}. Funciona como cualquier condicional.
+  
+\item[secuenciación] Los comandos en sal ocurren al mismo tiempo, en este
+  sentido podrian pensarse que los comandos de un comportamiento ocurren en paralelo.
+  
 \end{description}
-  verdadera tiene que ejecutarse el primer comando, en caso contrario el otro.
--- Agregar la idea de que los comandos ocurren en cualquier orden? ---
 
 \subsection{Comportamientos}
 
@@ -119,16 +113,16 @@ La sintaxis de los comportamientos es la siguiente:
   `end def'
 \end{grammar}
 
-La lista de parametros \textit{param-list} es una lista de variables separadas por coma
-que se inicializan cuando el actor es creado. La lista de comunicaciones (communication-list)
-muchas veces depende del tipo de comunicación que se esté enviando, por ejemplo
-si se está enviando un mensaje de \textbf{Retiro} a un actor simulando ser una
-caja de ahorros la comunicación debe especificar la cantidad a retirar. Pero si
-quiere saber cual es el \textbf{Balance} no debe especificar ningun parametro
-adicional.
-Basicamente se bifurca por el valor de uno de los campos llamado
-\textbf{tag-field}, dependiendo de este diferentes identificarores son esperados.
-La sintaxis de esta lista es la siguiente:
+La construción \textit{param-list} es una lista de identificadores separados por coma,
+se inicializan cuando el actor es creado. Por otra parte,
+\textit{communication-list} contiene la comunicación a ser procesada por el
+actor, esta puede ser una lista de identificadores.
+Muchas veces dependiendo del tipo de comunicación que se esté enviando,
+por ejemplo si el actor esta simulando ser una caja de ahoros, y recibe
+un mensaje de \textbf{retirar} el mensaje debería contener la cantidad, pero en
+caso de una consulta de saldo \textbf{balance} no debe especificar ningun parametro
+adicional, para esto se bifurca por el valor de uno de los campos llamado
+\textbf{tag-field}, la sintaxis de esta lista es la siguiente:
 
 \begin{grammar}
   <params> ::= <id> | <id> `,' <params>
@@ -140,24 +134,48 @@ El siguiente ejemplo muestra un caso donde es útil utilizar la sintaxis basada
 en \textbf{case}:
 
 \begin{lstlisting}[language=sal, style=simple]
-case request of 
-  depositar : (cliente, monto) 
+case pedido of 
+  depositar: (cliente, monto) 
   retirar: (cliente, monto) 
   balance: (cliente) 
 end case
 \end{lstlisting}
 
-En este caso \textbf{depositar}, \textbf{retirar} y \textbf{balance} son
-simbolos. 
-No siempre es necesario utilizar esta sintaxis, communication-list puede tener
-la misma estructura que param-list.
+No siempre es necesario utilizar esta sintaxis, \textit{communication-list} puede tener
+la misma estructura que \textit{param-list}.
 
 \subsection{Ejemplo: cálculo de factorial en SAL}
 
-SAL no tiene construcciones para control de flujo, pero esto se puede encodear
-dentro como mensajes.
+Está implementación del factorial está adaptada de \cite{Agha:1986:AMC:7929}, esta
+depende de un actor \textit{main} que le envía el valor  
 
+\begin{lstlisting}[language=sal, style=simple]
+def Factorial()[val, customer]
+  if val = 0 then
+ send [1] to customer
+  else
+    let cont = new FactorialCont(val, customer)
+       in send [val - 1, cont] to self
+  end if
+  become Factorial()
+end def
 
+def FactorialCont(n, customer)[arg] 
+  send [n * arg] to customer
+end def
+\end{lstlisting}
+
+Cuando \textbf{Factorial} recibe un mensaje esté incluye un entero positivo y
+una referencia al actor al que el resultado debe ser enviado. Al recibir el
+mensaje se comporta de la siguiente manera, si el valor que recibe es 0, le
+envia a customer 1. En caso contrario, crea un nuevo actor
+\textbf{FactorialCont} con los parametros, \textbf{val - 1} y \textbf{customer}.
+Cuando eventualmente \textbf{FactorialCont} recibe un entero, le envia a
+\textbf{Customer} la multiplicación de este por el valor que tenía originalmente
+en parametro. Se puede ver en la figura como esto evoluciona para el calculo del
+factorial de 3.
+
+\begin{figure}
 \begin{tikzpicture}
 \draw[thick] (8,7) -- (8, 0.5);
 
@@ -208,35 +226,10 @@ dentro como mensajes.
 \draw[-latex, black, dashed] (a3.west) -- (b1.south);
 
 \end{tikzpicture}
+\caption{El diagrama ilustra el cálculo del factorial de 3, todo el resultado es
+enviado al actor \textit{c}. Las lineas en punto indican la creación de un actor.}
+\end{figure}
 
-
-La implementación dada a continuación esta tomada de \cite{Agha:1986:AMC:7929}.
-
-\begin{lstlisting}[language=sal, style=simple]
-def Factorial()[val, customer]
-  if val = 0 then
-    send [1] to customer
-  else
-    let cont = new FactorialCont(val, customer)
-       in send [val - 1, cont] to self
-  end if
-  become Factorial()
-end def
-
-def FactorialCont(n, customer)[arg] 
-  send [n * arg] to customer
-end def
-\end{lstlisting}
-
-Cuando \textbf{Factorial} recibe un mensaje esté incluye un entero positivo y
-una referencia al actor al que el resultado debe ser enviado. Al recibir el
-mensaje se comporta de la siguiente manera, si el valor que recibe es 0, le
-envia a customer 1. En caso contrario, crea un nuevo actor
-\textbf{FactorialCont} con los parametros, \textbf{val - 1} y \textbf{customer}.
-Cuando eventualmente \textbf{FactorialCont} recibe un entero, le envia a
-\textbf{Customer} la multiplicación de este por el valor que tenía originalmente
-en parametro. Se puede ver en la figura como esto evoluciona para el calculo del
-factorial de 3.
 
 \section{CSP y actores}
 Para empezar a describir como se modeló en CSP, primero es importante hacer
@@ -442,7 +435,27 @@ que recibio originalmente en el momento de creación.
 
 No tiene comportamiento de reemplazo.
 
-\subsection{Generalizando el ejemplo}
+\subsection{Ejemplo: Una pila en SAL}
+
+Introducir el código en sal, y explicar como funciona.
+
+\subsection{Ejemplo: Una pila en CSPm}
+
+Introducir el código en CSPm equivalente y explicar las particularidades.
+
+\subsection{Ejemplo: Un cliente-servidor de chat en SAL}
+
+Introducir el código en sal, y explicar como funciona.
+
+\subsection{Ejemplo: Un cliente-servidor de chat en CSPm}
+
+Introducir el código en CSPm equivalente y explicar las particularidades.
+
+\subsection{Traduciendo de SAL a CSPm}
+
+Mostra la función que traduce de SAL a CSPm
+
+
 
 TODO: Definir \textbf{translateExp}
 
