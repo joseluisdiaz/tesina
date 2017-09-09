@@ -66,7 +66,7 @@ adaptación de está tesina que no estaba originalmente.
 La sintaxis de los comportamientos es la siguiente:
 
 \begin{grammar}
-  <behavior> :== `def' <beh name> `(' <param-list> `)' `[`'<communication-list>`]' \\
+  <BDef> :== `def' <beh name> `(' <param-list> `)' `[`'<communication-list>`]' \\
             <command>* \\
   `end def'
 \end{grammar}
@@ -447,7 +447,7 @@ factorialWorker  = \Interleave_{x : \{|FactorialWorker|\}} Create!x?(k, mailboxC
 \]
 
 Utilizando esta notación el tipo de datos \textbf{ActorID}, tiene dos
-responsabilidades: nombrar los actores y enumerarlos.
+responsabilidades: nombrarle los actores y enumerarlos.
 Recordemos que es necesario conocer la cantidad total de procesos que va
 a tener un red de \textit{CSP} antes de comenzar la simulación.
 
@@ -471,10 +471,38 @@ En este caso no cuenta con comportamiento de reemplazo, entonces termina con $\S
 \subsection{Ejemplo: Una pila en SAL}
 
 Introducir el código en sal, y explicar como funciona.
+\begin{lstlisting}[language=sal, style=simple]
+def stack-node(content, link)
+  [ case operation of
+        pop : (customer)
+        push : (new-content)
+    end case ]
+  if operation = pop then
+    become link
+    send content to customer
+  enf if
+  if operation = push then
+    let P = new stack-node(content, link)
+    { become new stack-node(new-content, P) }
+  end if
+end def
+\end{lstlisting}
 
 \subsection{Ejemplo: Una pila en CSPm}
 
-Introducir el código en CSPm equivalente y explicar las particularidades.
+\[
+node = ||| actorId : {|Node|} @ Create.actorId?(INT.content, ACTOR.link) ->
+nodeRunning(actorId, content, link) \\
+\\
+nodeRunning(self, content, link) = \\
+  CommRecv.self?(ATOM.PUSH, INT.newContent) -> \\
+  CreateAsk?Node.newNode!(INT.content, ACTOR.link) ->\\
+  nodeRunning(self, newContent, Node.newNode)\\
+  []\\
+  CommRecv.self?(ATOM.POP, ACTOR.client) -> \\
+  CommSend.client!(INT.content, None) ->\\
+  fwd(self, link)\\
+\]
 
 \subsection{Ejemplo: Un cliente-servidor de chat en SAL}
 
