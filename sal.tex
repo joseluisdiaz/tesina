@@ -40,10 +40,9 @@
  
 \tableofcontents
  
-\section{Introduction}
+\section{Introducción}
 
 \section{Conceptos básicos}
-
 
 \subsection*{Comportamientos}
 
@@ -53,55 +52,14 @@
 
 \subsection*{Comandos}
 
-\section{Lenguage de Actor Minimo}
+\section{Lenguaje de Actor Mínimo}
 
-Este lenguaje minimo fue mostrado por primera vez en la tesis doctoral
-\cite{Agha:1986:AMC:7929}, fue consevido como un lenguaje con fines pedagógicos.
+Este lenguaje fue mostrado por primera vez en la tesis doctoral de Agha
+\cite{Agha:1986:AMC:7929}, fue concebido como un lenguaje con fines pedagógicos.
 Un programa en sal está compuesto por un conjunto \textit{Comportamientos}.
 Como la mayoría de los lenguaje de programación, se agrega un
-\textit{Comporamiento} llamado \textbf{main} como punto de entrada.
-
-\subsection{Expresiones}
-
-Existen tres tipos primitivos, booleanos, enteros y mailbox. Las operaciones
-posibles entre los booleanos, \textbf{or}, \textbf{and}, \textbf{not}. Con
-respecto a los enteros se pueden operar utilizando \textbf{+}, \textbf{-},
-\textbf{*}, \textbf{/}. Un mailbox es un identificador que es devuelto cuando se
-crea un nuevo actor.
-
-\subsection{Comandos}
-La gramática de los comandos en SAL es la siguiente:
-
-\begin{grammar}
-  <command> ::= `send' $e_1, e_2, ..., e_n$ `to' <actor>  
-  \alt `become' $B(e_1, e_2, ..., e_n)$
-  \alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\
-  ... $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$        \\
-  `in' <command> 
-  \alt `if`<bool-expr> `then' <command> `else' <command> `end if' 
-  \alt <command> `;' <command>
-\end{grammar}
-
-\begin{description}
-\item [send]  Este comando permite enviar mensajes a otros actores, toma como
-  parametro una lista separada por coma de las expresiones a enviar, y el actor
-  destino, el envio de mensajes es asincronico. Cada expresion es evaluada antes
-  de ser enviada.
-\item [become] Este comando especifica el siguiente comportamiendo del actor
-  que está procesando el mensaje recicibido. Como en el caso anterior se evaluan
-  las expresiones antes de ser enviadas, y estas apareceran como la listas de
-  parametros del comportamiento. 
-\item[new] Este comando sirve para crear nuevos. El alcance de los
-  identificadores de los nuevos actores creados está sujeto a el cuerpo a
-  el cuerpo del \textbf{let}.
-\item[condicional] Luego de evaluar la expresión booleana, si es verdadera
-  ejecuta lo que esta a continuación del \textbf{then}, en caso contrario lo que está a
-  continuación del \textbf{else}. Funciona como cualquier condicional.
-  
-\item[secuenciación] Los comandos en sal ocurren al mismo tiempo, en este
-  sentido podrian pensarse que los comandos de un comportamiento ocurren en paralelo.
-  
-\end{description}
+\textit{Comportamiento} llamado \textbf{main} como punto de entrada, está es una
+adaptación de está tesina que no estaba originalmente.
 
 \subsection{Comportamientos}
 
@@ -113,16 +71,16 @@ La sintaxis de los comportamientos es la siguiente:
   `end def'
 \end{grammar}
 
-La construción \textit{param-list} es una lista de identificadores separados por coma,
+La construcción \textit{param-list} es una lista de identificadores separados por coma,
 se inicializan cuando el actor es creado. Por otra parte,
 \textit{communication-list} contiene la comunicación a ser procesada por el
 actor, esta puede ser una lista de identificadores.
 Muchas veces dependiendo del tipo de comunicación que se esté enviando,
-por ejemplo si el actor esta simulando ser una caja de ahoros, y recibe
+por ejemplo si el actor esta simulando ser una caja de ahorros, y recibe
 un mensaje de \textbf{retirar} el mensaje debería contener la cantidad, pero en
-caso de una consulta de saldo \textbf{balance} no debe especificar ningun parametro
+caso de una consulta de saldo \textbf{balance} no debe especificar ningún parámetro
 adicional, para esto se bifurca por el valor de uno de los campos llamado
-\textbf{tag-field}, la sintaxis de esta lista es la siguiente:
+\textbf{tag-field}, la sintaxis de esta puede  la siguiente:
 
 \begin{grammar}
   <params> ::= <id> | <id> `,' <params>
@@ -144,10 +102,56 @@ end case
 No siempre es necesario utilizar esta sintaxis, \textit{communication-list} puede tener
 la misma estructura que \textit{param-list}.
 
+\subsection{Comandos}
+La gramática de los comandos en SAL es la siguiente:
+
+\begin{grammar}
+  <command> ::= `send' $e_1, e_2, ..., e_n$ `to' <actor>  
+  \alt `become' $B(e_1, e_2, ..., e_n)$
+  \alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\
+  ... $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$        \\
+  `in' <command> 
+  \alt `if`<bool-expr> `then' <command> `else' <command> `end if' 
+  \alt <command> `;' <command>
+\end{grammar}
+
+\begin{description}
+\item [send]  Este comando permite enviar mensajes a otros actores, toma como
+  parámetro una lista separada por coma de las expresiones a enviar, y el actor
+  destino, el envío de mensajes es asincrónico. Cada expresión es evaluada antes
+  de ser enviada.
+\item [become] Este comando especifica el siguiente comportamiento del actor
+  que está procesando la comunicación recibida. Como en el caso anterior se evalúan
+  las expresiones antes de ser enviadas, y estas aparecerán como la listas de
+  parámetros del comportamiento. 
+\item[new] Este comando sirve para crear nuevos actores. El alcance de los
+  identificadores de los nuevos actores creados está sujeto a el cuerpo a del \textbf{let}.
+\item[condicional] Luego de evaluar la expresión booleana, si es verdadera
+  ejecuta lo que esta a continuación del \textbf{then}, en caso contrario lo que está a
+  continuación del \textbf{else}. Funciona como cualquier condicional.
+\item[secuenciación] Los comandos en sal ocurren al mismo tiempo, en este
+  sentido podrían pensarse que los comandos de un comportamiento ocurren en paralelo.
+  
+\end{description}
+
+\subsection{Expresiones}
+
+Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones
+posibles entre los booleanos, \textbf{or}, \textbf{and}, \textbf{not}. Con
+respecto a los enteros se pueden operar utilizando \textbf{+}, \textbf{-},
+\textbf{*}, \textbf{/}. Un buzón es un identificador que es devuelto cuando se
+crea un nuevo actor.
+
 \subsection{Ejemplo: cálculo de factorial en SAL}
 
 Está implementación del factorial está adaptada de \cite{Agha:1986:AMC:7929}, esta
-depende de un actor \textit{main} que le envía el valor  
+depende de un actor \textit{main} que le envía el valor a calcular. El factorial
+esta siempre disponible para procesar la siguiente comunicación, no bloquea con
+el calculo recursivo del factorial sino que lo delega en otros actores.
+
+La palabra reservada \textit{self} hace referencia a la dirección de buzón
+correspondiente al actor que está procesando la comunicación, este es inicializado
+cuando el actor es creado.
 
 \begin{lstlisting}[language=sal, style=simple]
 def Factorial()[val, customer]
@@ -165,15 +169,14 @@ def FactorialCont(n, customer)[arg]
 end def
 \end{lstlisting}
 
-Cuando \textbf{Factorial} recibe un mensaje esté incluye un entero positivo y
-una referencia al actor al que el resultado debe ser enviado. Al recibir el
-mensaje se comporta de la siguiente manera, si el valor que recibe es 0, le
-envia a customer 1. En caso contrario, crea un nuevo actor
-\textbf{FactorialCont} con los parametros, \textbf{val - 1} y \textbf{customer}.
-Cuando eventualmente \textbf{FactorialCont} recibe un entero, le envia a
-\textbf{Customer} la multiplicación de este por el valor que tenía originalmente
-en parametro. Se puede ver en la figura como esto evoluciona para el calculo del
-factorial de 3.
+El actor ante un entero distinto de cero ejecuta dos acciones, crea un actor con
+un comportamiento que será multiplicar por \textbf{n} el valor recibido y
+enviarlo al buzón de quien pidió el calculo del factorial de \textbf{n}.
+También, se envía un mensaje a si mismo para evaluar el factorial de \textbf{n -
+  1} y que le envíe el valor al actor que se acaba de crear. Este empeoramiento
+se puede ver en la figura \ref{fig:factorial}.
+En caso de que reciba \textbf{0} se le enviara \textbf{1} a quien pidió el
+calculo del factorial.
 
 \begin{figure}
 \begin{tikzpicture}
@@ -228,39 +231,37 @@ factorial de 3.
 \end{tikzpicture}
 \caption{El diagrama ilustra el cálculo del factorial de 3, todo el resultado es
 enviado al actor \textit{c}. Las lineas en punto indican la creación de un actor.}
+\label{fig:factorial}
 \end{figure}
-
 
 \section{CSP y actores}
 Para empezar a describir como se modeló en CSP, primero es importante hacer
-referencia a que se utilizó CSPm, que combina los operadores de CSP
-originalmente propuesto por Hoare, y un lenguage funcional.
+referencia a que se utilizó \textit{CSPm} \cite{fdr}, que combina los operadores de \textit{CSP}
+originalmente propuesto por Hoare\cite{Hoare:1978:CSP:359576.359585}, y un lenguaje funcional.
 
-En el proceso de traducción de SAL a CSPm, fue necesario construir un pequeño
+En el proceso de traducción de \textit{SAL} a \textit{CSPm}, fue necesario construir un pequeño
 \textit{runtime} para emular como los actores corren. Recordemos que la
-naturaleza de CSP es sincrona y los actores no lo son. Fue necesario
-concretamente desacoplar el pedido de creación de los actores de la creación
-misma, tambien el envio y la recepción de mensajes. 
+naturaleza de \textit{CSP} es síncrona y los actores no lo son. Fue necesario
+concretamente desacoplar la creación de nuevos actores, el envío y la recepción de mensajes. 
 
 \subsection{Creación de nuevos actores}
 
-Para desacoplar la creación de actores se utilizan dos abstracciones,
-\textbf{ActorID} y un par de canales que comunican, la intención de crear un
-actor por parte de otro, y el momento en el que este actor es activado.Se
-menciona activación y creción, dado que CSPm necesita conocer la red completa
-de procesos involucrados al comienzo de la simulación fue necesario simular la creación.
+Para desacoplar la creación de actores se utilizan varias abstracciones, en particular
+\textbf{ActorID} y dos canales de \textit{CSP}.
 
-Para definir \textbf{ActorID} utilizaremos tipos alegbraicos parecidos a los de haskell.
+Para definir \textbf{ActorID} utilizaremos tipos algebraicos parecidos a los de
+haskell, soportados por \textit{CSPm}.
 
 \[
 datatype\ ActorID = Factorial.\{1\} | FactorialWorker.\{1,2,3\} | Main.\{1\}
 \]
 
-Este tipo introduce y nombra cada uno de los actores que van ser utilizados. Es
-decir, no solo incluye el nombre, sino que la cantidad. Para esto se utiliza la
-notacíon que se ve entre llaves, en este caso vamos a contar con un actor del
-tipo \textbf{Factorial}, tres dle tipo \textbf{FactorialWorker} y uno más del
-tipo \textbf{Main}.
+Este tipo introduce y nombra cada uno de los actores que van ser utilizados,
+Aparte de incluir el nombre, también encapsula la cantidad de actores de un tipo
+dado.
+Para esto se utiliza la notacíon de conjunto que vemos entre llaves, en este
+caso vamos a contar con un actor del tipo \textbf{Factorial}, tres del tipo
+\textbf{FactorialWorker} y uno más del tipo \textbf{Main}.
 
 
 \[
@@ -268,14 +269,19 @@ channel\ CreateAsk:ActorID.(Value, Value)\\
 channel\ Create:ActorID.(Value, Value)
 \]
 
-Estos dos canales de CSP, son los encargados de desacoplar la creación,
-\textbf{Value} es un tipo de datos representa los valores que pueden ser pasado
-tanto en la creación de actores como en el envio de mensajes. Los valores a
-utilizar son enteros, \textbf{ActorID} o \textbf{ATOMS}, este último se usa para
-denominar un tipo de cadena de caracteres inmutable.
+Estos dos canales son los encargados de desacoplar la creación de un nuevo
+actor. Aquí se introduce \textbf{Value}, un tipo de datos algebraico que
+representa los valores que van ser pasado tanto en la creación de actores como en
+el envío de mensajes. Los posibles valores a utilizar son enteros, \textbf{ActorID} o
+\textbf{ATOMS}, este último se usa para denominar un tipo de cadena de
+caracteres \footnote{//TODO: Agregar un apéndice mostrando todo el runtime?}. 
 
-Ademas del actor que envia la intención de crear, y el que lo recibe finalmente,
-existe un proceso auxiliar que comunica estas dos accciones.
+Para desacoplar el actor que tiene la intención de crear otro del creado, el primero
+espera a sincronizar en un evento del tipo $CreateAsk$, como existe un proceso
+auxiliar que está dispuesto encontrase con el, se libera y así puede continuar
+el proceso que crea el nuevo actor. En realidad, la creación es algo ficticio ya
+que tenemos una red de procesos \textit{CSP} esperando el evento $Create$ para
+arrancar con el comportamiento definido.
 
 \[
 CreateAsk!FactorialWorker.1?m \then Create.FactorialWorker.1!m \then \Stop\\
@@ -286,50 +292,63 @@ CreateAsk!FactorialWorker.3?m \then Create.FactorialWorker.3!m \then \Stop
 
 Este proceso simplemente espera a sincronizar con un evento de tipo
 \textit{CreateAsk} y emite un evento de tipo \textit{Create}.
-En la semantica de CSP cuando utilizamos \textbf{`?'} estamos esperando un valor
-por un canal, si utlizamos \textbf{`!'} estamos enviando.
+En la semántica de CSP cuando utilizamos \textbf{`?'} estamos esperando un
+evento en un canal, si utilizamos \textbf{`!'} estamos enviando. Esto es una
+notación ya que originalmente \textit{CSP} solo habla de dos procesos que se
+encuentran en un punto dado.
 
-En el ejemplo se puede ver que se envia el valor $FactorialWorker.1$ a quien esté
-dispuesto a sincronizar, y se recepciona $m$ que equivale a la tupla de valores
-antes vista. Luego se espera a sincronizar con $Create.FactorialWorker.1$ a
-quien se le envía el valor de $m$.
+En el ejemplo se puede ver que se envía el valor $FactorialWorker.1$ a quien esté
+dispuesto a sincronizar, y se recepciona $m$ que es la tupla de valores antes
+vista. Este punto es muy importante ya que se le esta enviando al proceso
+que tiene la intención de crear un actor la dirección del buzón del nuevo actor
+creado. Luego se espera a sincronizar con $Create.FactorialWorker.1$ a quien se
+le envía el valor de $m$.
 
-Esto no desacopla la creción que sino que, al mismo tiempo, La asignación de un
+Esto no desacopla la creación que sino que, al mismo tiempo, La asignación de un
 único nombre al actor. En este caso es el valor que se envía mediante
 $CreateAsk$.
 
-\subsection{Envio de mensajes}
+\subsection{Envío de mensajes}
 Para desacoplar el envío de mensajes utilizamos una estructura intermedia que
-actua de \textit{mailbox}, para comunicarase con esta estructura existen dos canales.
+actúa de \textit{buzón}, para comunicarase con esta estructura existen dos canales.
 
 \[
 channel\ CommSend:ActorID.(VALUE, VALUE)\\
 channel\ CommRecv:ActorID.(VALUE, VALUE)
 \]
 
-Un actor se bloquea esperando en $CommRecv$, cuando una nueva comunicación está
-dispuesta a ser sincronizada, desde el mailbox hacia el actor, se procesa.
-Generalmente la primera acción de cualquier actor es esperar la llegada de un
-menasaje.
-
-Un \textit{mailbox} puede guardar más de un mensaje en su interior. Esto
-introduce un tipo de no determinismo, un actor puede sincronizar con cualquiera
-de los mensajes disponibles en su \textit{mailbox}.
-
-Por cada actor creado, existe un \textit{mailbox} con el mismo \textbf{ActorId}
+Por cada actor en la red, existe un \textit{buzón} con el mismo \textbf{ActorId}
 asociado a este. 
+Un actor se bloquea esperando en $CommRecv$, cuando una nueva comunicación está
+dispuesta a ser sincronizada, desde el \textit{buzón} hacia el actor esta es procesada.
+
+Un \textit{buzón} puede guardar más de un mensaje en su interior. Esto
+introduce un tipo de no determinismo, un actor puede sincronizar con cualquiera
+de los mensajes disponibles en su \textit{buzón}.
+
+El comportamiento del proceso buzón depende de su estado, si no tiene ningún
+mensaje, si tiene algunos mensajes, o si está completo.
+\begin{itemize}
+\item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
+\item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
+\item Si está completo, solo por el canal $CommRecv$.
+\end{itemize}
+
+Puede que los nombre de los canales suenen poco intuitivos, es importante notar que
+provienen de la acciones vista desde los actores.
+
+\begin{description}
+\item [CommSend] Canal utilizado para comunicar desde cualquier actor hacia el buzón.
+\item [CommRecv] Canal utilizado para comunicar del buzón hacia el actor asociado.
+\end{description}
 
 \subsection{Definición de comportamientos}
-La definición de comportamientos es quien utiliza las dos abstracciónes antes
-mencionadas.
-Para mostrar como funciona, se utilizará un ejemplo simple, un actor que cuando
-es creado recive un parametro \textbf{ActorId}, luego se queda esperando un
-mensaje, cuanado lo recive, utiliza el valor entero que recepciona, y lo
-incrementa en uno y lo envia a la referencía del actor que recibió en el
-momento de creación.
+Para mostrar como funciona se utilizará un ejemplo simple, un actor que cuando
+es creado recibe un parámetro del tipo \textbf{ActorId}, luego se queda esperando un
+mensaje, cuando lo recibe, incrementa en uno el valor que este y lo envía al buzón de $a1$.
 
 \[
-g = Create!G.1?(a1, None) \then g_{running}(G.1, a1) \\ 
+  g = Create!G.1?(a1, None) \then g_{running}(G.1, a1) \\ 
 g_{running}(self, ACTOR.client) = \\
 \quad CommRecv.self!(INT.v, None) \then \\
 \quad CommSend.client!(add(v, SI.1), None) \then \\ 
@@ -337,42 +356,55 @@ g_{running}(self, ACTOR.client) = \\
 \]
 
 Desarmando el ejemplo, una vez recibido el mensaje $Create!G.1?(a1, None)$,
-podemos decir que el actor está \textit{Corriendo}. Para eso utilizamos la
-funcíon $g_{running}$. Cuando un comportamiento reacciona a un mensaje, tiene que
-definir el comportamiento de reemplazo, en este caso puede ser el mismo
-comportamiento que antes. Para esto tambien se utliza esta función, esto se
-puede ver en la última linea del ejemplo, esta tambien podría haber sido $\Stop$,
-si no hubiera un nuevo comportamiento (botton behaviour).
+podemos decir que el actor está \textit{Corriendo}, para marcar esta diferencia
+se utiliza el proceso $g_{running}$.
 
-$CommRecv$ espera en el mailbox \textit{self} que el mailbox que es el mailbox
-propio al actor, cuando recibe el mesaje $CommSend.client$ Envia un evento al
-mailbox de $client$ con la tupla $(add(v, SI.1), None)$. Como utilizamos una
-represantación mas pequeña de los enteros para evitar //TODO: PROBLEMAS CON LOS
-ENTEROS GRANDES. El proceso de \textit{mailbox} estará esperando sincronizar
-la recepción con el evento $CommSend$ y lo guardará y esperara que el actor esté
-disponible para sincronizar el evento $CommRecv$ que efectuará la entrega.
+Cuando un actor reacciona a una comunicación, tiene que definir el
+comportamiento de reemplazo, en este caso puede ser el mismo comportamiento que
+antes, o uno nuevo. Para esto útil separar, el actor antes de ser creado, del
+actor que está corriendo. Sobre el final del ejemplo puede verse que se vuelve a
+comportar como $g_{running}$.
+
+Si no hubiera comportamiento de reemplazo simplemente la ultima linea sería
+$\Stop$.
+
+$CommRecv$ espera sincronizar con que el buzón propio al actor, cuando
+recibe un mensaje, $CommSend.client$ envía una comunicación al buzón de $client$
+el entero \footnote{Se utiliza una representación de enteros
+  propios para evitar la explicación de estados que utilizar todos los enteros
+  produce.} que recibió mas uno.
+
+
+Para cerrar con esta idea, una implementación en \textit{SAL}.
+
+\begin{lstlisting}[language=sal, style=simple]
+def G(actor)[v]
+    send [v + 1] to actor
+end def
+\end{lstlisting}
 
 \subsection{Ejemplo: cálculo de factorial en CSPm}
 Se utilizará el mismo ejemplo del factorial antes visto en sal \textbf{SAL},
 está compuesto por dos comportamientos $Factorial$ y $FactorialWorker$.
 
-\subsubsection*{Comporamiento de Factorial}
+\subsubsection*{Comportamiento de Factorial}
 
-La primer parte del factorial es una suerte de preludio que conecta un actor que
-no está corriendo, o no fue creado con uno que fue creado. 
+La primer parte del factorial es una suerte de preludio genérico que conecta un
+actor que no está corriendo, o no fue creado con uno que fue creado. Esto es ya que
+necesitamos arrancar toda la red de procesos en \textit{CSPm} en el momento de
+comenzar la simulación.
 
 \[
 factorial = Create.Factorial.1?(None, None) \then factorial_{running}(Factorial.1) 
 \]
 
-En el caso de la formula anterior, espera a sincronizar con sun mensaje de
-creación con los parametros correspondientes. Esto no solamente simula la
-creación, sino que al mismo tiempo se asigna el mailbox con nombre $Factorial.1$
-al actor que está corriendo.
-En el caso del comportamiento concreto hace referencia a $self$ como nombre de
-su propio mailbox, en este caso se necesita instanciar un solo actor de tipo
-$Factorial$ mas adelante veremos como funciona esto cuando se requieren varios
-actores de un tipo.
+En el caso de la formula anterior, espera a sincronizar con un mensaje de
+creación. Esto no solamente simula la creación, sino que al mismo tiempo se
+asigna el buzón con nombre $Factorial.1$ al actor que está corriendo. Dentro de
+la definición del comportamiento hace referencia a $self$ como nombre de
+su propio buzón.
+
+Notar que en este caso solo necesita instanciar un solo actor de tipo $Factorial$.
 
 \[
 factorial_{running}(self) = CommRecv?self.(ACTOR.mailboxClient, INT.k) \then     \\
@@ -388,23 +420,36 @@ factorial_{running}(self) = CommRecv?self.(ACTOR.mailboxClient, INT.k) \then    
 \quad \quad \quad factorial_{running}(self)
 \]
 
-El comportamiento del fragmento de código anterior, es exactamente lo mismo que
-hace el código antes visto en SAL. Cuando recibe un mensaje, este contiene dos
-parametros: el mailbox del cliente, y un entero K. Si este entero K fuera 0,
-enviamos el valor uno al mailbox del cliente.
-En caso contrario, crea un actor de tipo \textbf{FactorialWorker} y asigna su
-mailbox a \textit{FactorialWorker.pid} le envia a este un mensaje con un valor
-\textit{newK} que es basicamete $k-1$.
-En ambos caso el comportamiento de reemplazo para el mailbox acutal, es el mismo
+
+El comportamiento del fragmento de código anterior es exactamente igual a él
+código antes visto en \textit{SAL}. Cuando recibe un entero distinto de cero
+ejecuta dos acciones, crea un actor \textbf{FactorialWorker} y se envía
+un mensaje a si mismo para evaluar el factorial de \textbf{n - 1}.
+
+En este caso el comportamiento de reemplazo para el buzón actual, es el mismo
 que antes.
 
-\subsubsection*{Comporamiento de Worker}
+\subsubsection*{Comportamiento de FactorialWorker}
+
+Antes de introducir el ejemplo, veamos como funciona la notación ${| |}$ de
+\textit{CSPm}. Dado un tipo del $datatype T = A.{0..3}$, este es igual a
+conjunto ${A.0, A.1, A.2, A.3}$, En vez de tener que enumerar todos los tipos de
+$A$, podemos utilizar la notación ${|A|}$ que es equivalente.
+
+En el caso del comportamiento de \textbf{FactorialWorker} vamos a necesitar
+mas de un actor de este tipo, puede verse a continuación que se utiliza el operador de
+interleaving de \textit{CSP} en conjunto con la notación anterior, para poner en
+paralelo tantos procesos como elementos existan en el conjunto ${|FactorialWorker|}$.
 
 \[
 factorialWorker  = \Interleave_{x : \{|FactorialWorker|\}} Create!x?(k, mailboxClient) \\ 
 \quad \then factorialWorker_{running}(x, k, mailboxClient)
 \]
 
+Utilizando esta notación el tipo de datos \textbf{ActorID}, tiene dos
+responsabilidades: nombrar los actores y enumerarlos.
+Recordemos que es necesario conocer la cantidad total de procesos que va
+a tener un red de \textit{CSP} antes de comenzar la simulación.
 
 \[
 factorialWorker_{running}(self, INT.k, ACTOR.mailboxClient) = \\
@@ -417,23 +462,11 @@ CommRecv.self?(INT.n, None) \then \\
 \]
 
 
-A diferencia del actor anterior, ya que en este caso necesitamos mas de un actor
-del tipo \textbf{FactorialWorker}, en la primer linea puede verse que se
-comienzan en paralelo utlizando el operador de interliving de $CSPm$ tantos
-procesos como elementos existan \textbf{FactorialWorker}. //TODO: INCLUIR UN
-EJEMPLO DE LA NOTACIÓN.
-
-Utilziando esta notación el tipo de datos \textbf{ActorID}, tiene dos
-responsabilidades: nombrar los actores y enumerarlos. Recordemos que es
-necesario conocer la cantidad total de procesos que va a tener un red de $CSP$
-antes de comenzar la simulación.
-
 Este comportamiento es muy simple, en el momento de creación recibe dos
-parametros, un entero k y un mailbox. En el momento de recibir un mensaje, este
-toma el valor enviado en este mensaje lo multiplica y se lo envía a el mailbox
-que recibio originalmente en el momento de creación.
-
-No tiene comportamiento de reemplazo.
+parámetros, un entero \textbf{k} y un dirección de un buzón, al momento de
+recibir una comunicación, efectúa la multiplicación y se lo envía a
+$mailboxClient$.
+En este caso no cuenta con comportamiento de reemplazo, entonces termina con $\Stop$
 
 \subsection{Ejemplo: Una pila en SAL}
 
@@ -454,7 +487,6 @@ Introducir el código en CSPm equivalente y explicar las particularidades.
 \subsection{Traduciendo de SAL a CSPm}
 
 Mostra la función que traduce de SAL a CSPm
-
 
 
 TODO: Definir \textbf{translateExp}
@@ -523,7 +555,6 @@ behNameRunning(self, a_1, .., a_n) = CommRecv.self(n_1 ... n_j) -> translateCmd(
 \end{verbatim}
 
 --- Agregar case? ---
-
 
 \bibliography{references}{}
 \bibliographystyle{plain}
