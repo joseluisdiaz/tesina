@@ -19,19 +19,19 @@ eq(_, _) = false
 datatype ActorID = Factorial.{1} | FactorialWorker.{1,2,3} | Main.{1}
 
 -- Possible types for actors
-channel newPid:ActorID
-
--- Possible types for actors
 datatype VALUE = ACTOR.ActorID | INT.SmallInt | None
 
--- Start message
+-- Actor creation decoupling
 channel CreateAsk:ActorID.(VALUE, VALUE)
 channel Create:ActorID.(VALUE, VALUE)
+
+create(actorId) = CreateAsk!actorId?m -> Create.actorId!m -> STOP
+creates = ||| actor: ActorID @ create(actor)
+
 
 -- Send ( actor to mailbox ) and Recv ( mailbox to actor ) communication
 channel CommSend:ActorID.(VALUE, VALUE)
 channel CommRecv:ActorID.(VALUE, VALUE)
-
 
 buff(left, right, {}, N) = left?msg -> buff(left, right, {msg}, N)
 
@@ -41,11 +41,8 @@ buff(left, right, msgs, N) = [] msg: msgs @ right!msg -> buff(left, right, diff(
 MAILBOX_SIZE = 3
 mailboxes = ||| actor: ActorID @ buff(CommSend.actor, CommRecv.actor, {}, MAILBOX_SIZE)
 
-create(actorId) = CreateAsk!actorId?m -> Create.actorId!m -> STOP
-creates = ||| actor: ActorID @ create(actor)
 
-
--- Comportamiento del Actor Factorial
+-- Factorial actor
 factorial = Create!Factorial.1?(None, None) -> factorialRunning(Factorial.1)
 factorialRunning(self) = CommRecv?self.(ACTOR.mailboxClient, INT.k) ->
 if (eq(k,SI.0))
@@ -59,9 +56,7 @@ if (eq(k,SI.0))
       CommSend!self.(ACTOR.FactorialWorker.pid, INT.newK) ->
       factorialRunning(self)
 
-factorialRunning(_) = STOP
-
--- Comportamiento del actor factorialWorker
+-- FactorialWorker actor
 factorialWorker  = ||| actorId : {|FactorialWorker|} @ Create!actorId?(k, mailboxClient) -> factorialWorkerRunning(actorId, k, mailboxClient)
 factorialWorkerRunning(self, INT.k, ACTOR.mailboxClient) = CommRecv.self?(INT.n, None) ->
     let
@@ -72,6 +67,7 @@ factorialWorkerRunning(self, INT.k, ACTOR.mailboxClient) = CommRecv.self?(INT.n,
 
 factorialWorkerRunning(_, _, _) = STOP
 
+-- Main
 actor_main =
   CreateAsk?Factorial.pid!(None, None) ->
   CommSend!Factorial.pid.(ACTOR.Main.1, INT.SI.3) ->
@@ -82,4 +78,4 @@ actor_main =
 COMM = {|CommSend, CommRecv, Create, CreateAsk|}
 --
 
-SYSTEM = (factorial ||| factorialWorker ||| actor_main) [|COMM|]  ( mailboxes ||| creates)
+SYSTEM = (factorial ||| factorialWorker ||| actor_main) [|COMM|] ( mailboxes ||| creates)

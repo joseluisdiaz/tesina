@@ -23,9 +23,12 @@ datatype Atoms = PUSH | POP | F
 -- Possible types for actors
 datatype VALUE = ACTOR.ActorID | INT.SmallInt | ATOM.Atoms | None
 
--- Start message
+-- Actor creation decoupling
 channel CreateAsk:ActorID.(VALUE, VALUE)
 channel Create:ActorID.(VALUE, VALUE)
+
+create(actorId) = CreateAsk!actorId?m -> Create.actorId!m -> STOP
+creates = ||| actor: ActorID @ create(actor)
 
 -- Send ( actor to mailbox ) and Recv ( mailbox to actor ) communication
 channel CommSend:ActorID.(VALUE, VALUE)
@@ -40,13 +43,11 @@ buff(left, right, msgs, N) = [] msg: msgs @ right!msg -> buff(left, right, diff(
 MAILBOX_SIZE = 3
 mailboxes = ||| actor: ActorID @ buff(CommSend.actor, CommRecv.actor, {}, MAILBOX_SIZE)
 
-create(actorId) = CreateAsk!actorId?m -> Create.actorId!m -> STOP
-creates = ||| actor: ActorID @ create(actor)
 
 -- become link
 fwd(in, out) = CommRecv.in?msg -> CommSend.out!msg -> fwd(in, out)
 
--- Comportamiento del Actor Node
+-- Node actor
 node = ||| actorId : {|Node|} @ Create.actorId?(INT.content, ACTOR.link) -> nodeRunning(actorId, content, link)
 
 nodeRunning(self, content, link) =
@@ -63,6 +64,7 @@ nodeRunning(self, content, link) =
   nodeRunning(self, add(content, SI.1), link)
 
 
+-- Main actor
 actor_main =
 let
   self = Main.1
@@ -82,6 +84,5 @@ within
 --
 COMM = {|CommSend, CommRecv, Create, CreateAsk|}
 --
-
 
 SYSTEM = ( node ||| actor_main) [|COMM|] ( mailboxes ||| creates )
