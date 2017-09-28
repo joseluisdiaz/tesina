@@ -17,7 +17,8 @@
 \usetikzlibrary{positioning}
 
 \lstdefinelanguage{sal}{
-  keywords = {send, become, let, new, in, to, if, then, else, case, def, end, case, of}
+  keywords = {send, become, let, new, in, to, if, then, else, case, def, end,
+    case, of, ||}
 }
 
 \lstdefinelanguage{csp}{
@@ -55,8 +56,9 @@
 \section{Lenguaje de Actor Mínimo}
 
 Un programa en \SAL no es mas que una secuencia de \textit{comportamientos}.
-Como en la mayoría de los lenguaje de programación, se agrega un
-\textit{Comportamiento} llamado \textbf{main} como punto de entrada.
+Como en la mayoría de los lenguaje de programación, tiene un nombre reservado
+\textbf{main}, este \textit{Comportamiento} es el punto de entrada, será el
+responsable de crear otros actores y enviar mensajes.
 
 \begin{grammar}
    <Pgm> :== $BDef_1 ... BDef_n BDef_{main} $ 
@@ -100,10 +102,13 @@ La gramática de los comandos en SAL es la siguiente:
   ejecuta lo que esta a continuación de \textbf{then}, en caso contrario lo que está a
   continuación de \textbf{else}. Funciona como cualquier condicional.
 \item[composición] Estos dos comandos en \SAL son ejecutados concurrentemente.
-  
+ 
 \end{description}
 
-\subsection{Definicion de comportamientos}
+La ejecución de los comandos ocurre cuando el actor recibe un mensaje, y todos
+ellos ocurren concurrentemente, la composición no es secuencial.
+
+\subsection{Definición de comportamientos}
 
 La sintaxis de los comportamientos es la siguiente:
 
@@ -142,13 +147,13 @@ cuando el actor es creado.
 
 \begin{lstlisting}[language=sal, style=simple]
 def Factorial()[val, customer]
+  become factorial() ||
   if val = 0 then
- send [1] to customer
+  send [1] to customer
   else
     let cont = new FactorialCont(val, customer)
        in send [val - 1, cont] to self
-  end if
-  become Factorial()
+  end if 
 end def
 
 def FactorialCont(n, customer)[arg] 
