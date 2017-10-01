@@ -1,132 +1,54 @@
+- Reprecentación de enteros pequeños
 MAX_INT = 2
 V = {0 .. MAX_INT}
-
-CANTIDAD_F = 1
-CANTIDAD_G = 2
-CANTIDAD_H = 1
-
-PID = { 1, 2 }
-
--- Small Int representation
 datatype SmallInt = SI.V | Overflow
---
+
 add(SI.a, SI.b) = let sum = a + b within if sum <= MAX_INT then SI.sum else Overflow
-add(_, _) = Overflow
+add(_, _) = Overfl{ow
 
--- Possible actor names
-datatype ActorName = F | G | H
+-- Primitivos
+datatype VALUE = ACTOR.ActorID | INT.SmallInt | None
 
--- La dentificacion de un Actor esta compuesta por su tipo nombre (F G o H),
--- y un número a.
---
---
-datatype ActorID = Id.ActorName.PID
+-- Comunicaciones
+channel CommSend:ActorID.(VALUE, VALUE)
+channel CommRecv:ActorID.(VALUE, VALUE)
 
--- Possible types for actors
-datatype M = T.ActorID | Value.SmallInt | None
+mailbox(i, <>) = CommSend?i.x -> mailbox(i, <x>)
+mailbox(i, <x>) = CommRecv!i.x -> mailbox(i,<>) [] CommSend?i.y -> mailbox(i, <x, y>)
+mailbox(i, <x,y>) = CommRecv!i.x -> mailbox(i,<y>) [] CommRecv!i.y -> mailbox(i, <x>)
 
--- Start message
-channel Create:ActorID.(M,M)
+mailboxes = ||| actor: ActorID @ mailbox(actor, <>)
 
--- External ( actor to mailbox ) and Internal ( mailbox to actor ) communication
-channel CommEx:ActorID.(M, M)
-channel CommIn:ActorID.(M, M)
+-- Actores
+datatype ActorID = F.{1} | G.{1,2} | Main.{1}
 
-channel newPid:ActorID
+channel CreateAsk:ActorID.(VALUE, VALUE)
+channel Create:ActorID.(VALUE, VALUE)
 
-mailbox(i, <>) = CommEx?i.x -> mailbox(i, <x>)
-mailbox(i, <x>) = CommIn!i.x -> mailbox(i,<>) [] CommEx?i.y -> mailbox(i, <x, y>)
-mailbox(i, <x,y>) = CommIn!i.x -> mailbox(i,<y>) [] CommIn!i.y -> mailbox(i, <x>)
-
-
---
--- Tabla que cuenta cual fue el último ID entregado para
--- Cada Actor
---
-pidtable(ACTOR, <>) = STOP
-pidtable(ACTOR, <x> ^ xs) = newPid!Id.ACTOR.x -> pidtable(ACTOR, xs)
-table = pidtable(F, < 1 >) ||| ( pidtable(G, < 1, 2 >) ||| pidtable(H, < 1 >) )
-
+create(actorId) = CreateAsk!actorId?m -> Create.actorId!m -> STOP
+creates = ||| actor: ActorID @ create(actor)
 
 -- Comportamiento del actor F
-f(Id.F.i) = Create?Id.F.i.(None, None) -> working_f(Id.F.i, None, None)
-working_f(Id.F.i, None, None) =
-  newPid?Id.G.t1 ->
-  Create!Id.G.t1.(T.Id.F.i, Value.SI.0) ->
-  newPid?Id.G.t2 ->
-  Create!Id.G.t2.(T.Id.F.i, Value.SI.1) ->
-  CommIn?m.(Value.V, None) ->
-  CommIn?m.(Value.V, None) ->
-  f(Id.F.i)
-
-working_f(_, _, _) = STOP
+f = ||| actorId : {|F|} @ Create!actorId?(None, None) -> fRunning(actorId)
+fRunning(self) =
+  CreateAsk!G.t1.(ACTOR.self, Value.INT.0) ->
+  CreateAsk!G.t2.(ACTOR.self, Value.INT.1) ->
+  f(self)
 
 -- Comportamiento del actor G
-g(Id.G.i) = Create?Id.G.i.(p1, p2) -> working_g(Id.G.i, p1, p2)
-working_g(Id.G.i, T.a1, Value.v) =
-  CommEx!a1.(Value.(add(v, SI.1)), None) ->
-  g(Id.G.i)
+g = ||| actorId : {|G|} @ Create!actorId?(None, None) -> gRunning(actorId)
+gRunning(self, Actor.client, INT.v) =
+  CommSend!client.(Value.(add(v, SI.1)), None) ->
+  STOP
 
-working_g(_, _, _) = STOP
-
--- Comportamiento del actor H
-h(Id.H.i) = newPid?Id.F.t -> Create!Id.F.t.(None, None) -> STOP
+-- Main
+main =
+  CreateAsk?F.pid!(None, None) ->
+  STOP
 
 --
--- Comportamiento + Mailbox = Actor
---
--- Llamamos actor a un "Comportamiento" y un "Mailbox" en paralelo
+COMM = {|CommSend, CommRecv, Create, CreateAsk|}
 --
 
+SYSTEM = (f ||| g ||| main) [|COMM|] ( mailboxes ||| creates)
 
--- ACTOR F
---  * newPid.Id.G: un nuevo pid para G
---  * Create.Id.G: crear un nuevo G
---  * Create.i: crearse a si mismo
---  * CommIn.i: Comunicacion interna con el mailbox
-Xf(i) = {|newPid.Id.G, Create.Id.G, Create.i, CommIn.i|}
-
---  * CommIn.i: Comunicacion interna con el mailbox
---  * CommEx.i: Comunicacion del mailbox interna con i (CommIn.i) y desde
---              Otros actores hacia i (CommEx.i)
-Yf(i) = {|CommIn.i, CommEx.i|}
-
--- F en paralelo con su mailbox
-actor_f(i) = f(i) [Xf(i)||Yf(i)] mailbox(i, <>)
-
--- el actor F expone estos eventos
-alphabet_f = union(Xf(Id.F.1), Yf(Id.F.1))
-actor_system_f = actor_f(Id.F.1)
-
-
--- ACTOR G
-
---  * Create.i: crearse a si mismo
---  * CommEx: Comunicacion con otros actores
-Xg(i) = {|Create.i, CommEx|}
-
---  * CommIn.i: Comunicacion interna con el mailbox
---  * CommEx.i: Comunicacion del mailbox interna con i (CommIn.i) y desde
---              Otros actores hacia i (CommEx.i)
-Yg(i) = {|CommIn.i, CommEx.i|}
-
-actor_g(i) = g(i) [Xg(i)||Yg(i)] mailbox(i, <>)
-
-alphabet_g = union(union(Xg(Id.G.1), Yg(Id.G.1)), union(Xg(Id.G.2), Yg(Id.G.2)))
-actor_system_g = actor_g(Id.G.1) ||| actor_g(Id.G.2)
---
--- -- H
-Xh(i) = {|newPid.Id.F, Create.Id.F|}
-Yh(i) = {|CommIn.i, CommEx.i|}
-alphabet_h = union(Xh(Id.H.1), Yh(Id.H.1))
-
-actor_h(i) = h(i) [Xh(i)||Yh(i)] mailbox(i, <>)
-actor_system_h = actor_h(Id.H.1)
---
---
-PIDS = {|newPid|}
--- --
-actors = actor_system_f [alphabet_f||union(alphabet_g, alphabet_h)]
-          ( actor_system_g [alphabet_g||alphabet_h]  actor_system_h )
--- --
-SYSTEM = actors [|PIDS|] table
