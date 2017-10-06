@@ -293,9 +293,9 @@ similares a los de Haskell soportados por \textit{CSPm}.
 
 \[
   datatype\ ActorID = ACTOR_1.\{1 \ldots N_1\} | \\
-  ACTOR_2.\{1, \ldots ,N_2\} | \\
-  ACTOR_k.\{1, \ldots, N_k\} | \\
-  Main.\{1\}
+  \quad ACTOR_2.\{1, \ldots ,N_2\} | \\
+  \quad ACTOR_k.\{1, \ldots, N_k\} | \\
+  \quad Main.\{1\}
 \]
 
 El valor que está entre llaves corresponde a la cantidad de elementos de este
@@ -303,6 +303,7 @@ tipo que van a ser necesarios. Ya que no existe en \textbf{CSP} el concepto de
 instancia, es necesario contar con todos los procesos al principio de la
 simulación, este tipo de datos ayudará a crear los procesos necesarios como
 veremos en la sección siguiente.
+
 
 \subsubsection{Valores primitivos}
 
@@ -372,7 +373,17 @@ $mailboxes$ representa todos los buzones puestos en paralelo utilizando el
 operador de \textit{Interleave}. Como no existe comunicación entre buzones,
 siempre la comunicación es desde un actor hacia un buzón  el operador
 de \textit{Interleave} es el adecuado para capturar este efecto.
+Recordemos que $ActorID$ representa el conjunto de todos los valores posibles 
+que definimos en este tipo. 
 
+\[
+  \label{ActorID}
+  datatype\ ActorID = ACTOR_1.\{1, 2, 3\} | ACTOR_2.\{1, 2\} | Main.\{1\}
+\]
+
+%% MEJORAR
+El Conjunto generado por la anterior definicion sería $\{ACTOR_1.1, ACTOR_1.2, $ \\
+$ ACTOR_2.3, ACTOR_2.1 , ACTOR_2.2, MAIN.1\}$.
 
 \subsection{Crear nuevos actores}
 
@@ -391,7 +402,7 @@ Del ejemplo anterior podemos ver que el canal \textbf{C} genera el alfabeto de
 comunicación $\{ C.1.1, C.1.2, C.1.3, C.2.1, C.2.2, C.2.3, C.3.1, C.3.2, C.3.3 \}$.
 En $P1$ tenemos la variable libre $x$ y en $P2$ tenemos la variable libre $y$,
 es simple notar que al utilizar \textbf{`?'} podemos introducir el uso de una
-variable libre, no así cuando utilizamos \textbf{`!'}.
+variable libre y no así cuando utilizamos \textbf{`!'}.
 Esto genera la sensación de poder enviar un mensaje utilizando \textbf{!} y
 recibirlo usando \textbf{?}.
 
@@ -401,28 +412,55 @@ Por esto mismo en la creación de nuevos actores nos vamos a encontrar con dos
 partes involucradas, quien está iniciando un nuevo actor, y el actor que está
 siendo iniciado.
 
+En el momento de instanciar u nuevo actor, tenemos dos partes involucradas, quien
+quiere crear un actor y el nuevo actor a se creado.
+Para resolver este problema, se presentan tres abstracciones para realizar esta tarea. 
+
+La primera, es un conjunto de canales $CreateAsk$ y $Create$ uno es el
+mensaje que está dispuesto a sincronizar quien está queriendo crear un nuevo actor y el actor 
+que está por iniciar respectivamente.
+
 \[
 channel\ CreateAsk:ActorID.(VALUE, VALUE)\\
 channel\ Create:ActorID.(VALUE, VALUE)
 \]
 
-Para separar el actor que tiene la intención de crear otro del que efectivamente
-va a ser iniciado, el primero espera a sincronizar en un evento del tipo
-$CreateAsk$, como existe un proceso auxiliar que está dispuesto encontrase con
-el, se libera y así puede continuar el proceso que crea el nuevo actor.
+La segunda abstracción es un preambulo que está antes de iniciar un comportamiento, quien dota a este de 
+los parámetros conocidos como \textit{acquaiantence-list} y al mismo tiempo el otorga 
+al actor su identificador único de buzón. Esto se comporta como una especie de maquina de actores.
+
+\[
+actors_machine_k = \Interleave_{ id : actor_k } Create!id?(p1, p2) \then
+comportamiento_k(id, p1, p2)
+\]
+
 En realidad, la creación es algo ficticio ya que tenemos una red de
 procesos \textit{CSP} esperando el evento $Create$ para arrancar con el
 comportamiento definido.
+El conjunto definido por $actor_k$ es equivalente a los elementos en la clase 
+del tipo en cuestion, siguiendo el ejemplo dado en \ref{ActorID}, si $actor_k$ 
+fuera $ACTOR_2$, el conjunto generado sería $\{ ACTOR_2.1, ACTOR_2.2 \}$.
+Por esto es que decimos que no solo define el nombre, sino que al mismo tiempo está
+estableciendo cuantos actores del tipo $ACTOR_k$ vamos a tener.
+Siguiendo con esta idea, $actors_machine_k$, representa todos los actores 
+que van ser iniciados en paralelo utilizando el operador de \textit{Interleave}.
+Una vez sincronizado en el mensaje $Create$, se inicia el comportamiento en 
+pasandole como parametros, el identificador del buzón y los parametros recibidos.
 
+La tercer abstraccíon es un proceso que conecta esto dos mensajes. 
+ 
 \[
 create(actorId) = CreateAsk!actorId?m \then Create.actorId!m \then STOP
 creates = \Interleave_{actor : ActorID} create(actor)
 \]
 
-\[
-actors_k = \Interleave_{id : actor_k } Create!id?(p1, p2) \then
-comportamiento_k(actorId, p1, p2)
-\]
+Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ existan, 
+tal como muestra el ejemplo en \ref{ActorID}. $CreateAsk!actorId?m$
+
+Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental
+en la construcción total del sistema, esto tiene que ver con como CSP sincroniza los 
+eventos.
+
 
 \subsection{Definición de comportamientos}
 La idea de comportamiento fue introducida en la sección XXX, podemos pensar a un
