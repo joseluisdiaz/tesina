@@ -1,0 +1,67 @@
+\documentclass[fleqn]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+
+\usepackage{hyperref}
+\usepackage{syntax}
+\usepackage{listings}
+\usepackage{zed-csp}
+\usepackage{titlesec}
+\usepackage{lipsum}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries}{}{0pt}{\Large}
+
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+
+\lstdefinelanguage{sal}{
+  keywords = {send, become, let, new, in, to, if, then, else, case, def, end,
+    case, of, ||}
+}
+
+\lstdefinelanguage{csp}{
+  keywords = {channel, datatype}
+}
+
+\lstdefinestyle{simple}{
+  basewidth=0.5em
+}
+
+\newcommand{\SAL}{\textbf{SAL}\,}
+\newcommand{\CSP}{\textbf{CSP}\,}
+\newcommand{\CSPm}{\textbf{CSPm}\,}
+
+
+\title{CSP}
+\author{José Luis Diaz}
+\date{ }
+ 
+\begin{document}
+ 
+\maketitle
+ 
+\tableofcontents
+ 
+\input{Capitulos/Capitulo1} % Introducción
+
+\input{Capitulos/Capitulo2} % Actores
+ 
+\input{Capitulos/Capitulo3} % SAL
+
+\input{Capitulos/Capitulo4} % Modelo en CSP
+
+\input{Capitulos/Capitulo5} % Formalización
+
+\bibliography{references}{}
+\bibliographystyle{plain}
+\end{document}
+
+

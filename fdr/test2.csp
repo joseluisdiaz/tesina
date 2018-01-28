@@ -1,0 +1,2 @@
+P(x) = if x == 0 then STOP else (STOP [] STOP)
+Q(x) = let P = STOP [] STOP within P [] P

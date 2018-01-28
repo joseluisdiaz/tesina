@@ -1,0 +1,306 @@
+\chapter{Un modelo en CSP}
+Para empezar a describir como se modeló en \CSP, primero es importante hacer
+referencia a que se utilizó \CSPm \cite{fdr}, que combina los operadores de \CSP\ 
+originalmente propuesto por Hoare\cite{Hoare:1978:CSP:359576.359585}, y un lenguaje funcional. \\
+En el proceso de traducción de \SAL\ a \CSPm, fue necesario construir un pequeño
+\textit{runtime} para emular como los actores corren. Recordemos que la
+naturaleza de \CSP es sincrónica y los actores no lo son. \\
+Fue necesario concretamente desacoplar la creación de nuevos actores, y el proceso de comunicaciones. 
+
+\section{Estructuras de apoyo}
+
+\subsection{Enteros pequeños}
+
+Para evitar la explosión de estados que causa utilizar todo el rango de enteros 64-bits, se generó una
+una representación propia para reducir está explosión de estados. El valor de $MAX\_INT$ es el entero mas grande que se quisiera representar.
+
+\begin{align*}
+datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
+\\
+add(SI.a, SI.b)\ =&\ let\ sum\ = a + b \\
+&within\ if\ sum <= MAX\_INT\ then\ SI.sum\ else\ Overflow  \\
+%
+sub(SI.a, SI.b) =&\ let\ sub\ =\ a - b \\
+& within\ if\ sub >= 0\ then\ SI.sub\ else\ Overflow \\
+%
+mult(SI.a, SI.b) =&\ let\ mult\ = a * b \\
+& within\ if\ mult <= MAX\_INT\ then\ SI.mult\ else\ Overflow \\
+eq(SI.a, SI.b)\ =&\ a == b \\
+eq(\_, \_)\ =&\ false
+\end{align*}
+
+\subsection{Identificadores de actores}
+
+Esta construcción nombra cada uno de los actores que van ser utilizados, también
+guarda la cantidad de actores de un tipo dado. \\
+Para la definición usa tipos algebraicos similares a los de Haskell soportados por \CSPm.
+
+\begin{figure}[H]
+\begin{align*}
+  datatype\ ActorID &= ACTOR_1.\{1 \ldots N_1\} | \\
+  & ACTOR_2.\{1, \ldots ,N_2\} | \\
+  & ACTOR_k.\{1, \ldots, N_k\} | \\
+  & Main.\{1\}
+\end{align*}
+\end{figure}
+
+Ya que no existe en \CSP\ el concepto de instancia es necesario contar con todos los 
+procesos que van a ser parte de la red definidos desde el principio, concretamente 
+el valor que está entre llaves corresponde a la cantidad de elementos de este
+tipo que van a ser necesarios. 
+
+\subsection{Valores primitivos}
+
+Representaremos las cadenas de caracteres utilizando $Atoms$, estas cadenas son inmutables y no existe ninguna operación sobre ellas.
+
+\[
+  datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
+\]
+
+Finalmente, $VALUE$ es un tipo de datos que nos permite tener cierta flexibilidad al momento de enviar mensajes o crear actores.
+
+\[
+  datatype\ VALUE = ACTOR.ActorID | INT.SmallInt | ATOM.Atoms | None
+\]
+
+\section{Buzón}
+
+Recodemos que la naturaleza de \CSP es sincronica y los actores no lo son para esto necesitamos desacoplar el envío de mensajes de la recepción. Para esto utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
+
+\[
+channel\ CommSend:ActorID.(VALUE, VALUE)\\
+channel\ CommRecv:ActorID.(VALUE, VALUE)
+\]
+
+Un \textit{buzón} puede guardar más de una comunicación en su interior. Esto introduce un tipo de no determinismo ya que un actor puede sincronizar con cualquiera de las comunicaciones disponibles en su \textit{buzón}.\\
+El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, si tiene algunos mensajes, o si está completo. Podríamos modelar un buzón que no tenga una cota superior, pero tendríamos problemas de explosión de estados.
+
+\begin{itemize}
+\item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
+\item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
+\item Si está completo, solo por el canal $CommRecv$.
+\end{itemize}
+
+Puede que los nombre de los canales suenen poco intuitivos, es importante notar que provienen de la acciones vista desde los actores.
+
+\begin{description}
+\item [CommSend] Canal utilizado para comunicar desde cualquier actor hacia el buzón.
+\item [CommRecv] Canal utilizado para comunicar del buzón hacia el actor asociado.
+\end{description}
+
+\begin{align*}
+mailbox(i, \nil) =& CommSend?i.x \then mailbox(i, \trace{x}) \\
+mailbox(i, \trace{x}) =& \\
+CommRecv!i.x & \then mailbox(i, \nil) \Extchoice CommSend?i.y \then mailbox(i, \trace{x, y}) \\
+mailbox(i, \trace{x, y}) =& \\
+CommRecv!i.x & \then mailbox(i,\trace{y}) \Extchoice CommRecv!i.y \then mailbox(i, \trace{x}) 
+\end{align*}
+
+Por cada actor en la red, existe un \textit{buzón} con el mismo \textbf{ActorID}
+asociado. \\ 
+Un actor se bloquea esperando en $CommRecv$, cuando una nueva comunicación está
+dispuesta a ser sincronizada, desde el \textit{buzón} hacia el actor esta es procesada.
+
+\[
+mailboxes  = \Interleave_{actor : \{| ActorID |\} } mailbox(actor, \nil) 
+\]
+
+$mailboxes$ representa todos los buzones puestos en paralelo utilizando el
+operador \textit{Interleave}. Como no existe comunicación entre buzones,
+siempre la comunicación es desde un actor hacia un buzón el operador
+de \textit{Interleave} \cite[Cap. 2, p.~65]{Roscoe:1997:TPC:550448}. 
+
+\begin{figure}[H] \label{ActorID}
+\[
+datatype\ ActorID = ACTOR_1.\{1, 2, 3\} | ACTOR_2.\{1, 2\} | Main.\{1\} \\
+\\
+\{| ActorID |\} \equiv \{ACTOR_1.1, ACTOR_1.2, ACTOR_2.3, ACTOR_2.1,  ACTOR_2.2, MAIN.1 \} \\
+\\
+\{| ACTOR_2 |\} \equiv \{ ACTOR_2.1, ACTOR_2.2 \}
+\]
+\caption{Ejemplo de notación} 
+\end{figure}
+
+\section{Crear nuevos actores}
+
+Antes de empezar, un ejemplo para entender como funciona un aspecto fundamental
+de los canales de \CSPm. 
+
+\[
+V = \{1,2,3\} \\
+channel C:V.V \\
+P1 = C?x!2 \then \Stop \\
+P2 = C!1?y \then \Stop \\
+SYSTEM = P1 \Parallel P2
+\]
+
+Del ejemplo anterior podemos ver que el canal \textbf{C} genera el alfabeto de
+comunicación $\{ C.1.1, C.1.2, C.1.3, C.2.1, C.2.2, C.2.3, C.3.1, C.3.2, C.3.3 \}$.
+En $P1$ tenemos la variable libre $x$ y en $P2$ tenemos la variable libre $y$,
+es simple notar que al utilizar \textbf{`?'} podemos introducir el uso de una
+variable libre y no así cuando utilizamos \textbf{`!'}.
+Esto genera la sensación de poder enviar un mensaje utilizando \textbf{!} y
+recibirlo usando \textbf{?}\cite[chap.~1,p.~27]{Roscoe:1997:TPC:550448}. 
+
+Recordemos que en \CSP\ no existe el concepto de instancia, y debemos
+tener definida la red de procesos desde el comienzo. Para resolver este problema, 
+se presentan tres abstracciones.
+
+La primera, es un conjunto de canales $CreateAsk$ y $Create$ el primero es utilizando
+por quien está queriendo crear un nuevo actor y el otro por el actor que está por 
+iniciar.
+
+\[
+channel\ CreateAsk:ActorID.(VALUE, VALUE)\\
+channel\ Create:ActorID.(VALUE, VALUE)
+\]
+
+La segunda abstracción es un preámbulo que ocurre antes de un comportamiento, quien dota a este de 
+los parámetros \textit{acquaiantence-list} y al mismo tiempo el otorga al actor su identificador 
+único de buzón. Esto se comporta como una especie de maquina de actores.
+
+\begin{align}
+actors\_machine_k = \Interleave_{ id : \{| ACTOR_k |\} } & Create!id?(p1, p2) \then \\
+&comportamiento_k(id, p1, p2)
+\end{align}
+
+En realidad, la creación es algo ficticio ya que tenemos una red de procesos \CSP esperando al 
+evento $Create$ para arrancar con el comportamiento definido. \\
+El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos  en $ActorID$, 
+esto se puede ver en el ejemplo \ref{ActorID}. \\
+Por esto es que decimos que no solo define el nombre, sino que al mismo tiempo está
+estableciendo cuantos actores del tipo $ACTOR_k$ vamos a tener.
+Siguiendo con esta idea, $actors_machine_k$, representa todos los actores 
+que van ser iniciados en paralelo utilizando el operador de \textit{Interleave}.
+Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene
+el identificador del buzón y los parámetros recibidos.
+
+La tercer abstracción es un proceso que conecta esto dos mensajes. 
+ 
+\[
+create(actorId) = CreateAsk!actorId?m \then Create.actorId!m \then STOP \\
+creates = \Interleave_{actor : ActorID} create(actor)
+\]
+
+Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ existan, 
+tal como muestra el ejemplo en \ref{ActorID}. \\
+Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental
+en la construcción total del sistema, esto tiene que ver con en \CSP\ se puede elegir los 
+eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando 
+veamos como compone todo el sistema esta idea quedará mas clara.
+
+
+\section{Definición de comportamientos}
+La idea de comportamiento fue introducida en la sección \ref{basicos:comportamientos}, 
+podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida,
+nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el
+actor que esta procesando la comunicación.
+
+\begin{align*}
+&CommSend.actor_{buzon}!(p_1, p_2) & (Enviar\ Comunicaciones) \\ 
+&CreateAsk!Actor_m.pid?(p_1, p_2) & (Crear\ nuevos\ actores)\\
+&actor_{running}(self, p_1, p_2)  & (Comportamiento\ de\ reemplazo)
+\end{align*}
+
+
+\begin{description}
+\item [Enviar Comunicaciones] En este caso le enviaremos al actor con buzón $actor_{buzon}$ la tupla $(p_1, p_2)$. 
+\item [Crear nuevos actores] Obtendríamos mediante $Actor_m.pid$ el identificador de buzón del actor creado, y le enviaríamos los parámetros $(p_1, p_2)$ como \textit{acquaiantence-list}.
+\item [Comportamiento de reemplazo] En este caso el comportamiento sería $actor_{running}$, de no contar con uno sería simplemente \Stop.
+\end{description}
+
+
+\section{Ejemplo: cálculo de factorial en CSPm}
+Se utilizará en esencia el mismo ejemplo del factorial antes visto en sal \SAL,
+está compuesto por dos comportamientos $Factorial$ y $FactorialWorker$.
+
+\subsection*{Comportamiento de Factorial}
+
+\[
+factorial = Create.Factorial.1?(None, None) \then factorial_{running}(Factorial.1) 
+\]
+
+En el caso de la formula anterior, espera a sincronizar con un mensaje de
+creación. Esto no solamente simula la creación, sino que al mismo tiempo se
+asigna el buzón con nombre $Factorial.1$ al actor que está corriendo. Dentro de
+la definición del comportamiento hace referencia a $self$ como nombre de
+su propio buzón.
+
+Notar que en este caso solo se necesita un actor de tipo $Factorial$.
+
+\[
+factorial_{running}(self) = CommRecv?self.(ACTOR.mailboxClient, INT.k) \then     \\
+\textbf{if} (eq(k,SI.0)) \\
+\quad  then \\
+\quad \quad CommSend!mailboxClient.(INT.SI.1, None) \then factorialRunning(self) \\
+\quad \textbf{else} \\
+\quad \quad \textbf{let} \\
+\quad \quad \quad newK = sub(k, SI.1) \\
+\quad \quad \textbf{within} \\
+\quad \quad \quad CreateAsk?FactorialWorker.pid!(INT.k, ACTOR.mailboxClient) \then \\
+\quad \quad \quad CommSend!self.(ACTOR.FactorialWorker.pid, INT.newK)  \then \\
+\quad \quad \quad factorial_{running}(self)
+\]
+
+Cuando recibe un entero distinto de cero ejecuta dos acciones, crea un actor \textbf{FactorialWorker} 
+y se envía un mensaje a si mismo para evaluar el factorial de \textbf{n - 1}.\\
+En este caso el comportamiento de reemplazo para el buzón actual no cambia.
+
+\subsection*{Comportamiento de FactorialWorker}
+
+En el caso del comportamiento de \textbf{FactorialWorker} vamos a necesitar
+mas de un actor de este tipo, puede verse a continuación la notación antes vista, para poner en
+paralelo tantos procesos como elementos existan en el conjunto $\{|FactorialWorker|\}$.
+
+\[
+factorialWorker = \Interleave_{x : \{|FactorialWorker|\}} Create!x?(k, mailboxClient) \\ 
+\quad \then factorialWorker_{running}(x, k, mailboxClient)
+factorialWorker_{running}(self, INT.k, ACTOR.mailboxClient) = \\
+CommRecv.self?(INT.n, None) \then \\
+\quad \textbf{let} \\
+\quad \quad val = mult(n, k) \\
+\quad \textbf{within} \\
+\quad \quad CommSend.mailboxClient!(INT.val, None) \then \\
+\quad \Stop
+\]
+
+Este comportamiento es muy simple, en el momento de creación recibe dos
+parámetros, un entero \textbf{k} y un dirección de un buzón, al momento de
+recibir una comunicación, efectúa la multiplicación y se lo envía a
+$mailboxClient$.
+En este caso no cuenta con comportamiento de reemplazo, entonces termina con $\Stop$
+
+\section{Ejemplo: Una pila en CSPm}
+
+\[
+node  = \Interleave_{x : \{|Node|\}} Create.actorId?(INT.content, ACTOR.link) \\ 
+\quad \then node_{running}(actorId, content, link) \\
+node_{running}(self, content, link) = \\
+\quad CommRecv.self?(ATOM.PUSH, INT.newContent) \then \\
+\quad CreateAsk?Node.newNode!(INT.content, ACTOR.link) \then \\
+\quad nodeRunning(self, newContent, Node.newNode)\\
+\Extchoice \\
+\quad CommRecv.self?(ATOM.POP, ACTOR.client) \then  \\
+\quad CommSend.client!(INT.content, None) \then  \\
+\quad fwd(self, link)\\
+\]
+
+\[
+  fwd(in, out) = CommRecv.in?msg \then CommSend.out!msg \then fwd(in, out)
+\]
+
+
+\section{Ejemplo: Un una cola en SAL}
+
+Introducir el código en sal, y explicar como funciona.
+\section{Ejemplo: Un una cola en CSPm}
+
+Introducir el código en CSPm equivalente y explicar las particularidades.
+
+\section{Ejemplo: Un cliente-servidor de chat en SAL}
+
+Introducir el código en sal, y explicar como funciona.
+
+\section{Ejemplo: Un cliente-servidor de chat en CSPm}
+
+Introducir el código en CSPm equivalente y explicar las particularidades.

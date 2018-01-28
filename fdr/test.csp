@@ -1,5 +1,10 @@
-channel up, down
 
-P1 = up -> down -> P2
-P2 = up -> down -> P1
+channel Enconlar1
+channel Enconlar2
+channel Desencolar
 
+M1 = Enconlar1 -> M1 [] Enconlar2 -> M1 [] Desencolar ->  M1
+M2 = Enconlar1 ->  Enconlar2 -> M2 [] Desencolar ->  M2
+
+assert M1 [T= M2
+assert M2 [T= M1

@@ -1,0 +1,11 @@
+V = {1,2,3}
+
+channel C:V.V
+
+P1 = C?x!1 -> STOP
+
+P2 = C!1?y -> STOP
+
+C_alphabet = {|C|} 
+
+SYSTEM = P1 [| |] P2
