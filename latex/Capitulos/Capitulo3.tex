@@ -81,6 +81,7 @@ tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 
 \section{Ejemplo}
 
+
 Está implementación del factorial está adaptada de \cite{Agha:1986:AMC:7929}, esta
 depende de un actor \textit{main} que le envía el valor a calcular. El factorial
 esta siempre disponible para procesar la siguiente comunicación, no bloquea con
@@ -110,6 +111,16 @@ def Main()
     in send [3, self] to fact
 end
 \end{lstlisting}
+
+\begin{description}
+\item [Linea 1] \textit{Factorial} no recive ningún parametro en el momento de ser inicializado, pero si recibe dos parametros cuando procesa una comunicación, \textit{val} que es un entero, y \textit{customer} que es la dirección de un buzón.
+\item [Linea 2] 
+\item [Linea 2] 
+\item [Linea 2] 
+\item [Linea 2] 
+
+\end{description}
+
 
 El actor ante un entero distinto de cero ejecuta dos acciones, crea un actor con
 un comportamiento que será multiplicar por \textbf{n} el valor recibido y

@@ -10,7 +10,6 @@
 
 \usepackage{hyperref}
 \usepackage{syntax}
-\usepackage{listings}
 \usepackage{zed-csp}
 \usepackage{titlesec}
 \usepackage{lipsum}
@@ -22,16 +21,16 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 
+
+\usepackage{listings}
 \lstdefinelanguage{sal}{
   keywords = {send, become, let, new, in, to, if, then, else, case, def, end,
     case, of, ||}
 }
 
-\lstdefinelanguage{csp}{
-  keywords = {channel, datatype}
-}
 
 \lstdefinestyle{simple}{
+  numbers=left,
   basewidth=0.5em
 }
 
