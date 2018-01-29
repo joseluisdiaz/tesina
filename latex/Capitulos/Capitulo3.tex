@@ -1,16 +1,7 @@
 \chapter{Lenguaje de Actor Mínimo}
 
-Un programa en \SAL no es mas que una secuencia de \textit{comportamientos}.
-Como en la mayoría de los lenguaje de programación, tiene un nombre reservado
-\textbf{main}, este \textit{Comportamiento} es el punto de entrada, será el
-responsable de crear otros actores y enviar mensajes.
-
-\begin{grammar}
-   <Pgm> :== $BDef_1 ... BDef_n BDef_{main} $ 
-\end{grammar}
-
-la definición de \textit{comportamientos} funcionan como una suerte de plantilla
-para el comportamiento que luego tendrán los actores. 
+En esta sección se explorará la sintaxis de un lenguaje que implementa los rudimentos que vimos en la sección anterior. 
+Tales como comportamientos, definición de proximo comportamiento, creación de nuevos actores, creacion de nuevas comunicaciones. 
 
 \section{Expresiones}
 Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones
@@ -79,8 +70,13 @@ La ejecución de \textit{command} deberá contar a lo sumo con un solo comando
 existir ningún comando \textit{become}, el actor asumirá un comportamiento de
 tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 
-\section{Ejemplo}
+\section{Ejemplos}
 
+En esta sección mostraremos dos ejemplos de \SAL y alguas particularidades del lenguaje. 
+Primero se presentará el ejemplo de código, a continuación una breve descripción linea por linea de la funcionalidad, 
+y para terminar notas sobre su funcionamiento.
+
+\subsection{Cálculo del factorial}
 
 Está implementación del factorial está adaptada de \cite{Agha:1986:AMC:7929}, esta
 depende de un actor \textit{main} que le envía el valor a calcular. El factorial
@@ -102,8 +98,8 @@ def Factorial()[val, customer]
   end if 
 end def
 
-def FactorialCont(n, customer)[arg] 
-  send [n * arg] to customer
+def FactorialCont(n, customer)[m] 
+  send [n * m] to customer
 end def
 
 def Main() 
@@ -113,16 +109,19 @@ end
 \end{lstlisting}
 
 \begin{description}
-\item [Linea 1] \textit{Factorial} no recive ningún parametro en el momento de ser inicializado, pero si recibe dos parametros cuando procesa una comunicación, \textit{val} que es un entero, y \textit{customer} que es la dirección de un buzón.
-\item [Linea 2] 
-\item [Linea 2] 
-\item [Linea 2] 
-\item [Linea 2] 
+
+\item [Linea 1] $Factorial$ no recive ningún parametro en el momento de ser inicializado, pero si recibe dos parametros cuando procesa una comunicación, $val$ que es un entero, y $customer$ que es la dirección de un buzón.
+\item [Linea 2] Asigna como siguiente comportamiento a $Factorial()$, el lector podrá notar que no tienen nigún parametro de tipo \textit{input-list}. El operador $||$ es la composición de SAL, es similar a el $;$ en $C$. 
+\item [Linea 3] Envía una tupla con el valor $1$ al actor con buzón $customer$.
+\item [Linea 6] Crea un actor de tipo $FactorialCont$. En este caso se utiliza $new$, ya que se está creando un nuevo buzón, y este se asigna a la variable $cont$. Cuando se asigna el nuevo comportamiento, este recive los parametros $val$ y $customer$.
+\item [Linea 7] Envia un mensaje a la dirección del buzón propio utilizando la palabra reservada $self$, con la tupla $val -1$ y la dirección del buzón que se acaba de crear.
+\item [Linea 11] $FactorialCont$ recive dos valores cuando es instanciado: un entero $n$ y la dirección de un buzón $customer$. Cuando procesa un mensaje, en su \textit{acquaiantence-list} recive un entero $m$.
+\item [Linea 12] Envía la mutiplicación $n*m$ como tupla a la dirección del buzón $customer$ 
+\item [Lineas 15-18] Inicializa el actor $Factorial$ y le envia a este la tupla con los valores $3$ y la dirección del buzón actual. 
 
 \end{description}
 
-
-El actor ante un entero distinto de cero ejecuta dos acciones, crea un actor con
+Concretamente, el actor ante un entero distinto de cero ejecuta dos acciones, crea un actor con
 un comportamiento que será multiplicar por \textbf{n} el valor recibido y
 enviarlo al buzón de quien pidió el calculo del factorial de \textbf{n}.
 También, se envía un mensaje a si mismo para evaluar el factorial de \textbf{n -
@@ -135,11 +134,16 @@ Este comportamiento se puede ver en la figura \ref{fig:factorial},
 En caso de que reciba \textbf{0} se le enviara \textbf{1} a quien pidió el
 calculo del factorial. 
 
+
+
 \begin{figure}[H]
 \begin{tikzpicture}
+
+\draw[-latex] (6,7.3) to (8,6.5);
+
 \draw[thick] (8,7) -- (8, 0.5);
 
-\node[] (a1) at (8,7.3) {(a, Factorial(a))};
+\node[] (a1) at (8,7.3) {(a, Factorial)};
 
 \node[align=center, right] (a1) at (8.1,6.5) {[3,c]};
 \draw[fill] (8,6.5) circle (3pt);
@@ -186,9 +190,12 @@ calculo del factorial.
 
 \end{tikzpicture}
 \caption{El diagrama ilustra el cálculo del factorial de 3, todo el resultado es
-enviado al actor \textit{c}. Las lineas en punto indican la creación de un actor.}
+enviado al actor \textit{c}. Las lineas verticales indican el paso del tiempo, las de punto indican creación y las otras flechas envio de mensaje. }
 \label{fig:factorial}
 \end{figure}
+
+
+\subsection{Una pila usando actores}
 
 Otro ejemplo que podemos encontrar en \cite{Agha:1986:AMC:7929} es el de una pila,
 que está representada con una lista enlazada cada nodo de esta lista es un actor. 
