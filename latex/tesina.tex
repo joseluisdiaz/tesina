@@ -11,16 +11,12 @@
 \usepackage{hyperref}
 \usepackage{syntax}
 \usepackage{zed-csp}
-\usepackage{titlesec}
 \usepackage{lipsum}
-
-\titleformat{\chapter}[display]
-  {\normalfont\bfseries}{}{0pt}{\Large}
-
+\usepackage{xspace}
+\usepackage[margin=1.55in]{geometry} %page size
 
 \usepackage{tikz}
 \usetikzlibrary{positioning}
-
 
 \usepackage{listings}
 \lstdefinelanguage{sal}{
@@ -34,33 +30,35 @@
   basewidth=0.5em
 }
 
-\newcommand{\SAL}{\textbf{SAL}\,}
-\newcommand{\CSP}{\textbf{CSP}\,}
-\newcommand{\CSPm}{\textbf{CSPm}\,}
+\newcommand{\SAL}{\textbf{SAL}\xspace}
+\newcommand{\CSP}{\textbf{CSP}\xspace}
+\newcommand{\CSPm}{\textbf{CSPm}\xspace}
 
 
-\title{CSP}
-\author{José Luis Diaz}
-\date{ }
- 
 \begin{document}
- 
-\maketitle
- 
+
+\include{Capitulos/caratula}
+
 \tableofcontents
+
+\input{Capitulos/intro} % Introducción
+
+\input{Capitulos/actores} % Actores
  
-\input{Capitulos/Capitulo1} % Introducción
+\input{Capitulos/sal} % SAL
 
-\input{Capitulos/Capitulo2} % Actores
- 
-\input{Capitulos/Capitulo3} % SAL
+% \input{Capitulos/preliminares} % Preliminares de CSP?
 
-\input{Capitulos/Capitulo4} % Modelo en CSP
+\input{Capitulos/modelo} % Modelo en CSP
 
-\input{Capitulos/Capitulo5} % Formalización
+\input{Capitulos/formalizacion} % Formalización
+
+% \input{Capitulos/conclusiones} % Conclusiones 
+
 
 \bibliography{references}{}
 \bibliographystyle{plain}
+
 \end{document}
 
 
