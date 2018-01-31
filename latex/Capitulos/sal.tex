@@ -1,14 +1,38 @@
 \chapter{Lenguaje de Actor Mínimo}
 
-En esta sección se explorará la sintaxis de un lenguaje que implementa los rudimentos que vimos en la sección anterior. 
-Tales como comportamientos, definición de proximo comportamiento, creación de nuevos actores, creacion de nuevas comunicaciones. 
+En esta sección se explorará la sintaxis de un lenguaje que implementa los rudimentos que vimos en la sección anterior, tales como comportamientos, creación de nuevos actores, creacion de nuevas comunicaciones, etc. El lenguaje \SAL fue desarrollado con inteciones pedagógicas y tiene una sintaxis parecida a la de Algol. 
+
+Se utilizará la notación \textbf{Backus-Naur} para definir la sintaxis, se utilizá \textbf{*} para denotar una o más ocurrencias del termino. Muchas veces se suele codificar en las gramáticas la presedencía de operadores, no se sigue este patron.
 
 \section{Expresiones}
 Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones
 posibles entre los booleanos son \textbf{or}, \textbf{and}, \textbf{not}. Con
 respecto a los enteros se pueden operar utilizando \textbf{+}, \textbf{-},
-\textbf{*}, \textbf{/}.  buzón es un identificador que es devuelto cuando se
-crea un nuevo actor.
+\textbf{*}, \textbf{/}.
+La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, 
+este tipo de primitivo no tiene nigún operador asociado.
+
+La gramática de las expresiones booleanas es la siguiente:
+
+\begin{grammar}
+<exp> ::= <term> `or' <term> | <term> `and' <term> 
+  
+<term> ::= <bool> | `not' <term> | `(' <exp> `)' 
+
+<bool> ::= `TRUE' | `FALSE'
+\end{grammar}
+
+La gramática de los enteros es la siguiente:
+
+\begin{grammar}
+<exp> ::= <term> `*' <term> | <term> `/' <term>  
+  \alt <term> `+' <term>  | <term> `-' <term>
+
+<term> ::= <numero> "*" | `-' <term> | `(' <exp> `)'
+
+<numero> ::= `1' | `2' | `3' | `4' | `5' | `6' | `7' | `8' | `9' | `0'
+\end{grammar}
+
 
 \section{Definición de comandos}
 La gramática de los comandos en SAL es la siguiente:
@@ -17,7 +41,7 @@ La gramática de los comandos en SAL es la siguiente:
   <command> ::= `send' $e_1, e_2, \ldots\ , e_n$ `to' <actor>  
   \alt `become' $B(e_1, e_2, ..., e_n)$
   \alt `let' $x_1$ = `new' $B_1(e_1, e_2, ..., e_{1n})$, \\
-   \ldots\ \ $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$       \\
+   \ldots\ \ $x_k$ = `new' $B_k(e_1, e_2, ..., e_{kn})$   \\
   `in' <command> 
   \alt `if`<bool-expr> `then' <command> `else' <command> `end if'
   \alt <command> `||' <command>
@@ -49,11 +73,13 @@ ellos ocurren concurrentemente, la composición no es secuencial.
 La sintaxis de los comportamientos es la siguiente:
 
 \begin{grammar}
- <BDef> :== `def' <beh name> `(' <acquaiantence-list> `)' `[`'<input-list>`]' \\
-  \quad <command>* \\
-  `end def'
-  \alt <acquaiantence-list> :== <id> | <id>`,' <acquaiantence-list>
-  \alt <input-list> :== <id> | <id>`,' <input-list>
+<BDef> :== `def' <beh name> `(' <acquaiantence-list> `)' `[`'<input-list>`]' \\
+\quad \quad <command>*  \\
+\quad `end def'
+  
+<acquaiantence-list> :== <id> | <id>`,' <acquaiantence-list>
+  
+<input-list> :== <id> | <id>`,' <input-list>
 \end{grammar}
 
 El identificador \textit{beh name} esta atado a una abstracción y tiene alcance
@@ -69,6 +95,7 @@ La ejecución de \textit{command} deberá contar a lo sumo con un solo comando
 \textit{become}, esta propiedad tiene que ser garantizado de manera estática, de no
 existir ningún comando \textit{become}, el actor asumirá un comportamiento de
 tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
+
 
 \section{Ejemplos}
 
@@ -124,7 +151,7 @@ end
 Concretamente, el actor ante un entero distinto de cero ejecuta dos acciones, crea un actor con
 un comportamiento que será multiplicar por \textbf{n} el valor recibido y
 enviarlo al buzón de quien pidió el calculo del factorial de \textbf{n}.
-También, se envía un mensaje a si mismo para evaluar el factorial de \textbf{n -1}, y como dirección de cliente utiliza la dirección del buzón del actor
+También, se envía un mensaje a si mismo para evaluar el factorial de \textbf{n - 1}, y como dirección de cliente utiliza la dirección del buzón del actor
 recientemente creado. 
 
 Esto establece una red de actores que multiplicaran por  el valor indicado enviaran el cálculo al siguiente actor en la red, y el último actor 
@@ -193,32 +220,27 @@ Cuando el primer elemento de tupla recibido como comunicación es cero, esto hac
 
 \end{figure}
 
-
 \subsection{Una pila usando actores}
 
 Otro ejemplo que podemos encontrar en \cite{Agha:1986:AMC:7929} es el de una pila,
 que está representada con una lista enlazada cada nodo de esta lista es un actor. 
 
 \begin{lstlisting}[language=sal, style=simple]
-def node(content, link)
-  [ case operation of
-        pop : (customer)
-        push : (new-content)
-    end case ]
+def node(content, link)[operation, customer, newcontent]
   if operation = pop then
-    become link
+    become link ||
     send content to customer
   enf if
   if operation = push then
     let P = new node(content, link)
-      in become new node(new-content, P) 
+      in become node(newcontent, P) 
   end if
 end def
 
 def Main() 
   let stack = new node(10, Nil)
-    in send [push, 20] to stack ||
-       send [push, 30] to stack
+    in send [push, Nil, 20] to stack ||
+       send [push, Nil, 30] to stack
   end
 end
 \end{lstlisting}
