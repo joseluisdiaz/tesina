@@ -1,36 +1,37 @@
 \chapter{Lenguaje de Actor Mínimo}
 
-En esta sección se explorará la sintaxis de un lenguaje que implementa los rudimentos que vimos en la sección anterior, tales como comportamientos, creación de nuevos actores, creacion de nuevas comunicaciones, etc. El lenguaje \SAL fue desarrollado con inteciones pedagógicas y tiene una sintaxis parecida a la de Algol. 
+En esta sección se explorará la gramática de un lenguaje que implementa los rudimentos que vimos en la sección anterior, tales como comportamientos, creación de nuevos actores, creación de nuevas comunicaciones, etc. El lenguaje \SAL fue desarrollado con intensiones pedagógicas y tiene una sintaxis hereda de Algol. 
 
-Se utilizará la notación \textbf{Backus-Naur} para definir la sintaxis, se utilizá \textbf{*} para denotar una o más ocurrencias del termino. Muchas veces se suele codificar en las gramáticas la presedencía de operadores, no se sigue este patron.
+Se utilizará la notación \textbf{Backus-Naur} para definir la gramática, se utilizá \textbf{*} para denotar varias ocurrencias del termino. Muchas veces se suele codificar en las gramáticas la precedensía de operadores, no se sigue este patrón.
 
 \section{Expresiones}
-Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones
-posibles entre los booleanos son \textbf{or}, \textbf{and}, \textbf{not}. Con
-respecto a los enteros se pueden operar utilizando \textbf{+}, \textbf{-},
-\textbf{*}, \textbf{/}.
-La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, 
-este tipo de primitivo no tiene nigún operador asociado.
+Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones posibles entre los booleanos \textbf{or}, \textbf{and}, \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*}, \textbf{/}.
+
+La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor,  este tipo de primitivo no tiene ningún operador asociado.
 
 La gramática de las expresiones booleanas es la siguiente:
 
 \begin{grammar}
+
 <exp> ::= <term> `or' <term> | <term> `and' <term> 
   
 <term> ::= <bool> | `not' <term> | `(' <exp> `)' 
 
 <bool> ::= `TRUE' | `FALSE'
+
 \end{grammar}
 
 La gramática de los enteros es la siguiente:
 
 \begin{grammar}
+
 <exp> ::= <term> `*' <term> | <term> `/' <term>  
   \alt <term> `+' <term>  | <term> `-' <term>
 
 <term> ::= <numero> "*" | `-' <term> | `(' <exp> `)'
 
 <numero> ::= `1' | `2' | `3' | `4' | `5' | `6' | `7' | `8' | `9' | `0'
+
 \end{grammar}
 
 
@@ -61,7 +62,7 @@ La gramática de los comandos en SAL es la siguiente:
 \item[condicional] Luego de evaluar la expresión booleana, si es verdadera
   ejecuta lo que esta a continuación de \textbf{then}, en caso contrario lo que está a
   continuación de \textbf{else}. Funciona como cualquier condicional.
-\item[composición] Estos dos comandos en \SAL son ejecutados concurrentemente.
+\item[composición] Permite tener mas de un comando en el programa.
  
 \end{description}
 
@@ -96,12 +97,9 @@ La ejecución de \textit{command} deberá contar a lo sumo con un solo comando
 existir ningún comando \textit{become}, el actor asumirá un comportamiento de
 tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 
-
 \section{Ejemplos}
 
-En esta sección mostraremos dos ejemplos de \SAL y alguas particularidades del lenguaje. 
-Primero se presentará el ejemplo de código, a continuación una breve descripción linea por linea de la funcionalidad, 
-y para terminar notas sobre su funcionamiento.
+En esta sección mostraremos dos ejemplos de \SAL y algunas particularidades del lenguaje. Primero se presentará el código del ejemplo, a continuación una breve descripción linea por linea de la funcionalidad,  y para terminar notas sobre su funcionamiento.
 
 \subsection{Cálculo del factorial}
 
@@ -137,14 +135,14 @@ end
 
 \begin{description}
 
-\item [Linea 1] $Factorial$ no recive ningún parametro en el momento de ser inicializado, pero si recibe dos parametros cuando procesa una comunicación, la tupla $[val, customer]$ un entero y una la dirección de un buzón respectivamente.
-\item [Linea 2] Asigna como siguiente comportamiento a $Factorial()$, sin parámetros ya que $Factorial$ no recibe ningún parametro a la inicialización. El operador $||$ es la composición de SAL, es similar a el $;$ en $C$. 
+\item [Linea 1] $Factorial$ no recibe ningún parámetro en el momento de ser inicializado, pero si recibe dos parámetros cuando procesa una comunicación, la tupla $[val, customer]$ un entero y una la dirección de un buzón respectivamente.
+\item [Linea 2] Asigna como siguiente comportamiento a $Factorial()$, sin parámetros ya que $Factorial$ no recibe ningún parámetro a la inicialización. El operador $||$ es la composición de SAL, es similar a el $;$ en $C$. 
 \item [Linea 3] Envía una tupla con el valor $1$ al actor con buzón $customer$.
-\item [Linea 6] Crea un actor de tipo $FactorialCont$. En este caso se utiliza $new$, ya que se está creando un nuevo buzón, y este se asigna a la variable $cont$. Cuando se asigna el nuevo comportamiento, este recive los parametros $val$ y $customer$.
-\item [Linea 7] Envia un mensaje a la dirección del buzón propio utilizando la palabra reservada $self$, con la tupla $val - 1$ y la dirección del buzón que se acaba de crear.
-\item [Linea 11] $FactorialCont$ recive dos valores cuando es instanciado: un entero $n$ y la dirección de un buzón $customer$. Cuando procesa un mensaje, en su \textit{acquaiantence-list} recive un entero $m$.
-\item [Linea 12] Envía la mutiplicación $n*m$ como tupla a la dirección del buzón $customer$ 
-\item [Lineas 15-18] Inicializa el actor $Factorial$ y le envia a este la tupla con los valores $3$ y la dirección del buzón actual. 
+\item [Linea 6] Crea un actor de tipo $FactorialCont$. En este caso se utiliza $new$, ya que se está creando un nuevo buzón, y este se asigna a la variable $cont$. Cuando se asigna el nuevo comportamiento, este recibe los parámetros $val$ y $customer$.
+\item [Linea 7] Envía un mensaje a la dirección del buzón propio utilizando la palabra reservada $self$, con la tupla $val - 1$ y la dirección del buzón que se acaba de crear.
+\item [Linea 11] $FactorialCont$ recibe dos valores cuando es instanciado: un entero $n$ y la dirección de un buzón $customer$. Cuando procesa un mensaje, en su \textit{acquaiantence-list} recive un entero $m$.
+\item [Linea 12] Envía la multiplicación $n*m$ como tupla a la dirección del buzón $customer$ 
+\item [Lineas 15-18] Inicializa el actor $Factorial$ y le envía a este la tupla con los valores $3$ y la dirección del buzón actual. 
 
 \end{description}
 
@@ -157,9 +155,9 @@ recientemente creado.
 Esto establece una red de actores que multiplicaran por  el valor indicado enviaran el cálculo al siguiente actor en la red, y el último actor 
 en la red se lo enviará a quien originalmente lo pidió. 
 
-En la figura \ref{fig:factorial} se puede ver que el actor $Factorial()$ recive como comunicación la tupla $[3,c]$, esto hace que se cree un actor nuevo $c1$, que recibe dos parametros en la inicialización el valor $3$ y la dirección de buzón inicial que recibió como comuncación $Factorial()$, al mismo tiempo auto envía la comuncación con la tupla $[2,c1]$ que es el entero recibido decremetnado en uno y la dirección del buzón del actor creado. Esta ultima tupla inicia el mismo proceso antes descripto, es decir, crea un nuevo actor el cual se inicializa con la dirección de buzón recibida en la comunicación y el entero que recibió decrementado en uno. Todo esto continua hasta que el primer valor de la tupla recibido por $Factorial()$ es cero. 
+En la figura \ref{fig:factorial} se puede ver que el actor $Factorial()$ recibe como comunicación la tupla $[3,c]$, esto hace que se cree un actor nuevo $c1$, que recibe dos parámetros en la inicialización el valor $3$ y la dirección de buzón inicial que recibió como comunicación $Factorial()$, al mismo tiempo auto envía la comunicación con la tupla $[2,c1]$ que es el entero recibido con un decremento en uno y la dirección del buzón del actor creado. Esta ultima tupla inicia el mismo proceso antes descripto, es decir, crea un nuevo actor el cual se inicializa con la dirección de buzón recibida en la comunicación y el entero que recibió decrementado en uno. Todo esto continua hasta que el primer valor de la tupla recibido por $Factorial()$ es cero. 
 
-Cuando el primer elemento de tupla recibido como comunicación es cero, esto hace que se le envie al actor cuya dirección de buzón fue recien recibida la tupla con el valor uno. Este será el ultimo actor creado, que le enviará al siguiente actor el valor de la multiplicación $1*1$, este último le enviará al siguiente actor la multiplicación del valor recibido $2*1$, y el último actor en esta cadena el enviará el resultado de multiplicar $2*3$ al actor $c$, quien fue el que originalmente inició esta cadena.
+Cuando el primer elemento de tupla recibido como comunicación es cero, esto hace que se le envíe al actor cuya dirección de buzón fue recién recibida la tupla con el valor uno. Este será el ultimo actor creado, que le enviará al siguiente actor el valor de la multiplicación $1*1$, este último le enviará al siguiente actor la multiplicación del valor recibido $2*1$, y el último actor en esta cadena el enviará el resultado de multiplicar $2*3$ al actor $c$, quien fue el que originalmente inició esta cadena.
 
 \begin{figure}[H]
 \begin{tikzpicture}
@@ -214,7 +212,7 @@ Cuando el primer elemento de tupla recibido como comunicación es cero, esto hac
 \draw[-latex, black, dashed] (a3.west) -- (b1.south);
 \end{tikzpicture}
 
-\caption{El diagrama ilustra el cálculo del factorial de 3, todo el resultado es enviado al actor \textit{c}. Las lineas verticales indican el paso del tiempo, las de punto indican creación y las otras flechas envio de mensaje. La tupla superior indica  dirección del buzón, tipo de actor con los parametros de inicialización.}
+\caption{El diagrama ilustra el cálculo del factorial de 3, todo el resultado es enviado al actor \textit{c}. Las lineas verticales indican el paso del tiempo, las de punto indican creación y las otras flechas envío de mensaje. La tupla superior indica  dirección del buzón, tipo de actor con los parámetros de inicialización.}
 
 \label{fig:factorial}
 
@@ -245,10 +243,19 @@ def Main()
 end
 \end{lstlisting}
 
-El comportamiento $node$ recibe dos valores al momento de creación el contenido a guardar y la referencia al siguiente nodo en la red. \\
-Cuando $operation$ es de tipo $push$, crea un nuevo $node$ que sera el nodo que quedará segundo en la red, 
-tomando los valores que anteriormente tenía la cabeza. Por otra parte, el comportamiento de reemplazo para el actor actual tendrá 
-como contenido el valor recién recibido y como $link$ al actor recién creado, de esta manera quedará primero en la red el valor recibido. \\
-Cuando $operation$ es de tipo $pop$, se envía el valor que contiene el nodo a la dirección recibida en $customer$ y el comportamiento 
-de reemplazo es $become\ link$, básicamente reenviá todos los mensajes que recibe en su buzón a $link$. \\
-Puede observarse en el ejemplo, que el primer nodo creado tiene como valor $Nil$, esto es simplemente una referencia nula. 
+\begin{description}
+
+\item [Linea 1] $node$ está inicializado con dos parámetros, $content$ que es un entero, el valor que tiene a guardar el nodo y  $link$ es una dirección de buzón, es el siguiente actor en la pila. Recibe tres parámetros, $operation$ que es el tipo de operación a realizar,  $customer$ que tiene sentido cuando la operación es $pop$, y $newcontent$ que tiene sentido cuando la operación es $push$.
+\item [Linea 3] La instrucción $become$, en este caso, hace que se reenvien todos los mensajes a la dirección de buzón $link$
+\item [Linea 4] Envía $content$ a la dirección de buzón $customer$
+\item [Linea 7] Crea un nuevo actor con los parámetros de inicialización $content$ y $link$.
+\item [Linea 8] Asigna el siguiente comportamiento, como node con los parámetros $newcontent$ y la dirección de buzón del actor recién creado $P$. 
+\item [Lineas 13-15] Crea una nueva pila, y envía dos operaciones $push$ con los valores $20$ y $30$.
+\end{description}
+
+El comportamiento $node$ funciona como una lista enlazada donde en vez de tener direcciones de memoria tenemos direcciones de buzón. El primer parámetro es es el contenido a guardar $content$ y el segundo parámetro $link$ es el actor que está siguiente en la pila.
+
+Cuando $operation$ es de tipo $push$, la pila crea un nuevo $node$ que sera el nodo que quedará siguiente en en la red, se puede ver que esto ocurre en las lineas 7 y 8. Primero se crea un nodo con los valores actuales $content$ y $link$, luego el comportamiento de reemplazo se inicializa con $newcontent$ y como enlace el actor recientemente creado. Esta operación equivale a reemplazar la cabeza de la pila.
+
+Cuando $operation$ es de tipo $pop$, se envía el valor que contiene el nodo a la dirección recibida en $customer$ y el comportamiento de reemplazo es $become\ link$, básicamente reenviá todos los mensajes que recibe en su buzón a $link$. Puede observarse en el ejemplo, que el primer nodo creado tiene como valor $Nil$, esto es simplemente una referencia nula. 
+
