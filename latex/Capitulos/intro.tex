@@ -1,1 +1,41 @@
 \chapter{Introducción}
+
+Las aplicaciones, con el incremento de la cantidad de núcleos por microprocesador, hacen un uso mas frecuente de la concurrencia. Una forma de atacar este tipo de problemas es el modelo tradicional de concurrencia que se basa en multi-hilos, variables compartidas, locks, etc. Este trabajo propone utilizar un enfoque diferente: el modelo de actores, utilizado en la industria particularmente en lenguajes como Erlang\cite{Cesarini:2009:EP:1717841} y Scala\cite{scala-overview-tech-report} con la librería Akka\cite{Wyatt:2013:AC:2663429}. 
+
+La diferencia entre ambos modelos se puede notar mediante el problema del Jardín Ornamental. El enunciado del problema es el siguiente: supongamos que tenemos dos entradas a un parque y se requiere saber cuanta gente ingresa, para eso se instala un molinete en cada entrada. Se utiliza una computadora para registrar la información de ingreso.
+
+Implementándolo en un lenguaje imperativo, siguiendo el modelo tradicional, incluiría una variable global que guarde la cantidad de visitantes y dos hilos representando los molinetes que incrementan esta variable. Sin ningún tipo de protección en la región critica planteada por la actualización de la variable se perderían incrementos, ya que cada hilo carga localmente el valor de la variable global, efectúa un incremento y finalmente guarda el valor en la variable global. 
+
+El mismo problema se puede describir utilizando el modelo de actores, que tiene como único mecanismo de comunicacion entre procesos el paso de mensajes. En este caso, el problema puede ser representado utilizando un actor que realiza la tarea de contador que incrementará su valor cuando reciba un mensaje \emph{inc}, y otros dos actores que emitirán estos mensajes (los molinetes). En este caso el problema de la pérdida de la actualización no ocurre, por las garantías que tiene el paso de mensajes entre actores. 
+
+El objetivo de este trabajo es comprender en profundidad el modelo de actores y su semántica. Una buena herramienta para asistir a este proceso es utilizar métodos formales. Se propone modelar su semántica en CSP y efectuar algunas pruebas utilizando la herramienta FDR\cite{fdr}.
+
+\section{Fundamentos y estado de conocimiento sobre el tema}
+ 
+Como señala Rob Pike en su charla titulada ``Concurrencia no es paralelismo'' \cite{rpike13_cnp}, muchas veces se pasa por alto la diferencia conceptual entre estas dos ideas. En programación, la concurrencia es la composición de los procesos independientemente de la ejecución, mientras que el paralelismo es la ejecución simultánea de cálculos (posiblemente relacionados). 
+
+El modelo de actores es originalmente propuesto por C. Heweeit\cite{Wyatt:2013:AC:2663429}, es un enfoque diferente a cómo estructurar programas concurrentes. Un actor, computacionalmente, es una entidad que de manera concurrente puede:
+
+\begin{itemize}
+\item Enviar y recibir un numero finito de mensajes a otros actores
+\item Crear un numero finito de actores
+\item Designar un nuevo comportamiento a ser usado cuando se reciba el próximo mensaje.
+\end{itemize}
+
+Gul Agha\cite{Agha:1986:AMC:7929} en parte de su trabajo doctoral describe los actores usando una semántica operacional estructuada\cite{Plotkin81astructural}. Define dos tipos de transiciones que representan la evolución de la configuración de un sistema de actores, la primera \emph{transición posible} representa cuales son todas las posibles transiciones del sistema, esta relación es insuficiente para garantizar la entrega de estos eventos, también define \emph{siguiente} que expresa justamente esta garantía.
+
+\emph{Communicating Sequential Processes} ($CSP$), fue propuesto por primera vez por C.A.R Hoare\cite{Hoare:1978:CSP:359576.359585}, es un lenguaje para la especificación y verificación del comportamiento concurrentes de sistemas. Como su nombre indica, $CSP$ permite la descripción de sistemas en términos de componentes que operan de forma independiente que interactúan entre sí únicamente a través de eventos síncronos. Las relaciones entre los diferentes procesos y la forma en que cada proceso se comunica con su entorno, se describen utilizando un álgebra de procesos.
+
+Comparando $CSP$ con el modelo de actores, ambos mecanismos tienen procesos concurrentes que intercambian eventos. Sin embargo, los dos modelos hacen algunas decisiones fundamentalmente diferentes con respecto a las primitivas que proporcionan:
+
+\begin{itemize}
+\item Los procesos de CSP son anónimos, mientras que los actores tienen identidades.
+\item Los eventos fundamentalmente consisten en una sincronización entre los procesos involucrados en el envío y la recepción del evento, es decir, el remitente no puede transmitir un evento hasta que el receptor está dispuesto a aceptarlo. Por el contrario, en los sistemas de actores, el paso de eventos es fundamentalmente asíncrona, es decir, la transmisión y la recepción de eventos no tienen que suceder al mismo instante.
+\item CSP utiliza canales explícitos para el paso de eventos, mientras que los sistemas de actores transmiten eventos a los actores de destino.
+\end{itemize}
+
+Estos enfoques pueden ser considerados duales de uno al otro, en el sentido de que los sistemas basados en \emph{sincronización} pueden utilizarse para construir comunicaciones que se comporten como sistemas de mensajería asíncrona, mientras que los sistemas asíncronos se pueden utilizar para construir las comunicaciones síncronas utilizando algún protocolo que permita el encuentro entre los procesos. Lo mismo ocurre con los canales.
+
+El $\pi-calculo$, es un álgebra de procesos que captura en esencia la simpleza del $\lambda-calculo$. Un posterior trabajo de Gul Agha\cite{apicalculus} crea un sustento teórico algebraico para el modelo de actores, y le da semántica a un lenguaje concreto llamado Simple Actor Language (SAL). Este lenguaje permite definir los rudimentos necesarios para construir actores, definir nuevos comportamientos, crear/enviar/recibir comandos.
+
+FDR es una herramienta para el análisis de los programas escritos en notación $CSP$ de Hoare, en particular utilizando $CSP_M$, que combina los operadores de $CSP$ con un lenguaje de programación funcional. FDR originalmente fue escrito en 1991 por Formal Systems (Europe) Ltd, que también lanzo la versión 2 a mediados de la década de 1990. La versión actual de la herramienta es FDR3, se liberó por primera vez en 2013 por la Universidad de Oxford.

@@ -1,4 +1,6 @@
-\chapter{Un modelo en CSP}
+\chapter{Un modelo en para el sistema de actores}
+
+\section{Describiendo el sistema de actores} 
 Para empezar a describir como se modeló en \CSP, primero es importante hacer
 referencia a que se utilizó \CSPm \cite{fdr}, que combina los operadores de \CSP\ 
 originalmente propuesto por Hoare\cite{Hoare:1978:CSP:359576.359585}, y un lenguaje funcional. \\
@@ -7,9 +9,9 @@ En el proceso de traducción de \SAL\ a \CSPm, fue necesario construir un peque�
 naturaleza de \CSP es sincrónica y los actores no lo son. \\
 Fue necesario concretamente desacoplar la creación de nuevos actores, y el proceso de comunicaciones. 
 
-\section{Estructuras de apoyo}
+\subsection{Estructuras de apoyo}
 
-\subsection{Enteros pequeños}
+\subsubsection{Enteros pequeños}
 
 Para evitar la explosión de estados que causa utilizar todo el rango de enteros 64-bits, se generó una
 una representación propia para reducir está explosión de estados. El valor de $MAX\_INT$ es el entero mas grande que se quisiera representar.
@@ -29,7 +31,7 @@ eq(SI.a, SI.b)\ =&\ a == b \\
 eq(\_, \_)\ =&\ false
 \end{align*}
 
-\subsection{Identificadores de actores}
+\subsubsection{Identificadores de actores}
 
 Esta construcción nombra cada uno de los actores que van ser utilizados, también
 guarda la cantidad de actores de un tipo dado. \\
@@ -49,7 +51,7 @@ procesos que van a ser parte de la red definidos desde el principio, concretamen
 el valor que está entre llaves corresponde a la cantidad de elementos de este
 tipo que van a ser necesarios. 
 
-\subsection{Valores primitivos}
+\subsubsection{Valores primitivos}
 
 Representaremos las cadenas de caracteres utilizando $Atoms$, estas cadenas son inmutables y no existe ninguna operación sobre ellas.
 
@@ -63,7 +65,7 @@ Finalmente, $VALUE$ es un tipo de datos que nos permite tener cierta flexibilida
   datatype\ VALUE = ACTOR.ActorID | INT.SmallInt | ATOM.Atoms | None
 \]
 
-\section{Buzón}
+\subsection{Buzón}
 
 Recodemos que la naturaleza de \CSP es sincronica y los actores no lo son para esto necesitamos desacoplar el envío de mensajes de la recepción. Para esto utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
 
@@ -121,7 +123,7 @@ datatype\ ActorID = ACTOR_1.\{1, 2, 3\} | ACTOR_2.\{1, 2\} | Main.\{1\} \\
 \caption{Ejemplo de notación} 
 \end{figure}
 
-\section{Crear nuevos actores}
+\subsection{Crear nuevos actores}
 
 Antes de empezar, un ejemplo para entender como funciona un aspecto fundamental
 de los canales de \CSPm. 
@@ -190,7 +192,7 @@ eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, c
 veamos como compone todo el sistema esta idea quedará mas clara.
 
 
-\section{Definición de comportamientos}
+\subsection{Definición de comportamientos}
 La idea de comportamiento fue introducida en la sección \ref{basicos:comportamientos}, 
 podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida,
 nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el
@@ -210,11 +212,11 @@ actor que esta procesando la comunicación.
 \end{description}
 
 
-\section{Ejemplo: cálculo de factorial en CSPm}
+\subsection{Ejemplo: cálculo de factorial en CSPm}
 Se utilizará en esencia el mismo ejemplo del factorial antes visto en sal \SAL,
 está compuesto por dos comportamientos $Factorial$ y $FactorialWorker$.
 
-\subsection*{Comportamiento de Factorial}
+\subsubsection*{Comportamiento de Factorial}
 
 \[
 factorial = Create.Factorial.1?(None, None) \then factorial_{running}(Factorial.1) 
@@ -246,7 +248,7 @@ Cuando recibe un entero distinto de cero ejecuta dos acciones, crea un actor \te
 y se envía un mensaje a si mismo para evaluar el factorial de \textbf{n - 1}.\\
 En este caso el comportamiento de reemplazo para el buzón actual no cambia.
 
-\subsection*{Comportamiento de FactorialWorker}
+\subsubsection*{Comportamiento de FactorialWorker}
 
 En el caso del comportamiento de \textbf{FactorialWorker} vamos a necesitar
 mas de un actor de este tipo, puede verse a continuación la notación antes vista, para poner en
@@ -270,7 +272,7 @@ recibir una comunicación, efectúa la multiplicación y se lo envía a
 $mailboxClient$.
 En este caso no cuenta con comportamiento de reemplazo, entonces termina con $\Stop$
 
-\section{Ejemplo: Una pila en CSPm}
+\subsection{Ejemplo: Una pila en CSPm}
 
 \[
 node  = \Interleave_{x : \{|Node|\}} Create.actorId?(INT.content, ACTOR.link) \\ 
@@ -290,18 +292,86 @@ node_{running}(self, content, link) = \\
 \]
 
 
-\section{Ejemplo: Un una cola en SAL}
+\subsection{Ejemplo: Un una cola en SAL}
 
 Introducir el código en sal, y explicar como funciona.
 
-\section{Ejemplo: Un una cola en CSPm}
+\subsection{Ejemplo: Un una cola en CSPm}
 
 Introducir el código en CSPm equivalente y explicar las particularidades.
 
-\section{Ejemplo: Un cliente-servidor de chat en SAL}
+
+\subsection{Ejemplo: Un cliente-servidor de chat en SAL}
 
 Introducir el código en sal, y explicar como funciona.
 
-\section{Ejemplo: Un cliente-servidor de chat en CSPm}
+\subsection{Ejemplo: Un cliente-servidor de chat en CSPm}
 
 Introducir el código en CSPm equivalente y explicar las particularidades.
+
+\section{Una semantica en CSP}
+
+TODO: Definir \textbf{translateExp}
+
+La clase \textbf{Cmnd} con elementos de tipo S está dada por:
+
+\begin{verbatim}
+S :== S_1 ; S_2 | if b then S_1 else S_2 | send [e1, .., e_i] to a | become new
+E(e_1, .. ,e_i) | let a_1 = new E_1(e_1,..,e_i) and ... a_j = new
+E_1(e_1,..,e_i) { S } 
+\end{verbatim}
+
+definimos la funcion \textbf{translateCmd} de la siguiente forma:
+
+\begin{verbatim}
+translateCmd (S_1 S_2) = translateCmd(S_1) -> translateCmd(S_2)
+\end{verbatim}
+
+
+\begin{verbatim}
+translateCmd(if b then S_1 else S_2) = 
+   if (translateExp(b)) then
+       translateCmd(S_1) else 
+       translateCmd(S_2)
+\end{verbatim}
+
+\begin{verbatim}
+translateCmd(send[e_1, ..., e_i] to a) = CommSend.a.
+         (translateExp(e_1), ..., 
+          translateExp(e_i)) 
+\end{verbatim}
+
+\begin{verbatim}
+translateCmd(become new Beh(e_1, ..., e_n)) = runningBeh(self, e_1, ..., e_n)
+\end{verbatim}
+
+newEnv es el resultado de agregar a el entorno de las variables de mailbox $a_1
+= E_1.pid_1$ .. $a_n = E_n.pid_n$
+\begin{verbatim}
+translateCmd(let a_1 = new E_1(e_1, ..., e_j) and 
+         ... and a_n = new E_N(e_1, ..., e_j) { S } = 
+
+CreateAsk?E_1.pid_1!(translateExp(e_1), ...,translateExp(e_j)) ->
+CreateAsk?E_N.pid_n!(translateExp(e_1), ...,translateExp(e_j)) ->
+translateCmd(S, newEnv)
+\end{verbatim}
+
+
+La clase \textbf{Beha} con elementos de tipo S está dada por:
+
+\begin{verbatim}
+def behName(a_1 .. a_i)[n_1 ... n_j]
+  S
+end def
+\end{verbatim}
+
+Tendria como equivalente en CSP:
+
+\begin{verbatim}
+
+behName = ||| actorId : {|BehName|} @ Create.actorId?(a_1, ..., a_i) ->
+behNameRunning(actorId, a_1, .., a_n)
+
+behNameRunning(self, a_1, .., a_n) = CommRecv.self(n_1 ... n_j) -> translateCmd(S)
+
+\end{verbatim}
