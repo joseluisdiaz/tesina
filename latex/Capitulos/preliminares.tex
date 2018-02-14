@@ -4,5 +4,17 @@
 
 \subsection{Paralelismo en CSP}
 
-\section{FDR}
+\section{CSPm}
+
+\begin{figure}[H] \label{ActorID}
+\[
+datatype\ ActorID = ACTOR_1.\{1, 2, 3\} | ACTOR_2.\{1, 2\} | Main.\{1\} \\
+\\
+\{| ActorID |\} \equiv \{ACTOR_1.1, ACTOR_1.2, ACTOR_2.3, ACTOR_2.1,  ACTOR_2.2, MAIN.1 \} \\
+\\
+\{| ACTOR_2 |\} \equiv \{ ACTOR_2.1, ACTOR_2.2 \}
+\]
+\caption{Ejemplo de notación} 
+\end{figure}
+
 
