@@ -1,3 +1,125 @@
 \chapter{Actores}
 
-\label{actores:comportamientos}
+En este capitulo se explicara de como funciona la estructura computacional en modelo de actores. En la primera sección explicaran como funcionan las comunicaciones y el comportamiento de los actores. En la segunda se daran conceptos básicos para definir un lenguaje minimo de actores.
+
+\section{Definiendo un Sistema de Actores}
+
+Los calculos en un sistema de actores es en respuesta a las comunicaciones enviadas al sistema. Estas comunicaciones están representadas como \textit{tareas}. El sistema de actores evoluciona a partir de estas tareas, cuando una tarea es procesada genera nuevas tareas y nuevos actores. Todas las tareas que fueron proceadas y todos los actores que ya no son útiles pueden ser liberadas con algún tipo de ``Garabage Collector''. La idea de cuando un actor deja de ser útil será definida con mejor presición más adelante. Esto no afecta el comportamiento del sistema. La configuración de un sistema de actores viene dada por los actores que tiene, y el conjunto de tareas no proceadas.
+
+\subsection{Tareas}
+
+Podríamos decir que las \textit{tareas} que no son fueron procesadas son quienes mueven los calculos en un sistema de actores.
+
+Las \textit{tareas} estan respresentadas por 2-tupla:
+
+\begin{enumerate}
+\item Un \textit{destino}, la dirección de buzón a la que será entregada la comunicación.
+\item Una \textit{comunicación}, básicamente la información que estará disponible al actor que procesará la tarea.
+\end{enumerate}
+
+Se puede considerar que una \textit{comunicación} pueda ser una tupla de valores. Estos valores pueden ser direcciónes de buzón, enteros, cadenas de caracteres o cualquier cosa, y de así requerirlo podríamos poner restricciones sobre de tipos sobre estos valores. 
+El \textit{destino} debe ser una dirección de buzón válida, es decir, un actor antes de enviarle un mensaje a otro actor debe tener la dirección de buzón destino, y esta debe ser valida. Existen tres formas en la cual un actor $\alpha$, al aceptar una comunicación $\bar{k}$, puede conocer la dirección de destino de una nueva comunicación que este actor puede enviar. Las formas son las siguientes:
+
+\begin{itemize}
+ \item El \textit{destino} era conocido por el actor $\alpha$, antes de aceptar la comunicación.
+ \item El \textit{destino} estaba incluido como parte de la comunicación $\bar{k}$.
+ \item El \textit{destino} es una dirección de buzón creada como resultado de aceptar la comunicación $\bar{k}$.
+\end{itemize}
+
+En realidad Agha[chap.~3,p.~35]\cite{Agha:1986:AMC:7929} lo define como una 3-tupla, incluye un \textit{tag} para diferenciar una taréa de la otra en el sistema. Define que un \textit{tag} puede tener una representación arbitraria. Como los \textit{tag} son únicos en todo el sistema, hace uso de esta propiedad para construir la direcciónes de buzón de los nuevos actores creados esto puede verse \cite[chap.~5,p.~104]{Agha:1986:AMC:7929}. En el modelo que se presentará esto no es necesario.
+
+Otro de los argumentos sobre incluir este \textit{tag} esta relacionado con tener trazabilidad, como diferenciar dos tareas que tienen el mismo destino y la misma comunicación. En este trabajo podriamos incluir un numero aleatorio para permitir tener esta trazabilidad si quisieramos diferenciar estas dos tareas \textit{destino} y la misma \textit{comunicación}, pero se decidió dejarlo fuera.
+
+\subsection{El Comportamiento de un actor}
+
+Como vimos en la sección anterior toda computación en el modelo de actores es resultado de procesar comunicaciones. Un actor acepta una comunicación cuando procesan una tarea que contiene esa comunicación. Un actor solo puede procesar comunicaciones que estan dirigidas a su dirección de buzón. Como resultado de aceptar una comunicación, un actor puede, crear nuevas comunicaciones, crear nuevos actores y debe definir su comportamiento de reemplazo.
+
+Para un actor, el orden de llegada de las comunicaciones enviadas a ese actor debe ser lineal. Esto quiere decir que el sistema de buzones debería tener algún mecanismo de \textit{buffer} para las comunicaciones que llegen casi al mismo tiempo. El sistema de buzónes es quien está encargado de poner las comunicaciones en el \textit{buzón} correspondiende al actor destino. 
+% Si queremos tratar cuestiones relacionadas con el orden de llegada de las comunicaciones, como \textit{la garantía de entrega} de una comunicación tenemos que considerar el \textit{buzón} explícitamente.
+
+Un actor puede describirse especificando:
+
+\begin{itemize}
+ \item Su dirección de buzón, a la que le corresponde un \textit{buzón} lo suficientemente grande.
+ \item Su \textit{comportamiento}, que es una función de la comunicación aceptada
+\end{itemize}
+
+Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones y se colocan en orden, y una maquina del actor que apunta a una celda particular de este \textit{buzón}. Esto se ve representado en la figura \ref{fig:mailqueue}.
+
+\begin{figure}[H]
+\begin{tikzpicture}
+
+\draw (0,0) -- (7,0);
+\draw (0,1) -- (7,1);
+
+\draw (0,0) -- (0,1);
+\draw (0.5,0) -- (0.5,1);
+\draw (1,0) -- (1,1);
+
+\draw (5,0) -- (5,1);
+\draw (5.5,0) -- (5.5,1);
+
+\node at (0.9,1.2) {$1\quad2\quad\ldots$};
+
+\node at (5.25,1.2) {$n$};
+
+\node at (7,0.5) {buzón};
+
+\node at (7,-1.4) {maquina del actores};
+
+\draw[->] (5.25,-1) -- (5.25,0);
+\node at (5.25,-1.4) [circle,draw] (x) {$X$};
+
+\end{tikzpicture}
+\caption{Representación de un actor. La maquina del actor tiena la información de su comportamiento. Acepta la comunicación actual y no puede procesar ningún otra comunicación.}
+\label{fig:mailqueue}
+\end{figure}
+
+Cuando la maquina del actores $X_n$ acepta la $(n)-esima$ comunicacion desde su buzón, crea la maquina del actor $X_{n+1}$ está ejecutará el comportamiento de reemplazo del actor. Esta nueva maquina apunta a la siguiente celda en el buzón en donde será guardada la comunicacion $(n+1)-esima$. Esto puede verse en la figura \ref{fig:actortransition}
+
+\begin{figure}[H]
+\begin{tikzpicture}
+
+\draw (0,0) -- (7,0);
+\draw (0,1) -- (7,1);
+
+\draw (0,0) -- (0,1);
+\draw (0.5,0) -- (0.5,1);
+\draw (1,0) -- (1,1);
+
+\draw (5,0) -- (5,1);
+\draw (5.5,0) -- (5.5,1);
+
+\node at (0.9,1.2) {$1\quad2\quad\ldots$};
+
+\node at (5.25,1.2) {$n$};
+
+\node at (7,0.5) {buzón};
+
+\node at (7,-1.4) {maquina del actores};
+
+\draw[->] (5.25,-1) -- (5.25,0);
+\node at (5.25,-1.4) [circle,draw] (x) {$X$};
+
+\end{tikzpicture}
+\caption{Una transición entre dos comportamientos}
+\label{fig:actortransition}
+\end{figure}
+
+Las dos máquinas de actores $X_n$ y $X_{n+1}$ no interfieren entre sí. $X_n$ solo procesa la $(n)-esima$ comunicación, salvando el caso en el cual se envie una comunicación a si mismo. Cada una de estas maquinas crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que la maquina $X_n$ cree la maquina $X_{n+1}$, $X_n$ podría haber creado otros actores u otras tareas. Es posible incluso, que $X_n$ este creando actores o tareas al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicacion, ni tampoco espeficiará ninguno otro comportamiento de reemplazo.
+
+\section{Programando con actores}
+
+\subsection{Las construcciones básicas}
+
+\subsubsection*{Definiendo comportamientos}
+\subsubsection*{Creando Actores}
+\subsubsection*{Creando tareas}
+
+\subsubsection*{Comandos}
+
+\subsubsection*{Comportamiento por defecto}
+
+
+
+
