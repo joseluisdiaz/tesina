@@ -74,7 +74,7 @@ ellos ocurren concurrentemente, la composición no es secuencial.
 La sintaxis de los comportamientos es la siguiente:
 
 \begin{grammar}
-<BDef> :== `def' <beh name> `(' <acquaiantence-list> `)' `[`'<input-list>`]' \\
+<BDef> :== `def' <beh name> `(' <acquaiantence-list> `)' `[`'<comunication-list>`]' \\
 \quad \quad <command>*  \\
 \quad `end def'
   
@@ -87,11 +87,11 @@ El identificador \textit{beh name} hace referencia a un comportamiento y tiene a
 
 Los identificadores \textit{acquaiantence-list} los recibe el momento de inicialización y tiene alcance en todo \textit{command}. 
 
-Los identificadores \textit{input-list} son completados al momento de procesar una comunicación, y su alcance es todo \textit{command}. 
+Los identificadores \textit{comunication-list} son completados al momento de procesar una comunicación, y su alcance es todo \textit{command}. 
 
 Podemos pensar que los comportamientos son una función que toma dos listas de parámetros en distintos momentos, uno cuando es inicializada o es invocada desde el cuerpo de un comando utilizando el comando $become$ y el otro conjunto de parámetros los recibe en e momento de procesar un mensaje.
 
-Ambas listas, \textit{input-list} y \textit{acquaiantence-list} contienen todos los identificadores libres que están en \textit{command}. Existe un identificador especial \textit{self} que puede ser utilizado para hacer referencia al actor que está se definiendo. 
+Ambas listas, \textit{comunication-list} y \textit{acquaiantence-list} contienen todos los identificadores libres que están en \textit{command}. Existe un identificador especial \textit{self} que puede ser utilizado para hacer referencia al buzón del actor que está se definiendo. 
 
 La ejecución de \textit{command} deberá contar a lo sumo con un solo comando \textit{become}, esta propiedad tiene que ser garantizado de manera estática, de no existir ningún comando \textit{become}, el actor asumirá un comportamiento de tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 

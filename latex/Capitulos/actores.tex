@@ -89,31 +89,109 @@ Cuando la maquina del actores $X_n$ acepta la $(n)-esima$ comunicacion desde su 
 
 \draw (5,0) -- (5,1);
 \draw (5.5,0) -- (5.5,1);
+\draw (6,0) -- (6,1);
 
 \node at (0.9,1.2) {$1\quad2\quad\ldots$};
 
-\node at (5.25,1.2) {$n$};
+\node at (5.9,1.2) {$n \quad n+1$};
 
-\node at (7,0.5) {buzón};
+\node at (4,-2.4) [circle,draw] (XN) {$X_n$};
+\draw[->] (XN) -- (5.25,0);
 
-\node at (7,-1.4) {maquina del actores};
+\node at (5.5,-2.4) [circle,draw] (XN1) {$X_{n+1}$};
+\draw[->] (XN1) -- (5.75,0);
 
-\draw[->] (5.25,-1) -- (5.25,0);
-\node at (5.25,-1.4) [circle,draw] (x) {$X$};
+\draw[->] (XN) -- (XN1);
+
+\node at (2,-3) [circle,draw] (T) {$tareas$};
+
+\draw (4,-5) -- (11,-5);
+\draw (4,-6) -- (11,-6);
+\draw (4,-5) -- (4,-6);
+\draw (4.5,-5) -- (4.5,-6);
+
+\draw[->, thick] (XN) to[bend right] (4, -5);
+
+
+\node at (4.25,-7) [circle,draw] (Y) {$Y$};
+\draw[->] (Y) -- (4.25, -6);
+\node at (4.70, -4.75) {$1\quad\ldots$};
+
+\draw[->] (XN) -- (T);
+
+\node at (2,-2) {crea tareas};
+\node at (5,-4.25) {crea actores};
+
+\node at (8,-3.5) {comportamiento de reemplazo};
+
+\draw[->] (5.5,-3.5) to[bend left] (4.7,-2.5); 
+
+\node at (7.5,0.5) {buzón};
+\node at (7,-5.5) {buzón};
 
 \end{tikzpicture}
 \caption{Una transición entre dos comportamientos}
 \label{fig:actortransition}
 \end{figure}
 
+
 Las dos máquinas de actores $X_n$ y $X_{n+1}$ no interfieren entre sí. $X_n$ solo procesa la $(n)-esima$ comunicación, salvando el caso en el cual se envie una comunicación a si mismo. Cada una de estas maquinas crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que la maquina $X_n$ cree la maquina $X_{n+1}$, $X_n$ podría haber creado otros actores u otras tareas. Es posible incluso, que $X_n$ este creando actores o tareas al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicacion, ni tampoco espeficiará ninguno otro comportamiento de reemplazo.
+
+Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos, el orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de las máquinas del actor con cualquier direccione de buzón definen un orden total entre ellas. Esto se puede ver en la figura \ref{fig:actortransition}.
+
+Una pregunta que surge a partir de crear una maquina de actores de reemplazo en cada vez que una comunicación es aceptada es, cuan performante esto resulta. Debería quedar claro que este modelo es solo conceptual y no está atado a una implementación en particular. La \textit{concurrencia} no implica paralelismo. Algunas implementación esperar a que la maquina de actores anterior termine, para construir la nueva y eliminar la vieja.
+
+Sin embargo, retrasar el reemplazo de la construcción hasta que la máquina vieja pueda ser reemplazada no es un requisito como si lo sería en el caso de una máquina secuencial. Si hay suficientes recursos disponibles, la computación en un sistema de actores se puede acelerar, simplemente aceptando la próxima comunicación ni bien su comportamiento de reemplazo esta establecido.
+
+% \begin{figure}[H]
+% \begin{tikzpicture}
+% 
+% \node at (0,1) (A1) {Tareas pendientes};
+% \node at (0,0) (A2) [circle,draw];
+% \node at (0,-6) (A3) [circle,draw];
+% \node at (0,-71) (A4) {x};
+% 
+% \node at (-1.5,-4) (Tx1) {a1};
+% \node at (-3,-2) (Tx2) {destino};
+% \node at (-3,2) (Tx3) {};
+% 
+% 
+% \node at (1.5,-2) (Ax1) {a2};
+% \node at (2,-1) (Ax2) {b2};
+% 
+% 
+% \end{tikzpicture}
+% \caption{xxx}
+% \label{fig:taskprocesing}
+% \end{figure}
+
 
 \section{Programando con actores}
 
+En esta sección se definiran las construcciones necesarias para definir un nucleo de un lenguaje minimo de actores. A pesar de su simplicidad, el este lenguaje es extremadamente poderoso, captura varias características importantes de la computación dentro del paradigma de actores: La posibilidad de ditribuir una computación entre elementos concurrentes, la únificación de información procedural y declarativa, y transparencia referencial de los identificadores usados en un programa.
+
 \subsection{Las construcciones básicas}
 
+En la configuración inicial de un sistema actores, necesitamos crear algunos actores y poderle enviar algunas comunicaciones. Un programa en un sistema de actores esta compuesto por:
+
+\begin{itemize}
+ \item \textit{definición de comportamientos} simplemente asocian un esquema de comportamiento con un identificador, no crear ningún actor.
+ \item expresiones \textit{new} para crear nuevos actores.
+ \item comandos \textit{send} para crear nuevas tareas.
+\end{itemize}
+
+
 \subsubsection*{Definiendo comportamientos}
+Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada uno de los comportamientos de reemplazo también tendrá un comportamiento de reemplazo, para especificar el comportamiento de un actor, necesitamos una definición potencialmente infinita. Para esto acudimos al uso de la recursión. Básicamente, se parametriza cada comportamiento mediante algún identificador este será una variable libre en la definición. 
+
+Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de este saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de comportamiento de una cuenta bancaria, se tiene que dar un valor especifico para esta cuenta.
+
+También hay un número infinito de valores posibles para las comunicaiones entrantes. En este caso tambien se expresará como una funcion de la comunicación entrante.
+
+Dos listas de identificadores son utilizadas en la definición de un comportamiento, La primer lista corresponde a los parámetros que son dados al momento de la creación de un actores. Esta lista es llamada \textit{acquaintance list}. La segunda lista, que se obtienen cuando una comunicación es aceptada, se llama \textit{communication list}. Cuando un actor es creado y acepta una comunicación ejecuta los comandos en el \textit{entorno} definido por los parametros enlazados a los identificares.
+
 \subsubsection*{Creando Actores}
+
 \subsubsection*{Creando tareas}
 
 \subsubsection*{Comandos}
