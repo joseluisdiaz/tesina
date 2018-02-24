@@ -1,14 +1,14 @@
-\chapter{Un modelo en para el sistema de actores}
-En este capítulo se construirá un modelo de actores utilizando \CSPm, este incluirá las funciones básicas que se comentaron previamente, tales como crear nuevos actores, enviar comunicaciones, y definir el nuevo comportamiento. 
+\chapter{Un modelo en CSP para un sistema de actores}
+En este capítulo se modelará un sistema de actores utilizando \CSPm. Este incluirá las funciones defindas por \SAL, que se comentaron previamente. Tales como crear nuevos actores, enviar mensajes, y definir un comportamiento de reemplazo. 
 
 Se empezará con un pequeño ejemplo que mostrará las ideas básicas, seguido por una descripción detallada de cada componete, algunos ejemplos de traducción de \SAL a \CSPm, terminando con una función que traduce de \SAL a \CSPm.
 
 \section{Describiendo el sistema de actores} 
-Dentro de las acciones que un actor efectúa es la de crear otro actor, en el caso de \CSP esto equivale a crear un proceso, como todos los procesos tienen que estar definidos desde el comienzo, en \CSP no existe la posibilidad de instanciar un nuevo proceso.
+Dentro de las acciones que un actor efectúa está la de crear otro actor. En \CSP los actores corresponden a procesos, como todos los procesos tienen que estar definidos desde el comienzo, en \CSP no existe la posibilidad de crear dinámicamente un nuevo proceso.
 
-Para resolver este problema podemos tener todos los procesos creados al principio a la espera algún mensaje que les de inicio. Este mensaje podría verse como la palabra reservada $new$ en varios lenguajes de programación orientados a objetos. 
+Se simula la creación definiendo cada proceso con la espera un mensaje que les de inicio. Esto podría verse como la palabra reservada $new$ en varios lenguajes de programación orientados a objetos. 
 
-Para iniciar $n$ procesos de tipo $P$ utilizamos la siguiente forma:
+Para iniciar $n$ procesos de tipo $P$ escribimos los siguientes procesos en \CSP:
 
 \begin{align*}
 P =& \texttt{comportmiento-de-P} \then STOP \\
@@ -18,7 +18,7 @@ P_2 =& Iniciar_2 \then P \\
 P_n =& Iniciar_n \then P \\
 \end{align*}
 
-Como vimos en el capitulo anterior, \CSP es sincrónico, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si queremos comunicar dos procesos en \CSP utilizamos la siguiente ecuación:
+Como vimos en el capitulo anterior, \CSP es sincrónico, mientras qué, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si queremos transmitir entre dos procesos información, en \CSP lo escribimos de la siguiente forma:
 
 \begin{align*}
 P_1 = canal!1 \then& STOP \\
@@ -26,53 +26,35 @@ P_2 = canal?x \then& STOP \\
 SYSTEM = P_1 \Parallel& P_2 \\
 \end{align*}
 
-
-Para poder desacoplar el envío de la recepción del mensaje, una solución es utilizar una estructura intermedia de $BUFFER$, la podemos ver en la siguiente ecuación:
+Donde $P1$ le envía un uno a $P2$. Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, la escribimos de la siguiente forma:
 
 \begin{align*}
-BUFFER =& entrada?x \then salida!x \then BUFFER \\
-P_1 =& entrada!1 \then STOP \\
-P_2 =& salida?x \then STOP \\
-SYSTEM =& P_1 \Parallel P_2 \\
+BUFFER =& enviar?x \then recibir!x \then BUFFER_1 \\
+P_1 =& enviar!1 \then STOP \\
+P_2 =& recibir?x \then STOP \\
+SYSTEM =& ( P_1 \Parallel P_2 ) \Parallel BUFFER \\
 \end{align*}
 
-Con estas estructuras, tendríamos los elementos básicos para poder crear un proceso y enviar una comunicación de manera asicronica. Lo podemos ver en la siguiente ecuación:
+Con estas estructuras, tendríamos los elementos básicos para poder crear un proceso y enviar una comunicación de manera asicronica. Se puede ver esto en el siguiente ejemplo:
 
 \begin{align*}
-BUFFER =& entrada?x \then salida!x \then BUFFER\\
-SUMA =& inicia_{suma} \then entrada?x \then salida?(x + 1) \then STOP \\
-CLIENTE =& inicia_{suma}\then entrada!2 \then salida?x \then STOP \\
+BUFFER_1 =& enviar.1?x \then recibir.1!x \then BUFFER\\
+BUFFER_2 =& enviar.2?x \then recibir.2!x \then BUFFER\\
+SUMA =& inicia_{suma} \then recibir.1?x \then enviar.2?(x + 1) \then STOP \\
+CLIENTE =& inicia_{suma}\then enviar.1!2 \then recibir.2?x \then STOP \\
+BUFFER =& BUFFER_1 \Parallel BUFFER_2 \\
 SYSTEM =& (SUMA \Parallel CLIENTE) \Parallel (BUFFER)\\
 \end{align*}
 
-El ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos, este envío es desacoplado por $BUFFER$, cuando $SUMA$ recibe este dos, crea una nueva comunicación con el valor que recibió incrementado en uno.
+En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. Este envío es asincrono por $BUFFER$. Cuando $SUMA$ recibe este dos, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrona.z, con el valor que recibió incrementado en uno.
 
-Este simple ejemplo expone algunos de los problemas que se resolverán en este capitulo, tales como: enviar una comunicación a un proceso especifico, crear varios tipos de procesos, tener una estructura más genérica de $BUFFER$.
+Este simple ejemplo expone algunos de los problemas que se resolverán en este capitulo, tales como: enviar una comunicación a un proceso especifico, crear varios tipos de procesos.
 
-Otros problemas aparecen al modelarlos usando \FDR están relacionados con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite.
+Otros problemas aparecen al modelar los ejemplos usando \FDR están relacionados con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite.
 
 \subsection{Estructuras de apoyo}
 
 Antes de comenzar a enumerar las ecuaciones necesarias para las operaciones básicas utilizando actores, se enunciaran algunas estructuras necesarias para construir estas funcionalidades.
-
-\subsubsection{Enteros pequeños}
-
-Para evitar la explosión de estados que causa utilizar el rango de enteros de 64-bits, se generó una una representación propia para reducir esta explosión. El valor $MAX\_INT$ es el entero mas grande que se quisiera representar.
-
-\begin{align*}
-datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
-\\
-add(SI.a, SI.b)\ =&\ let\ sum\ = a + b \\
-&within\ if\ sum <= MAX\_INT\ then\ SI.sum\ else\ Overflow  \\
-%
-sub(SI.a, SI.b) =&\ let\ sub\ =\ a - b \\
-& within\ if\ sub >= 0\ then\ SI.sub\ else\ Overflow \\
-%
-mult(SI.a, SI.b) =&\ let\ mult\ = a * b \\
-& within\ if\ mult <= MAX\_INT\ then\ SI.mult\ else\ Overflow \\
-eq(SI.a, SI.b)\ =&\ a == b \\
-eq(\_, \_)\ =&\ false
-\end{align*}
 
 \subsubsection{Identificadores de actores}
 
@@ -102,12 +84,12 @@ Representaremos las cadenas de caracteres utilizando $Atoms$, estas cadenas son 
 $VALUE$ es un tipo de datos que nos permite tener cierta flexibilidad al momento de enviar mensajes o crear actores. 
 
 \[
-  datatype\ VALUE = ACTOR.ActorID | INT.SmallInt | ATOM.Atoms | None
+  datatype\ VALUE = ACTOR.ActorID | INT.Int | ATOM.Atoms | None
 \]
 
 \subsection{Buzón} 
 
-Recodemos que la naturaleza de \CSP es sincronica y los actores no lo son para esto necesitamos desacoplar el envío de mensajes de la recepción. Para esto utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
+Recodemos que la naturaleza de \CSP es sincronica y los actores no lo son. Para esto necesitamos desacoplar el envío de mensajes de la recepción. Utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
 
 La ecuación de \textit{buzón} es la siguiente:
 
@@ -173,24 +155,33 @@ $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el opera
 
 \subsection{Crear nuevos actores}\label{modelo:crear}
 
-Como se menciono en las seccione anteriores, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan dos abstracciones.
+Como se menciono en las anteriormente, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación dos abstracciones.
 
 La primera abstracción es un preámbulo a un comportamiento, le asigna a este de los parámetros \textit{acquaiantence-list} y al mismo tiempo el otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un proceso que funciona como una maquina de actores y un canal para comunicarse con ella.
-
-La maquina de actores se define de la siguiente forma:
-
-\begin{align*}
-actors\_machine_k = \Interleave_{ self : \{| ACTOR_k |\} } & Create!self?(p1, p2) \then \\
-& comportamiento_k(self, p1, p2) 
-\end{align*}
-
-Donde $actors\_machine_k$ hace referencia a la maquina de actores del $comportamiento_k$; $self : \{| ACTOR_k |\}$ es el conjunto de todos los actor $ActorID$ disponibles para $ACTOR_k$, $Create!self?(p1, p2)$, sincroniza en el canal $Create$ envía $self$ como parámetro y recibe $(p1, p2)$; $comportamiento_k(self, p1, p2)$ llama al proceso parametrizado definido como $comportamiento_k$ con los parámetros $self$, $p1$ y $p2$.
 
 El canal para comunicarse con la maquina de actores se define de la siguiente forma:
 
 \[
 channel\ Create:ActorID.(VALUE, VALUE)
 \]
+
+
+La maquina de actores se define de la siguiente forma:
+
+\begin{align*}
+ks = \Interleave_{ self : \{| ACTOR_k |\} } & Create!self?(p1, p2) \then \\
+& K(self, p1, p2) 
+\end{align*}
+
+Donde:
+
+\begin{itemize}
+ \item $ks$ hace referencia todos los procesos de tipo $K$.
+ \item $self : \{| ACTOR_k |\}$ es el conjunto de todos los actor $ActorID$ disponibles para $ACTOR_k$.
+ \item $Create!self?(p1, p2)$, sincroniza en el canal $Create$ envía $self$ como parámetro y recibe $(p1, p2)$
+ \item $K(self, p1, p2)$ llama al proceso parametrizado definido como $K$ con los parámetros $self$, $p1$ y $p2$
+\end{itemize}
+
 
 En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create$ para arrancar con el comportamiento definido. 
 
@@ -243,15 +234,15 @@ Factorial(self) = {} \\ \quad
   \begin{block}
   CommRecv?self.(ACTOR.mailboxClient, INT.k) \then {} \\ \quad
     \begin{block}
-    \If (eq(k,SI.0)) \Then {} \\ \quad
+    \If (k == 0) \Then {} \\ \quad
       \begin{block} 
-      CommSend!mailboxClient.(INT.SI.1, None) \then \\
+      CommSend!mailboxClient.(INT.1, None) \then \\
       Factorial(self) 
       \end{block} \\
     \Else {} \\ \quad
       \begin{block}
       \begin{declaration}
-     m  = sub(k, SI.1) 
+     m  = k - 1 
 	\end{declaration} \\
 	\begin{within}
 	CreateAsk?factorialWorker.pid!(INT.k, ACTOR.mailboxClient) \then \\
@@ -267,9 +258,9 @@ Factorial(self) = {} \\ \quad
 \begin{description}
  \item $CommRecv?self.(ACTOR.mailboxClient, INT.k)$ espera recibir una comunicación con los parametros de tipo, el primero buzón y el segundo un entero.
  \item $\If (eq(k,SI.0))$ Compara el entero $k$, con cero utilizando la definición de enteros pequeños antes vista.
- \item $CommSend!mailboxClient.(INT.SI.1, None)$ envía una comunicación al buzón $mailboxClient$ la lista con el valor $1$ y $None$. En este caso $None$ es solo un marcador de posición.
+ \item $CommSend!mailboxClient.(INT.1, None)$ envía una comunicación al buzón $mailboxClient$ la lista con el valor $1$ y $None$. En este caso $None$ es solo un marcador de posición.
  \item $CreateAsk?factorialWorker.pid!(INT.k, ACTOR.mailboxClient)$ crea un nuevo actor de tipo $FactorialWorker$, guarda en $pid$ la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $k$ y el buzón $mailboxClient$.
- \item $CommSend!self.(ACTOR.factorialWorker.pid, INT.m)$ Se auto envía un mensaje, con el valor de buzón del actor creado en la linea anterior, y el entero $m$, que fue calculado utilizando $m  = sub(k, SI.1)$. Esta ultima operación es la resta para enteros pequeños.
+ \item $CommSend!self.(ACTOR.factorialWorker.pid, INT.m)$ Se auto envía un mensaje, con el valor de buzón del actor creado en la linea anterior, y el entero $m$, que fue calculado utilizando $m = k - 1$.
  \item $Factorial(self)$ define como siguiente comportamiento, $Factorial$ para el buzón $self$.
 \end{description}
 
@@ -283,7 +274,7 @@ FactorialWorker(self, INT.k, ACTOR.mailboxClient) = {} \\ \quad
   CommRecv.self?(INT.n, None) \then {} \\ \quad
     \begin{block}
     \begin{declaration}
-    val = mult(n, k) 
+    val = n * k 
     \end{declaration} \\
     \begin{within}
     CommSend.mailboxClient!(INT.val, None) \then \\
@@ -295,7 +286,7 @@ FactorialWorker(self, INT.k, ACTOR.mailboxClient) = {} \\ \quad
 
 \begin{description}
  \item $CommRecv.self?(INT.n, None)$ Espera una comunicación que contenga un entero, y lo guarda en $n$.
- \item $val = mult(n, k)$ utiliza la multiplicación de enteros pequeños, guarda en $val$ la multiplicación de $n * k$.
+ \item $val = n * k$ guarda en $val$ la multiplicación de $n * k$.
  \item $CommSend.mailboxClient!(INT.val, None)$ envía el el valor antes calculado a la dirección de buzón $mailboxClient$
 \end{description}
 
@@ -325,7 +316,7 @@ Node(self, content, link) = {} \\ \quad
 \begin{block}
 CommRecv.self?(ATOM.PUSH, newContent) \then \\
 CreateAsk?node.newNode!(content, ACTOR.link) \then \\
-comportamiento_{node}(self, newContent, node.newNode)
+Node(self, newContent, node.newNode)
 \end{block} \\
 \Extchoice \\ \quad
 \begin{block}
@@ -339,7 +330,7 @@ fwd(self, link)
 \begin{description}
  \item $CommRecv.self?(ATOM.PUSH, newContent)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.PUSH$, guarda en $newContent$ el valor del segundo elemento de la lista.
  \item $CreateAsk?node.newNode!(content, ACTOR.link)$ crea un actor de un tipo $Node$ y guarda en $newNode$ el valor de la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con valor $content$ y el buzón $link$.
- \item $comportamiento_{node}(self, newContent, Node.newNode)$ define como comportamiento para el buzón $self$, el mismo comportamiento con los parámetros, $newContent$ y el buzón creado en la linea anterior.
+ \item $Node(self, newContent, Node.newNode)$ define como comportamiento para el buzón $self$, el mismo comportamiento con los parámetros, $newContent$ y el buzón creado en la linea anterior.
  \item $CommRecv.self?(ATOM.POP, ACTOR.client)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.POP$, guarda en $client$ el valor del segundo elemento de la lista.
  \item $CommSend.client!(content, None)$ envía una comunicación al buzón $client$ la lista con el valor $content$ y $None$. En este caso $None$ es solo un marcador de posición.
  \item $fwd(self, link)$ se comporta como el proceso $fwd$. 
@@ -652,3 +643,32 @@ behNameRunning(actorId, a_1, .., a_n)
 behNameRunning(self, a_1, .., a_n) = CommRecv.self(n_1 ... n_j) -> translateCmd(S)
 
 \end{verbatim}
+
+\subsection{Particularidades de FDR}
+
+
+\subsubsection{Enteros pequeños}
+
+Para evitar la explosión de estados que causa utilizar el rango de enteros de 64-bits, se generó una una representación propia para reducir esta explosión. Para esto se utiliza un tipo alebraico que representa estos enteros:
+
+\begin{align*}
+datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
+\end{align*}
+
+Donde, $MAX\_INT$ es el entero mas grande que se quisiera representar. Aparte de esta representación de los enteros, se presentan las operaciones básicas:
+
+\begin{align*}
+add(SI.a, SI.b)\ =&\ let\ sum\ = a + b \\
+&within\ if\ sum <= MAX\_INT\ then\ SI.sum\ else\ Overflow  \\
+%
+sub(SI.a, SI.b) =&\ let\ sub\ =\ a - b \\
+& within\ if\ sub >= 0\ then\ SI.sub\ else\ Overflow \\
+%
+mult(SI.a, SI.b) =&\ let\ mult\ = a * b \\
+& within\ if\ mult <= MAX\_INT\ then\ SI.mult\ else\ Overflow \\
+eq(SI.a, SI.b)\ =&\ a == b \\
+eq(\_, \_)\ =&\ false
+\end{align*}
+
+Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación exede el entero máximo el resultado de esta es $Overflow$.
+

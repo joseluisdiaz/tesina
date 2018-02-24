@@ -5,7 +5,7 @@ En este capítulo se explorará la gramática de un lenguaje que implementa los 
 Se utilizará la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utilizá el símbolo \textbf{*} representa una o ninguna ocurrencias de un termino. 
 
 \section{Expresiones}
-Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones posibles entre los booleanos \textbf{or}, \textbf{and}, \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*}, \textbf{/}. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo de primitivo no tiene ningún operador asociado.
+Existen tres tipos primitivos, booleanos, enteros y dirección del buzón. Las operaciones posibles entre los booleanos son \textbf{or}, \textbf{and}, \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*}, \textbf{/}. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo primitivo no tiene ningún operador asociado.
 
 La gramática de las expresiones booleanas es la siguiente:
 
@@ -43,7 +43,7 @@ La gramática de $mexp$ es simplemente cualquier carácter entre la $A$ y la $Z$
 \section{Definición de comandos}
 
 % agregar referencia a la seccion de comandos
-Los comandos son las acciones que permite a \SAL crear nuevos actores, enviar mensajes, definir un nuevo comportamiento. Estas describen en esencia lo que un actor puede hacer en un dentro de un comportamiento.
+Los comandos son las acciones que permite a \SAL crear nuevos actores, enviar mensajes, definir un nuevo comportamiento. Estas describen en esencia lo que un actor puede hacer dentro de un comportamiento.
 
 La gramática de los comandos en SAL es la siguiente:
 
@@ -56,12 +56,14 @@ La gramática de los comandos en SAL es la siguiente:
   \alt `if` <bexp> `then' <command> `else' <command> `end if'
 \end{grammar}
 
+donde:
+
 \begin{description}
-\item [send] Este comando permite enviar mensajes a otros actores, toma como parámetro una lista separada por coma de las expresiones a enviar, y el actor destino. El envío de mensajes es asincrónico. Cada expresión es evaluada antes utilizada como parámetro en \textit{acquaiantence-list}.
-\item [become] Este comando especifica el siguiente comportamiento del actor que está procesando la comunicación recibida. Como en el caso anterior se evalúan las expresiones antes de utilizadas, y estas aparecerán como la listas de parámetros del comportamiento. 
-\item[new] Este comando sirve para crear nuevos actores. El alcance de los
+\item [send] permite enviar mensajes a otros actores, toma como parámetro una lista separada por coma de las expresiones a enviar, y el actor destino. El envío de mensajes es asincrónico. Cada expresión es evaluada antes de ser utilizada como parámetro en \textit{acquaiantence-list}.
+\item [become] especifica el siguiente comportamiento del actor que está procesando la comunicación recibida. Como en el caso anterior se evalúan las expresiones antes de utilizadas, y estas aparecerán como la listas de parámetros del comportamiento. 
+\item [new] sirve para crear nuevos actores. El alcance de los
   identificadores de los nuevos actores creados está sujeto al cuerpo de \textbf{let}.
-\item[condicional] Luego de evaluar la expresión booleana, si es verdadera
+\item [if-then-else], después de evaluar la expresión booleana, si es verdadera
   ejecuta lo que esta a continuación de \textbf{then}, en caso contrario lo que está a
   continuación de \textbf{else}. Funciona como cualquier condicional.
 \end{description}
@@ -85,15 +87,15 @@ La sintaxis de los comportamientos es la siguiente:
 
 El identificador \textit{beh name} hace referencia a un comportamiento y tiene alcance a todo el programa. 
 
-Los identificadores \textit{acquaiantence-list} los recibe el momento de inicialización y tiene alcance en todo \textit{command}. 
+Los identificadores \textit{acquaiantence-list} los recibe al momento de inicialización y tiene alcance en todo \textit{command}. 
 
 Los identificadores \textit{comunication-list} son completados al momento de procesar una comunicación, y su alcance es todo \textit{command}. 
 
-Podemos pensar que los comportamientos son una función que toma dos listas de parámetros en distintos momentos, uno cuando es inicializada o es invocada desde el cuerpo de un comando utilizando el comando $become$ y el otro conjunto de parámetros los recibe en e momento de procesar un mensaje.
+Podemos pensar que los comportamientos son una función que toma dos listas de parámetros en distintos momentos, uno cuando es inicializada o es invocada desde el cuerpo de un comando utilizando el comando $become$ y el otro conjunto de parámetros los recibe en el momento de procesar un mensaje.
 
-Ambas listas, \textit{comunication-list} y \textit{acquaiantence-list} contienen todos los identificadores libres que están en \textit{command}. Existe un identificador especial \textit{self} que puede ser utilizado para hacer referencia al buzón del actor que está se definiendo. 
+Ambas listas, \textit{comunication-list} y \textit{acquaiantence-list}, contienen todos los identificadores libres que están en \textit{command}. Existe un identificador especial \textit{self} que puede ser utilizado para hacer referencia al buzón del actor que está se definiendo. 
 
-La ejecución de \textit{command} deberá contar a lo sumo con un solo comando \textit{become}, esta propiedad tiene que ser garantizado de manera estática, de no existir ningún comando \textit{become}, el actor asumirá un comportamiento de tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
+La ejecución de \textit{command} deberá contar a lo sumo con un solo comando \textit{become}, esta propiedad tiene que ser garantizada de manera estática, de no existir ningún comando \textit{become}, el actor asumirá un comportamiento de tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 
 \section{Ejemplos}
 

@@ -65,7 +65,7 @@ Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunic
 
 \node at (7,0.5) {buzón};
 
-\node at (7,-1.4) {maquina del actores};
+\node at (7,-1.4) {máquina del actores};
 
 \draw[->] (5.25,-1) -- (5.25,0);
 \node at (5.25,-1.4) [circle,draw] (x) {$X$};
@@ -188,16 +188,38 @@ Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Enton
 
 También hay un número infinito de valores posibles para las comunicaiones entrantes. En este caso tambien se expresará como una funcion de la comunicación entrante.
 
-Dos listas de identificadores son utilizadas en la definición de un comportamiento, La primer lista corresponde a los parámetros que son dados al momento de la creación de un actores. Esta lista es llamada \textit{acquaintance list}. La segunda lista, que se obtienen cuando una comunicación es aceptada, se llama \textit{communication list}. Cuando un actor es creado y acepta una comunicación ejecuta los comandos en el \textit{entorno} definido por los parametros enlazados a los identificares.
+Estas dos listas de identificadores son utilizadas en la definición de un comportamiento, la primer lista corresponde a los parámetros que son dados al momento de la creación de un actores. Esta lista es llamada \textit{acquaintance-list}. La segunda lista, que se obtienen cuando una comunicación es aceptada, se llama \textit{communication-list}. Cuando un actor es creado y se acepta una comunicación se ejecutan los comandos en el \textit{entorno} definido por los parametros enlazados a los identificadores.
 
-\subsubsection*{Creando Actores}
+\subsubsection*{Creando actores}
+
+Los actores son creados usando expresiones de tipo \textit{new}, y esta devuelve una nueva direción de buzón del actor recien creado. La dirección de buzón tiene que estar asignada a algún identificador de caso contrario no tiene ningún sentido.
+
+La sintaxis de las expresiones de tipo \textit{new} es la siguiente:
+
+\[
+   \langle expresi\acute{o}n\ new \rangle :== \textbf{new}\ \langle nombre\ comportamiento \rangle (expr, \{expr\}*)  
+\]
+
+El $nombre\ comportamiento$ hace referencia a un identificador vinculado con un comportamiento especifio, declarado utilizando una \textit{definición de comportamiento}. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciado con los valores de las expresiones entre paréntesis. Utilizando el lexico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El valor de $expresion new$ es el valor de la diercción de buzón y puede estar vinculado con un identificador. Este identificador puede ser destino de nuevas comunicaciones. 
+
+Los actores son creados de manera concurrente, estos pueden cononcer entre si las dirección de buzón. Esta es una forma de definición mutuamente recursiva que es perfectamente valida en el modelo de actores. En todo actor recientemente creado lo único que el actor que esta creando un nuevo sabe de este es su dirección de buzón, es decir, no tiene ningún acceso a la estructura interna del actor creado.
 
 \subsubsection*{Creando tareas}
 
+Una tarea es creada especificando un actor destino y una comunicacion. Las comunicaciones se pueden enviar a actores que ya fueron creados o actores creados por quien está enviando la comunicación. El destino es la dirección de buzón del actor al que le queremos enviar la comunicación. La sintaxis de este comando podría ser la siguiente:
+
+\[
+  \langle comando\ send \rangle :== \textbf{send}\ \langle comunicaci\acute{o}n \rangle\ \textbf{to}\ \langle destino \rangle
+\]
+
+Donde $comunicacion$ es una lista de expresiones, que puede ser vacia. Las expresiones pueden ser indentificadores, constantes. Las expresiones son evaluadas y se envian los correspondientes valores de estas en la comunicacion. Destino es un identificador que tiene asociado una direción de buzón de un actor.
+
 \subsubsection*{Comandos}
 
-\subsubsection*{Comportamiento por defecto}
+El proposito de los comandos es especificar las acciones que pueden ocurrir. Se mostraron los comandos para crear nuevos actores y para crear nuevas tareas. Tambien necesitamos un comando para definir el comportamiento de reemplazo. La sintaxis para este comando tiene la forma:
 
+\[
+ \texttt{become}\ \langle expresi\acute{o}n \rangle
+\]
 
-
-
+expresión debería es una dirección de buzón, entonces este actor reenvia todos los mensajes a el nuevo buzón. Tambien se puede utilizar una similar a `new`, pero sin crear ningún nuevo buzón. Esto equivale a crear un nuevo actor, pero sin crear un nuevo buzón.
