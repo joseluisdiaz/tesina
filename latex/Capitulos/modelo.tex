@@ -50,14 +50,9 @@ En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. E
 
 Este simple ejemplo expone algunos de los problemas que se resolverán en este capitulo, tales como: enviar una comunicación a un proceso especifico, crear varios tipos de procesos.
 
-Otros problemas aparecen al modelar los ejemplos usando \FDR están relacionados con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite.
+Otros problemas aparecen al modelar los ejemplos usando \FDR están relacionados con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. 
 
-\subsection{Estructuras de apoyo}
-
-Antes de comenzar a enumerar las ecuaciones necesarias para las operaciones básicas utilizando actores, se enunciaran algunas estructuras necesarias para construir estas funcionalidades.
-
-\subsubsection{Identificadores de actores}
-
+\subsection{Identificadores de actores}
 Esta construcción nombra cada uno de los actores que van ser utilizados, también guarda la cantidad de actores de un tipo dado. Esto se verá en detalle más adelante.
 
 Para la definición usa tipos algebraicos similares a los de Haskell soportados por \CSPm.
@@ -73,20 +68,6 @@ Para la definición usa tipos algebraicos similares a los de Haskell soportados 
 
 Ya que no existe en \CSP el concepto de instancia es necesario contar con todos los procesos que van a ser parte de la red definidos desde el principio, el valor que está entre llaves corresponde a la cantidad de actores de este tipo que van a ser necesarios. 
 
-\subsubsection{Valores primitivos}
-
-Representaremos las cadenas de caracteres utilizando $Atoms$, estas cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación.
-
-\[
-  datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
-\]
-
-$VALUE$ es un tipo de datos que nos permite tener cierta flexibilidad al momento de enviar mensajes o crear actores. 
-
-\[
-  datatype\ VALUE = ACTOR.ActorID | INT.Int | ATOM.Atoms | None
-\]
-
 \subsection{Buzón} 
 
 Recodemos que la naturaleza de \CSP es sincronica y los actores no lo son. Para esto necesitamos desacoplar el envío de mensajes de la recepción. Utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
@@ -100,42 +81,36 @@ CommSend?i.x \then Mailbox(i, \lseq x \rseq)
 \end{block} \\
 
 \begin{block}
-Mailbox(i, \lseq x \rseq) = {} \\ \quad 
+Mailbox(i, \lseq x \rseq \cat xs ) = {} \\ \quad 
   \begin{block}
-    CommRecv!i.x \then Mailbox(i, \nil) \\
+    CommRecv!i.x \then Mailbox(i, xs) \\
     \Extchoice \\
-    CommSend?i.y \then Mailbox(i, \lseq x, y \rseq) 
+    CommSend?i.y \then Mailbox(i, \lseq x \rseq \cat xs \cat \lseq y \rseq ) 
   \end{block}
 \end{block} \\
 
-\begin{block}
-Mailbox(i, \lseq x, y \rseq) = {} \\ \quad
-  \begin{block}
-    CommRecv!i.x \then Mailbox(i, \lseq y \rseq) \\
-    \Extchoice \\
-    CommRecv!i.y \then Mailbox(i, \lseq x \rseq) 
-  \end{block} 
-\end{block}
-
 \end{process}
 
-Donde $Mailbox(i, \nil)$ es cuando \textit{buzón} está vacío, $Mailbox(i, \lseq x \rseq)$ es cuando tiene al menos un mensaje, $Mailbox(i, \lseq x, y \rseq)$ es cuando tiene su capacidad completa.
+Donde $Mailbox(i, \nil)$ es cuando \textit{buzón} está vacío, $Mailbox(i, \lseq x \rseq \cat xs )$. Los canales para comunicarse con el buzón se definen de la siguiente forma:
 
-Los canales para comunicarse con el buzón se definen de la siguiente forma:
+\begin{align*}
+channel\ CommSend:ActorID.Seq() \\
+channel\ CommRecv:ActorID.Seq()
+\end{align*}
 
-\[
-channel\ CommSend:ActorID.(VALUE, VALUE)\\
-channel\ CommRecv:ActorID.(VALUE, VALUE)
-\]
+Donde:
+\begin{description}
+ \item $channel\ CommSend:ActorID.Seq()$ define el canal $CommSend$, el primer parametro es cualquier $ActorID$, representa el actor destino. El segundo parametro, es una lista. Representa las comunicaciones enviadas. 
+ \item $channel\ CommRecv:ActorID.Seq()$ define el canal $CommRecv$. Los parametros son identicos a los anteriores.
+\end{description}
 
-Un \textit{buzón} puede guardar más de una comunicación en su interior. Esto introduce un tipo de no determinismo ya que un actor puede sincronizar con cualquiera de las comunicaciones disponibles en su \textit{buzón}.
+Un \textit{buzón} puede guardar más de una comunicación en su interior. Las comunicaciones se agregan al final, y se consumen sobre el principio. En este sentido, es una cola d tipo LIFO, del acrónimo inglés de Last In, First Out (``último en entrar, primero en salir'').
 
-El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, si tiene algunos mensajes, o si está completo. Podríamos modelar un buzón que no tenga una cota superior, pero tendríamos problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón.
+El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje. 
 
 \begin{itemize}
 \item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
 \item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
-\item Si está completo, solo por el canal $CommRecv$.
 \end{itemize}
 
 Puede que los nombre de los canales suenen poco intuitivos, es importante notar que provienen de la acciones vista desde los actores.
@@ -157,39 +132,37 @@ $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el opera
 
 Como se menciono en las anteriormente, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación dos abstracciones.
 
-La primera abstracción es un preámbulo a un comportamiento, le asigna a este de los parámetros \textit{acquaiantence-list} y al mismo tiempo el otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un proceso que funciona como una maquina de actores y un canal para comunicarse con ella.
+La primera abstracción es un preámbulo a un comportamiento, le asigna a este de los parámetros \textit{acquaiantence-list} y al mismo tiempo el otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un conjunto de procesos puestos en paralelo, y un canal para comunicarse con ella.
 
-El canal para comunicarse con la maquina de actores se define de la siguiente forma:
+El canal para comunicarse con la los procesos que estan esperando ser iniciados, se define de la siguiente forma:
 
 \[
-channel\ Create:ActorID.(VALUE, VALUE)
+channel\ Create:ActorID.Seq()
 \]
 
-
-La maquina de actores se define de la siguiente forma:
+Donde: $channel\ Create:ActorID.Seq()$ define el canal $Create$, el primer parametro es cualquier $ActorID$, representa el actor destino. El segundo parametro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
 
 \begin{align*}
-ks = \Interleave_{ self : \{| ACTOR_k |\} } & Create!self?(p1, p2) \then \\
+ks = \Interleave_{ self : \{| ACTOR_k |\} } & Create!self?<p1, p2> \then \\
 & K(self, p1, p2) 
 \end{align*}
 
 Donde:
 
 \begin{itemize}
- \item $ks$ hace referencia todos los procesos de tipo $K$.
+ \item $ks$ es el conjunto de todos los procesos puestos en paralelo.
  \item $self : \{| ACTOR_k |\}$ es el conjunto de todos los actor $ActorID$ disponibles para $ACTOR_k$.
- \item $Create!self?(p1, p2)$, sincroniza en el canal $Create$ envía $self$ como parámetro y recibe $(p1, p2)$
+ \item $Create!self?<p1, p2>$, sincroniza en el canal $Create$ envía $self$ como parámetro y recibe $<p1, p2>$. En este caso estamos suponiendo que $K$ tiene solo dos parámetros de tipo \textit{acquaiantence-list}.
  \item $K(self, p1, p2)$ llama al proceso parametrizado definido como $K$ con los parámetros $self$, $p1$ y $p2$
 \end{itemize}
-
 
 En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create$ para arrancar con el comportamiento definido. 
 
 El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos en $ActorID$. Por esto es que decimos que no solo define el nombre, sino que al mismo tiempo está estableciendo cuantos actores del tipo $ACTOR_k$ vamos a tener.
 
-Siguiendo con esta idea, $actors_machine_k$, representa todos los actores que van ser iniciados en paralelo utilizando el operador de \textit{Interleave}. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos.
+El proceso que representa a todos los actores que van ser iniciados en paralelo, utiliza el operador de \textit{Interleave}. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos. 
 
-La segunda abstracción es un proceso que desacopla el mensaje de creación, de la creación como tal. Para esto se utiliza una estructura intermedia $create$ y un canal para comunicarse con ella. $create$ se define de la siguiente forma: 
+La segunda abstracción es un proceso que vuelve asincronica el mensaje de creación, de la creación como tal. Para esto se utiliza una estructura intermedia $create$ y un canal para comunicarse con ella. $create$ se define de la siguiente forma: 
 
 \[
 \begin{array}{l}
@@ -203,7 +176,7 @@ Donde $create(actorId)$ es un proceso parametrizado; $CreateAsk!actorId?m$ sincr
 El canal que para comunicarse con esta estructura se define:
 
 \[
-channel\ CreateAsk:ActorID.(VALUE, VALUE)
+channel\ CreateAsk:ActorID.Seq()
 \]
 
 Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ existan. Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental en la construcción total del sistema, esto tiene que ver con en \CSP se puede elegir los eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando veamos como compone todo el sistema esta idea quedará mas clara.
@@ -212,15 +185,15 @@ Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ exista
 La idea de comportamiento fue introducida en la sección \ref{actores:comportamientos}, podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida, nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el actor que esta procesando la comunicación.
 
 \begin{align*}
-&CommSend.aid!(p_1, p_2) & (Enviar\ Comunicaciones) \\ 
-&CreateAsk!Actor_m.aid?(p_1, p_2) & (Crear\ nuevos\ actores)\\
-&comportamiento_k(self, p_1, p_2)  & (Comportamiento\ de\ reemplazo)
+&CommSend.d!<p_1, p_2, \ldots, p_n> & (Enviar\ Comunicaciones) \\ 
+&CreateAsk!actor_m.d?<p_1, p_2, \ldots, p_m> & (Crear\ nuevos\ actores)\\
+&K(self, p_1, p_2, \ldots, p_m)  & (Comportamiento\ de\ reemplazo)
 \end{align*}
 
 \begin{description}
-\item [Enviar comunicaciones] En este caso le enviaremos al actor con buzón $actor_n$ la lista $(p_1, p_2)$. 
-\item [Crear nuevos actores] Obtendríamos mediante $Actor_m.aid$ el identificador de buzón del actor creado, y le enviaríamos los parámetros $(p_1, p_2)$ como \textit{acquaiantence-list}.
-\item [Comportamiento de reemplazo] En este caso el comportamiento sería $comportamiento_k$. De no contar con uno sería simplemente STOP.
+\item [Enviar comunicaciones] En este caso le enviaremos al actor con la dirección buzón $d$ la listas de valores $<p_1, p_2, \ldots p_n>$. 
+\item [Crear nuevos actores] Obtendríamos mediante $actor_m.d$ el identificador de buzón del actor creado, y le asignarian los parámetros $<p_1, p_2, \ldots p_m>$ como \textit{acquaiantence-list}.
+\item [Comportamiento de reemplazo] En este caso el comportamiento sería $K$. De no contar con uno sería simplemente $STOP$.
 \end{description}
 
 \subsection{Ejemplo: cálculo de factorial en CSPm}
@@ -232,11 +205,11 @@ El primero de los comportamientos, es el de $Factorial$ que viene dado por la si
 \begin{process}
 Factorial(self) = {} \\ \quad
   \begin{block}
-  CommRecv?self.(ACTOR.mailboxClient, INT.k) \then {} \\ \quad
+  CommRecv?self.\langle mailboxClient, k \rangle \then {} \\ \quad
     \begin{block}
     \If (k == 0) \Then {} \\ \quad
       \begin{block} 
-      CommSend!mailboxClient.(INT.1, None) \then \\
+      CommSend!mailboxClient.\langle 1 \rangle \then \\
       Factorial(self) 
       \end{block} \\
     \Else {} \\ \quad
@@ -245,8 +218,8 @@ Factorial(self) = {} \\ \quad
      m  = k - 1 
 	\end{declaration} \\
 	\begin{within}
-	CreateAsk?factorialWorker.pid!(INT.k, ACTOR.mailboxClient) \then \\
-	CommSend!self.(ACTOR.factorialWorker.pid, INT.m) \then \\
+	CreateAsk?factorialWorker.pid!\langle k, mailboxClient \rangle \then \\
+	CommSend!self.\langle factorialWorker.pid, m \rangle \then \\
 	Factorial(self)
 	\end{within}
       \end{block}
@@ -256,11 +229,11 @@ Factorial(self) = {} \\ \quad
 
 
 \begin{description}
- \item $CommRecv?self.(ACTOR.mailboxClient, INT.k)$ espera recibir una comunicación con los parametros de tipo, el primero buzón y el segundo un entero.
- \item $\If (eq(k,SI.0))$ Compara el entero $k$, con cero utilizando la definición de enteros pequeños antes vista.
- \item $CommSend!mailboxClient.(INT.1, None)$ envía una comunicación al buzón $mailboxClient$ la lista con el valor $1$ y $None$. En este caso $None$ es solo un marcador de posición.
- \item $CreateAsk?factorialWorker.pid!(INT.k, ACTOR.mailboxClient)$ crea un nuevo actor de tipo $FactorialWorker$, guarda en $pid$ la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $k$ y el buzón $mailboxClient$.
- \item $CommSend!self.(ACTOR.factorialWorker.pid, INT.m)$ Se auto envía un mensaje, con el valor de buzón del actor creado en la linea anterior, y el entero $m$, que fue calculado utilizando $m = k - 1$.
+ \item $CommRecv?self.<mailboxClient, k>$ espera recibir una comunicación con los parametros de tipo, el primero buzón y el segundo un entero.
+ \item $\If (k == 0)$ Compara $k$ con el valor cero.
+ \item $CommSend!mailboxClient.\langle 1 \rangle$ envía una comunicación al buzón $mailboxClient$ la lista con el valor $1$.
+ \item $CreateAsk?factorialWorker.pid!\langle k, mailboxClient \rangle$ crea un nuevo actor de tipo $FactorialWorker$, guarda en $pid$ la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $k$ y el buzón $mailboxClient$.
+ \item $CommSend!self.<factorialWorker.pid, m>$ Se auto envía un mensaje, con el valor de buzón del actor creado en la linea anterior, y el entero $m$, que fue calculado utilizando $m = k - 1$.
  \item $Factorial(self)$ define como siguiente comportamiento, $Factorial$ para el buzón $self$.
 \end{description}
 
@@ -269,15 +242,15 @@ Cuando recibe un entero distinto de cero ejecuta dos acciones, crea un actor \te
 El segundo de los comportamientos, es el de $FactorialWorker$ que viene dado de la siguiente forma:
 
 \begin{process}
-FactorialWorker(self, INT.k, ACTOR.mailboxClient) = {} \\ \quad
+FactorialWorker(self, k, mailboxClient) = {} \\ \quad
   \begin{block}
-  CommRecv.self?(INT.n, None) \then {} \\ \quad
+  CommRecv.self?\langle n \rangle \then {} \\ \quad
     \begin{block}
     \begin{declaration}
     val = n * k 
     \end{declaration} \\
     \begin{within}
-    CommSend.mailboxClient!(INT.val, None) \then \\
+    CommSend.mailboxClient!\langle val \rangle \then \\
     STOP
     \end{within}
     \end{block}
@@ -285,20 +258,18 @@ FactorialWorker(self, INT.k, ACTOR.mailboxClient) = {} \\ \quad
 \end{process}
 
 \begin{description}
- \item $CommRecv.self?(INT.n, None)$ Espera una comunicación que contenga un entero, y lo guarda en $n$.
+ \item $CommRecv.self?\langle n \rangle$ Espera una comunicación que contenga un entero, y lo guarda en $n$.
  \item $val = n * k$ guarda en $val$ la multiplicación de $n * k$.
- \item $CommSend.mailboxClient!(INT.val, None)$ envía el el valor antes calculado a la dirección de buzón $mailboxClient$
+ \item $CommSend.mailboxClient!\langle INT.val \rangle$ envía el el valor antes calculado a la dirección de buzón $mailboxClient$
 \end{description}
 
 Este comportamiento es muy simple, en el momento de creación recibe dos parámetros, un entero $k$ y un dirección de un buzón. Al momento de recibir una comunicación, efectúa la multiplicación del valor recibido por $k$ y se lo envía a $mailboxClient$.
 
 En este caso no cuenta con comportamiento de reemplazo, entonces termina con $STOP$.
 
-Tanto para $Factorial$ y para $FactorialWorker$ faltan definir ambas maquinas de actores definidas en la sección  \cite{modelo:crear}. El ejemplo entero puede verse en el \textbf{apendiceXXXinsertarApendice}.
-
+Tanto para $Factorial$ y para $FactorialWorker$ faltan definir los procesos que van a dar inicio a los actores. Estos fueron definidos definidas en la sección \cite{modelo:crear}. 
 
 \subsection{Ejemplo: Una pila}
-
 En este ejemplo se construirá una estructura de datos de tipo \textbf{pila}, la cual esta compuesta de un solo comportamiento $node$ que es el que se encarga de recibir las operaciones $PUSH$ y $POP$. En este caso se agrega al modelo $fwd$ que como veremos, está encargado de modelar el comportamiento $\textbf{become}\ buzon$.
 
 El comportamiento de $fwd$ está definido de la siguiente forma:
@@ -314,26 +285,28 @@ El comportamiento de $node$ está definido de la siguiente forma:
 \begin{process}
 Node(self, content, link) = {} \\ \quad
 \begin{block}
-CommRecv.self?(ATOM.PUSH, newContent) \then \\
-CreateAsk?node.newNode!(content, ACTOR.link) \then \\
+CommRecv.self?\langle 'push', newContent \rangle \then \\
+CreateAsk?node.newNode!\langle content, link \rangle \then \\
 Node(self, newContent, node.newNode)
 \end{block} \\
 \Extchoice \\ \quad
 \begin{block}
-CommRecv.self?(ATOM.POP, ACTOR.client) \then  \\
-CommSend.client!(content, None) \then  \\
+CommRecv.self?\langle 'pop', client \rangle \then  \\
+CommSend.client!\langle content \rangle \then  \\
 fwd(self, link)
 \end{block}
 
 \end{process}
 
+Donde:
+
 \begin{description}
- \item $CommRecv.self?(ATOM.PUSH, newContent)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.PUSH$, guarda en $newContent$ el valor del segundo elemento de la lista.
- \item $CreateAsk?node.newNode!(content, ACTOR.link)$ crea un actor de un tipo $Node$ y guarda en $newNode$ el valor de la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con valor $content$ y el buzón $link$.
+ \item $CommRecv.self?\langle 'push', newContent \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'push'$, guarda en $newContent$ el valor del segundo elemento de la lista.
+ \item $CreateAsk?node.newNode!\langle content, link \rangle$ crea un actor de un tipo $Node$ y guarda en $newNode$ el valor de la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con valor $content$ y el buzón $link$.
  \item $Node(self, newContent, Node.newNode)$ define como comportamiento para el buzón $self$, el mismo comportamiento con los parámetros, $newContent$ y el buzón creado en la linea anterior.
- \item $CommRecv.self?(ATOM.POP, ACTOR.client)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.POP$, guarda en $client$ el valor del segundo elemento de la lista.
- \item $CommSend.client!(content, None)$ envía una comunicación al buzón $client$ la lista con el valor $content$ y $None$. En este caso $None$ es solo un marcador de posición.
- \item $fwd(self, link)$ se comporta como el proceso $fwd$. 
+ \item $CommRecv.self?\langle 'pop', client \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'pop'$, guarda en $client$ el valor del segundo elemento de la lista.
+ \item $CommSend.client!\langle content \rangle$ envía una comunicación al buzón $client$ la lista con el valor $content$.
+ \item $fwd(self, link)$ se comporta como el proceso $fwd$.
 \end{description}
 
 Cuando la operación es de tipo $pop$, se envía el valor que contiene el nodo al buzón $client$ y se reenvían todos los mensajes a $link$, todas las futuras operaciones $push$ y $pop$ las recibe este nodo.
@@ -344,7 +317,7 @@ Cuando la operación es de tipo $push$, la pila crea un nuevo actor $node$. Se c
 
 En este ejemplo se explorará como construir una estructura de datos de tipo \textit{cola}, se intentó modelarla como si fuera una máquina de estados, dónde cada comportamiento corresponde a un estado y las comunicaciones son quienes disparan las transiciones de estos. Primero se mostrará el ejemplo escrito utilizando \SAL, y luego su equivalente en \CSPm.
 
-Existen dos operaciones posibles para efectuarse en una \textit{cola} $QUEUE$ o encolar, y $DEQUEUE$ desencolar. La primera operación agrega un elemento al final, y la segunda lo remueve del principio. 
+Existen dos operaciones posibles para efectuarse en una \textit{cola} $QUEUE$ o encolar, y $DEQUEUE$ desencolar. La primera operación agrega un nodo al final, y la segunda lo remueve del principio. 
 
 Tanto el ejemplo en \SAL como el de \CSPm tienen cuatro comportamientos:
 
@@ -358,6 +331,7 @@ Tanto el ejemplo en \SAL como el de \CSPm tienen cuatro comportamientos:
 En el resto de la sección se detallaran cada uno de los cuatro comportamientos antes enumerados, para terminar con una descripcion de como estos funcionan en conjunto.
 
 \subsubsection*{Comportamiento de node}
+Este comportamiento es el que está encargado de guardar el contenido que se quisiera guardar en la \textit{cola}. Consta de dos operaciones $'delete'$ e $'insert'$. La primer operación envía todo su contenido a una dirección de buzón y termina su ejecución. El segundo, cambia el valor de $link$.
 
 Código en \SAL:
 
@@ -370,6 +344,8 @@ def Node(content, link) match
 end def
 \end{lstlisting}
 
+Donde:
+
 \begin{description}
  \item [Lineas 2-3] Si la operación es $delete$, envía su contenido a $mailbox$. Como no hay comportamiento de reemplazo, este nodo termina su ejecución en este momento.
  \item [Lineas 4-5] Si la operación es $insert$, el comportamiento de reemplazo tiene un nuevo nodo al que apunta. Esta operación básicamente cambia, el nodo que está próximo en la \textit{cola}.
@@ -380,7 +356,7 @@ Código en \CSPm:
 \begin{process}
 Node(self, content, link) = \\ \quad
   \begin{block}
-  CommRecv.self?(ATOM.DELETE, ACTOR.mailbox) \then \\
+  CommRecv.self?\langle 'delete', mailbox \rangle \then \\
   CommSend.mailbox!(link, content) \then \\
   STOP
   \end{block} \\
@@ -388,20 +364,23 @@ Node(self, content, link) = \\ \quad
   \Extchoice \\ \quad
   
   \begin{block}
-  CommRecv.self?(ATOM.INSERT, mailbox) \then \\
+  CommRecv.self?\langle 'insert', mailbox \rangle \then \\
   Node(self, content, mailbox)
   \end{block}
 \end{process}
 
+Donde: 
+
 \begin{description}
- \item $CommRecv.self?(ATOM.DELETE, ACTOR.mailbox)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.DELETE$, guarda en $mailbox$ el valor del segundo elemento de la lista, que es de tipo $ACTOR$.
- \item $CommSend.mailbox!(link, content)$ Envía una comunicación al buzón $mailbox$, con la lista $link$ y $content$
+ \item $CommRecv.self?\langle 'delete', mailbox \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'delete'$, guarda en $mailbox$ el valor del segundo elemento de la lista, que es una dirección de buzón.
+ \item $CommSend.mailbox!\langle link, content \rangle$ Envía una comunicación al buzón $mailbox$, con la lista $link$ y $content$
  \item $STOP$ Al no haber comportamiento de reemplazo, el actor termina su ejecución.
- \item $CommRecv.self?(ATOM.INSERT, ACTOR.mailbox)$ Espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.INSERT$, guarda en $mailbox$ el valor del segundo elemento de la lista, que es de tipo $ACTOR$.
+ \item $CommRecv.self?\langle 'insert', ACTOR.mailbox \rangle$ Espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'insert'$, guarda en $mailbox$ el valor del segundo elemento de la lista, que es una dirección de buzón.
  \item $Node(self, content, mailbox)$ Define el comportamiento de reemplazo, utiliza el parámetro $mailbox$ recibido en el linea como reemplazo del anterior $link$. Es decir reemplaza al nodo que apunta.
 \end{description}
 
 \subsubsection*{Comportamiento de emptyQueue}
+Este comportamiento corresponde a la \textit{cola} cuando no tiene ningún nodo. La única operación posible es $'enqueue'$, que agrega un nodo. El comportamiento de reemplazo es $Queue$.
 
 Código en \SAL:
 
@@ -413,6 +392,8 @@ def EmptyQueue() match
 end def
 \end{lstlisting}
 
+Donde:
+
 \begin{description}
  \item [Linea 3] Si la operación fue $enqueue$, entonces crea un nuevo nodo con el valor recibido. Como es el primer nodo que va a tener la cola, el parámetro del siguiente nodo en la pila es $nil$.
  \item [Linea 4] El comportamiento de reemplazo para este actor es $Queue$. Como es el único nodo que tiene la \textit{cola} el primer y el ultimo actor es el actor creado en la linea anterior.
@@ -423,19 +404,20 @@ Código en \CSPm:
 \begin{process}
 EmptyQueue(self) = \\ \quad
   \begin{block}
-  CommRecv.self?(ATOM.ENQUEUE, INT.value) \then \\ 
-  CreateAsk?node.pid!(INT.value, ACTOR.NoId) \then \\
-  Queue(self, ACTOR.node.pid, ACTOR.node.pid)
+  CommRecv.self?\langle 'enqueue', value \rangle \then \\ 
+  CreateAsk?node.pid!\langle value, Null\rangle \then \\
+  Queue(self, node.pid, node.pid)
   \end{block}
 \end{process}
 
 \begin{description}
- \item $CommRecv.self?(ATOM.ENQUEUE, INT.value)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.ENQUEUE$, guarda en value el valor del segundo elemento de la lista en $value$, que es de tipo $INT$.
- \item $CreateAsk?node.pid!(INT.value, ACTOR.NoId)$ crea un nuevo actor de tipo $node$, guarda en en $pid$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $value$ y el buzón nulo $NoId$.
- \item $Queue(self, ACTOR.node.pid, ACTOR.node.pid)$ define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Le pasa como parámetro la dirección del buzón del actor antes creado, se repite por que tanto el primer como el ultimo nodo es el mismo cuando la \textit{cola} tiene un solo nodo.
+ \item $CommRecv.self?\langle 'enqueue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'enqueue'$, guarda en $value$ el valor del segundo elemento.
+ \item $CreateAsk?node.pid!\langle value, Null \rangle$ crea un nuevo actor de tipo $node$, guarda en en $pid$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $value$ y $Null$.
+ \item $Queue(self, node.pid, node.pid)$ define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Le pasa como parámetro la dirección del buzón del actor antes creado, se repite por que tanto el primer como el ultimo nodo es el mismo cuando la \textit{cola} tiene un solo nodo.
 \end{description}
 
 \subsubsection*{Comportamiento de queue}
+Este comportamiento es cuando la cola tiene al menos un nodo. Tiene dos operaciones $'enqueue'$ y $'dequeue'$. La primera agrega un nodo y la segunda lo remueve. Al remover un nodo, es necesario obtener la referencia al nuevo primer nodo, es decir, al que apuntaba el nodo que esta por ser removido. Para esto se utiliza el comportamiento $waitDelete$.
 
 Código en \SAL:
 
@@ -451,6 +433,8 @@ def queue(first, last) match
 end def
 \end{lstlisting}
 
+Donde:
+
 \begin{description}
  \item [Linea 1] $first$ y $last$ son respectivamente, el primer y último nodo de la \textit{cola}.
  \item [Linea 3] Si la operación fue $enqueue$, entonces crea un nuevo nodo con el valor recibido. 
@@ -463,34 +447,37 @@ end def
 Código en \CSPm:
 
 \begin{process}
-Queue(self, ACTOR.first, ACTOR.last) = \\ \quad
+Queue(self, first, last) = \\ \quad
   \begin{block}
-  CommRecv.self?(ATOM.ENQUEUE, value) \then \\
-  CreateAsk?Node.newLast!(value, ACTOR.NoId) \then \\
-  CommSend.last!(ATOM.INSERT, ACTOR.node.newLast) \then \\
-  Queue(self, ACTOR.first, ACTOR.node.newLast)
+  CommRecv.self?\langle 'enqueue', value \rangle \then \\
+  CreateAsk?Node.newLast!\langle value, Null \rangle \then \\
+  CommSend.last!\langle 'insert', node.newLast \rangle \then \\
+  Queue(self, first, node.newLast)
   \end{block} \\
 
   \Extchoice \\ \quad
   
   \begin{block}
-  CommRecv.self?(ATOM.DEQUEUE, ACTOR.client) \then \\
-  CommSend.first!(ATOM.DELETE, ACTOR.self) \then \\
+  CommRecv.self?\langle 'dequeue', client \rangle \then \\
+  CommSend.first!\langle 'delete', self \rangle \then \\
   WaitDelete(self, client, last)
   \end{block} 
 \end{process}
 
+Donde:
+
 \begin{description}
- \item $CommRecv.self?(ATOM.ENQUEUE, value)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.ENQUEUE$, guarda en $value$ el valor del segundo elemento de la lista, que es de tipo $INT$.
- \item $CreateAsk?node.pid!(INT.value, ACTOR.NoId)$ crea un nuevo actor de tipo $node$, guarda en en $newLast$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $value$ y el buzón nulo $NoId$.
- \item $CommSend.first!(ATOM.INSERT, ACTOR.node.newLast)$ Envía una comunicación al buzón $first$, con la lista $ATOM.INSERT$ y el actor creado en la linea anterior $newLast$. 
- \item $Queue(self, ACTOR.first, ACTOR.Node.newLast)$ Define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Pasa como parámetro la dirección del buzón del actor antes creado como reemplazo del ultimo nodo de la pila.
- \item $CommRecv.self?(ATOM.DEQUEUE, value)$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.DEQUEUE$, guarda en value el valor del segundo elemento de la lista, que es de tipo $ACTOR$.
- \item $CommSend.first!(ATOM.DELETE, ACTOR.self)$ Envía una comunicación al buzón $first$, con la lista $ATOM.DELETE$ y la dirección del buzón de la actor \textit{cola}. 
+ \item $CommRecv.self? \langle 'enqueue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.ENQUEUE$, guarda en $value$ el valor del segundo elemento de la lista.
+ \item $CreateAsk?node.pid!\langle value, Null \rangle$ crea un nuevo actor de tipo $node$, guarda en en $newLast$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el valor $value$ y $Null$.
+ \item $CommSend.first!\langle 'insert', node.newLast \rangle$ Envía una comunicación al buzón $first$, con la lista $'insert'$ y el actor creado en la linea anterior. 
+ \item $Queue(self, first, node.newLast)$ Define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Pasa como parámetro la dirección del buzón del actor antes creado como reemplazo del ultimo nodo de la pila.
+ \item $CommRecv.self?\langle 'dequeue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'queue'$, guarda en value el valor del segundo elemento de la lista,.
+ \item $CommSend.first!\langle 'delete', self \rangle$ Envía una comunicación al buzón $first$, con la lista $'delete'$ y la dirección del buzón de la actor \textit{cola}. 
  \item $WaitDelete(self, client, last)$ el comportamiento de reemplazo es $WaitDelete$.
  \end{description}
 
 \subsubsection*{Comportamiento de waitDelete}
+Este comportamiento es un estado intermedio, está a la espera de los datos de nodo que está siendo removido. Una vez que llega el contenido, este se envía a quien originalmente pidio remover el nodo. Si el nodo que se borró era el último, el nodo al que apuntaba será $nil$, entonces se tiene que comportar como si la cola estuviera vacia. En caso contrario se comporta como la cola con al menos un elemento.
 
 Código en \SAL:
 
@@ -504,6 +491,8 @@ def waitDelete(last, client)[content, newFirst]
 end def
 \end{lstlisting}
 
+Donde: 
+
 \begin{description}
  \item [Linea 2] Reenvía a $client$ el valor $content$ recibido
  \item [Linea 4] Si el valor del primer nodo es nulo, el comportamiento de reemplazo es $emptyQueue$
@@ -515,55 +504,57 @@ Código en \CSPm:
 \begin{process}
 WaitDelete(self, client, last) = \\ \quad
   \begin{block}
-  CommRecv.self?(ACTOR.newFirst, INT.content) \then \\ 
-  CommSend.client?(INT.content, None) \then \\ 
-  \If newFirst == NoId \Then \\ \quad
+  CommRecv.self?\langle newFirst, content \rangle \then \\ 
+  CommSend.client?\langle content \rangle \then \\ 
+  \If newFirst == Null \Then \\ \quad
     \begin{block}
       EmptyQueue(self)
     \end{block} \\ 
   \Then \\ \quad
     \begin{block}
-    Queue(self, ACTOR.newFirst, ACTOR.last)
+    Queue(self, newFirst, last)
     \end{block}
   \end{block} 
 \end{process}
 
+Donde:
+
 \begin{description}
- \item $CommRecv.self?(ACTOR.newFirst, INT.content)$ Espera recibir un mensaje, donde el primer elemento es de tipo $ACTOR$ y lo guarda en $newFirst$, y el segundo elemento es de tipo $INT$ y lo guarda en $value$
- \item $CommSend.client!(INT.content, None)$ Envía una comunicación al buzón $client$, la lista con el valor $INT.content$ y $None$. En este caso $None$ es solo un marcador de posición. 
- \item $EmptyQueue(self)$ Si el valor recibido como el nuevo primer nodo de la cola es $NoId$, el comportamiento es $EmptyQueue$. La lista vuelve al estado vacío.
- \item $Queue(self, ACTOR.newFirst, ACTOR.last)$ El comportamiento de reemplazo es $Queue$. Cambia el valor del primer nodo por $newFirst$.
+ \item $CommRecv.self?\langle newFirst, content \rangle$ Espera recibir un mensaje, donde el primer elemento es una dirección de buzón. Lo guarda en $newFirst$. El segundo elemento lo guarda en $value$
+ \item $CommSend.client!\langle content \rangle$ Envía una comunicación al buzón $client$, la lista con el valor $content$. 
+ \item $EmptyQueue(self)$ Si el valor recibido como el nuevo primer nodo de la cola es $Null$, el comportamiento es $EmptyQueue$. La lista vuelve al estado vacío.
+ \item $Queue(self, newFirst, last)$ El comportamiento de reemplazo es $Queue$. Cambia el valor del primer nodo por $newFirst$.
  \end{description}
  
 La \textit{cola} tiene dos tranciciones, cuando está vacía y se agrega un nodo transciona del comportamiento $EmptyQueue$ al comportamiento $Queue$. Cuando tiene un único nodo y se lo remueve, transiciona del comportamiento $Queue$ a $EmptyQueue$. También tiene un funcionamiento habitual, es decir cuando se agregan y quitan nodos y hay mas de un nodo en la \textit{cola}.
 
-Supongamos que queremos insertar un nodo ($ENQUEUE$), con el valor $42$ en una \textit{cola} con ningún nodo en ella. La interacción entre los actores tendría la siguiente forma:
+Supongamos que queremos insertar un nodo ($'enqueue'$), con el valor $42$ en una \textit{cola} con ningún nodo en ella. La interacción entre los actores tendría la siguiente forma:
 
 \begin{itemize}
  \item El buzón del actor que tiene el comportamiento $EmptyQueue$:
- \item Recibe una comunicación con la lista $ENQUEUE$ y $42$.
+ \item Recibe una comunicación con la lista $'enqueue'$ y $42$.
  \item Crea un nuevo nodo y guarda su guarda la dirección del buzón en $P$.
  \item Como es el primer nodo en la \textit{cola}, el siguiente nodo es el nodo vacío.
  \item El comportamiento de reemplazo es $Queue$, como es el único nodo en la lista, el primer y el último nodo coinciden y es el nodo recién creado.
 \end{itemize}
 
-Supongamos que queremos insertar un nodo ($ENQUEUE$), con el valor $42$ en una \textit{cola} con al menos un nodo en ella, la interacción entre los actores tendría la siguiente forma:
+Supongamos que queremos insertar un nodo ($'enqueue'$), con el valor $42$ en una \textit{cola} con al menos un nodo en ella, la interacción entre los actores tendría la siguiente forma:
 
 \begin{itemize}
  \item El buzón del actor que tiene el comportamiento $Queue$:
- \subitem Recibe una comunicación con la lista $ENQUEUE$ y $42$.
+ \subitem Recibe una comunicación con la lista $'enqueue'$ y $42$.
  \subitem Crea un nuevo nodo, y guarda su guarda la dirección del buzón en $newLast$.
  \subitem Reenvía un mensaje al último nodo en la \textit{cola} ($last$) para que cambie al nodo que apunta.
  \subitem Cambia cual es el último nodo en $Queue$, ahora es $newLast$.
  \item El buzón del nodo que hasta ese momento era el último ($last$):
- \subitem Recibe una comunicación con la lista $INSERT$ y $mailbox$.
+ \subitem Recibe una comunicación con la lista $'insert'$ y $mailbox$.
  \subitem En el comportamiento de reemplazo, cambia el valor de $link$ por $mailbox$. Esto hace que apunte a un nuevo nodo, el que fue insertado.
 \end{itemize}
 
-Supongamos que queremos remover el primer nodo ($DEQUEUE$), y enviarle el contenido a un actor $client$. La interacción entre los actores tendría la siguiente forma:
+Supongamos que queremos remover el primer nodo ($'dequeue'$), y enviarle el contenido a un actor $client$. La interacción entre los actores tendría la siguiente forma:
 
 \begin{itemize}
- \item El buzón del actor que tiene el comportamiento $Queue$ recibe una comunicación con la lista $DEQUEUE$ y una dirección de buzón ($client$) para enviar el contenido del primer nodo.
+ \item El buzón del actor que tiene el comportamiento $Queue$ recibe una comunicación con la lista $'dequeue'$ y una dirección de buzón ($client$) para enviar el contenido del primer nodo.
  \subitem Le envía al actor que está primero en la cola ($first$) un mensaje para que se borre, con una dirección de buzón a quien enviarle su contenido.
  \subitem Transiciona en un comportamiento intermedio, el cual esperará el contenido del nodo que será borrado.
  \item El buzón del nodo que hasta ese momento era el primero ($first$):
@@ -571,11 +562,175 @@ Supongamos que queremos remover el primer nodo ($DEQUEUE$), y enviarle el conten
  \subitem Envía su contenido, tanto $link$ que es a la dirección de buzón que apunta (el siguiente nodo en la \textit{cola}), como contenido que guarda al buzón $mailbox$. Como no tiene comportamiento de reemplazo, este actor termina su ejecución en este momento.
  \item El buzón del actor que tiene el comportamiento $WaitDelete$ recibe una comunicación con la lista $content$ y una dirección de buzón. Esta dirección es la dirección a la que el primer nodo, es decír el segundo nodo en la lista.
  \subitem Se envía el contenido a quien originalmente lo pidió ($client$).
- \subitem Si la dirección a la que apuntaba era $nil$, esto quiere decir que era el último nodo en la lista. Se transiciona al comportamiento $emptyQueue$.
+ \subitem Si la dirección a la que apuntaba era $Null$, esto quiere decir que era el último nodo en la lista. Se transiciona al comportamiento $emptyQueue$.
  \subitem En caso contrario, se transiciona al comportamiento $Queue$, con un nuevo nodo como el primer nodo en la \textit{cola}.
 \end{itemize}
 
 \subsection{Ejemplo: Un anillo de actores}
+Está propuesto como ejercicio en el libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}\footnote{Página 115, Ejercicio 4-2: The Process Ring}. El ejercicio propone crear una red de $n$ procesos como muestra la figura \ref{fig:anillo}. Una vez terminada de establecer, se tienen que enviar $m$ mensajes en la red, luego de recibir estos $m$ mensajes los nodos deberían finalizar.
+
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\tikzstyle{nodo} = [draw, circle, minimum size=1.5em]
+
+\node[nodo] (A1) at (1,0) {};
+\node[nodo] (A2) at (2.5,0) {};
+\node[nodo] (A3) at (4,0) {};
+\node[nodo] (A4) at (5.5,0) {};
+\node[nodo] (A5) at (7,0) {};
+
+\draw[->] (A1) -- (A2);
+\draw[->] (A2) -- (A3);
+\draw[->] (A3) -- (A4);
+\draw[->] (A4) -- (A5);
+
+\draw[->] (A5) edge [bend left=20] (A1);
+\end{tikzpicture}
+\caption{Anillo de procesos}
+\label{fig:anillo}
+\end{figure}
+
+Para resolver este problema, se plantan tres comportamientos:
+
+\begin{description}
+ \item [Node] modela cada nodo del anillo.
+ \item [Ring] espera un mensaje con una cantidad de nodos a crear, y una cantidad de mensajes a enviar.
+ \item [BuildingRing] cumple la función de estructura de control, crea el anillo de nodos.
+\end{description}
+
+\subsubsection*{Comportamiento de Node}
+
+\textbf{Node} reacciona ente dos comunicacion $'point_to'$ y $'msg'$. En el caso del primero de las comunicacion, este cambia el nodo que tiene como siguiente su estado.
+Cuando procesa un mensaje de tipo $['msg']$, siempre reenvia al siguiente nodo en la lista la comuncacion $['msg']$. Si el valor del contador $m$ es mayor que cero, decrementa el contador en uno y sigue con la ejecución. Si es cero, termina la ejucución en ese momento.
+
+Código en \SAL para \textbf{node}:
+
+\begin{lstlisting}[language=sal, style=simple]
+def Node(m, next) match
+  case ['point_to', newNext]:
+    become Node(m, newNext)
+  case ['msg']:
+    if ( m > 0 ) then
+      send ['msg'] to next
+      become Node(m - 1, next)
+    else
+      send ['msg'] to next
+    end if
+end def
+\end{lstlisting}
+
+Código en \CSPm:
+
+\begin{process}
+Node(self, m, next) = \\ \quad
+  \begin{block}
+  CommRecv.self?\langle 'point_to', newNext \rangle \then \\
+  Node(self, m, newNext)
+  \end{block} \\
+
+  \Extchoice \\ \quad
+  
+  \begin{block}
+  CommRecv.self?\langle 'msg' \rangle \then {} \\ \quad
+    \begin{block}
+    \If (m == 0) \Then {} \\ \quad
+      \begin{block} 
+      CommSend!next.\langle 'msg' \rangle \then \\
+      Node(self, m - 1, next) 
+      \end{block} \\
+    \Else {} \\ \quad
+      \begin{block}
+      CommSend!next.\langle 'msg' \rangle \then \\
+      STOP
+      \end{block}
+    \end{block}
+  \end{block} 
+\end{process}
+
+% Donde:
+% 
+% \begin{description}
+%  \item [Linea 2-3] Si responde a un mensaje de tipo $'point_to'$, el comportamiento de reemplazo es \textbf{Node} pero cambiando el parametro $next$ por $newNext$.
+%  \item [Linea 4-5] Si responde a un mensaje de tipo $'msg'$, y su contador $m$ es mayor que cero, envia un mensaje al proximo actor el anillo ($next$). Su comportamiento de reemplazo es \textbf{Node} pero decrementando en uno el contador $m$.
+%  \item [Linea 7] Si responde a un mensaje de tipo $'msg'$, y su contador $m$ era cero, envia un mensaje al proximo actor en el anillo ($next$). Como no define comportamiento de reemplazo, termina su ejecución en es momento.
+% \end{description}
+
+\subsubsection*{Comportamiento de Ring}
+
+Cuando \textbf{Ring} recibe una comunicacion con una lista que tiene un par de enteros, el primero de los enteros es la cantidad de nodos a crear, y el segundo es la cantidad de comunicaciones a mandar. Crea el primer nodo que va a tener el anillo y el actor que va a estar encargado de crear el resto del anillo. Le envía un mensaje a $builder$ con el numero de nodos que tiene que crear. Como el primero fue inicialiado este es decrementado en uno.
+
+Código en \SAL:
+
+\begin{lstlisting}[language=sal, style=simple]
+def Ring()[n, m]
+  let first = new Node(m, nil)
+      builder = new BuildingRing(m, first, first) 
+  in
+    send [n - 1] to builder
+    become Ring() 
+end def
+\end{lstlisting}
+
+Código en \CSPm:
+
+\begin{process}
+Ring(self) = \\ \quad
+  \begin{block}
+  CommRecv.self?\langle n, m \rangle \then \\
+  CreateAsk?node.first!\langle m, Null \rangle \then \\
+  CreateAsk?buildingRing.builder!\langle m, node.first, node.first \rangle \then \\
+  CommSend.buildingRing.builder!\langle n - 1\rangle \then \\
+  Ring(self)
+  \end{block}
+\end{process}
+
+\subsubsection*{Comportamiento de BuildingRing}
+
+Esta es una estructura de control, siempre que procese una comunicación con $n$ mayor a uno. Creara un nuevo nodo. Le enviará al nodo que creó en la iteración anterior un mensaje para que apunte al nuevo nodo creado. Se auto enviará un mensaje decrementando en uno el contador de nodos a crear. El comportamiento de reemplazo cambia el nodo $lastCreated$.
+
+Si el contador $n$ era uno, le envía un mensaje a él nodo creado en la iteración anterior para que apunta al primer nodo creado ($first$). De esta manera cierra el anillo. Le envía una comunicacion a el primer nodo, que da inicio al envio de mensajes. 
+
+Código en \SAL:
+
+\begin{lstlisting}[language=sal, style=simple]
+def BuildingRing(m, first, lastCreated)[n]
+  if (n > 1) then
+    let newNode = new Node(m, null) in
+      send ['point_to', newNode] to lastCreated
+      send [ n - 1 ] to self
+      become BuildingRing(m, first, newNode)
+  else
+    send ['poins_to', first] to lastCreated
+    send ['msg'] to first
+  end if
+end def
+\end{lstlisting}
+
+Código en \CSP:
+
+\begin{process}
+BuildingRing(self, m, first, lastCreated) = \\ \quad
+  \begin{block}
+  CommRecv.self?\langle n \rangle \then \\ \quad
+  \begin{block} 
+  \If (n > 1) \Then {} \\ \quad
+    \begin{block} 
+    CreateAsk?node.newNode!\langle m, Null \rangle \then \\
+    CommSend!lastCreated.\langle 'point_to', node.newNode \rangle \then \\
+    CommSend!send.\langle n - 1 \rangle \then \\
+    BuildingRing(self, m, first, node.newNode) 
+    \end{block} \\
+  \Else {} \\ \quad
+    \begin{block}
+    CommSend!lastCreated.\langle 'point_to', node.newNode \rangle \then \\
+    CommSend!first.\langle 'msg' \rangle \then \\
+    STOP
+    \end{block}
+  \end{block} 
+\end{block}
+\end{process}
 
 \section{Una semantica en CSP}
 
@@ -671,4 +826,24 @@ eq(\_, \_)\ =&\ false
 \end{align*}
 
 Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación exede el entero máximo el resultado de esta es $Overflow$.
+
+Antes de comenzar a enumerar las ecuaciones necesarias para las operaciones básicas utilizando actores, se enunciaran algunas estructuras necesarias para construir estas funcionalidades.
+
+\subsubsection{Cota en el buzón}
+
+Podríamos modelar un buzón que no tenga una cota superior, pero tendríamos problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón.
+
+\subsubsection{Valores primitivos}
+
+$VALUE$ es un tipo de datos que nos permite tener cierta flexibilidad al momento de enviar mensajes o crear actores. 
+
+\[
+  datatype\ VALUE = ACTOR.ActorID | INT.Int | BOOL.Bool | ATOM.Atoms | None
+\]
+
+Representaremos las cadenas de caracteres utilizando $Atoms$, estas cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación.
+
+\[
+  datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
+\]
 
