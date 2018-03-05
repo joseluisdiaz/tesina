@@ -1,7 +1,9 @@
 \documentclass[a4paper, 10pt]{book}
 % 
 \usepackage[spanish,activeacute,es-noindentfirst, es-noquoting, es-nodecimaldot]{babel}   
+\usepackage{subcaption}
 
+\usepackage{cleveref}
 \usepackage[utf8]{inputenc}
 \usepackage{cite}
 \usepackage{xcolor}
@@ -11,6 +13,8 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{multicol}
+
 \usepackage{csp}
 \usepackage{float}
 \usepackage{verbatim}
@@ -22,7 +26,7 @@
 
 \usepackage{lipsum}
 \usepackage{xspace}
-\usepackage[margin=1.55in]{geometry} %page size
+%\usepackage[margin=1.55in]{geometry} %page size
 
 \usepackage{setspace}
 \onehalfspacing
@@ -63,6 +67,8 @@
 \input{Capitulos/modelo} % Modelo en CSP
 
 \input{Capitulos/conclusiones} % Conclusiones 
+
+\appendix
 
 \input{Capitulos/codigo}
 

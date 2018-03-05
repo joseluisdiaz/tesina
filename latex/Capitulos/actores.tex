@@ -1,21 +1,22 @@
 \chapter{Actores}
 
-En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda se daran conceptos básicos para definir un lenguaje minimo de actores.
+En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda se darán conceptos básicos para definir un lenguaje mínimo de actores. En la tercera sección se definirá la sintaxis de un lenguaje mínimo de actores, para terminar con algunos ejemplos de este lenguaje.
 
 \section{Definiendo un Sistema de Actores}
 
-Los calculos en un sistema de actores son en respuesta a las comunicaciones enviadas al sistema. Estas comunicaciones están representadas como \textit{tareas}. El sistema de actores evoluciona a partir de estas tareas. Cuando una tarea es procesada puede generar nuevas tareas y nuevos actores. Todas las tareas que fueron proceadas y todos los actores que ya no son útiles pueden ser liberadas con algún tipo de ``Garabage Collector''. La idea de cuando un actor deja de ser útil será definida con mejor presición más adelante. Esto no afecta el comportamiento del sistema. La configuración de un sistema de actores viene dada por los actores que tiene, y el conjunto de tareas no proceadas.
+Los cálculos en un sistema de actores son en respuesta a las comunicaciones enviadas al sistema. Estas comunicaciones están representadas como \textit{trabajos}. El sistema de actores evoluciona a partir de estas trabajos. Cuando una trabajo es procesado puede generar nuevos trabajos y nuevos actores. Todos los trabajos que fueron procesados y todos los actores que ya no son útiles pueden ser liberadas con algún tipo de ``Garabage Collector''. La idea de cuando un actor deja de ser útil será definida con mejor precisión más adelante. Esto no afecta el comportamiento del sistema. La configuración de un sistema de actores viene dada por los actores que tiene, y el conjunto de trabajos no procesados. 
 
-\subsection{Tareas}
+\subsection{Trabajos}
 
-Podríamos decir que las \textit{tareas} que no son fueron procesadas son quienes mueven los calculos en un sistema de actores. Las \textit{tareas} estan respresentadas por pares:
+Podríamos decir que los \textit{Trabajos} que no son fueron procesadas son quienes mueven los cálculos en un sistema de actores. Los \textit{Trabajos} vienen representados por el par:
 
 \begin{enumerate}
 \item Un \textit{destino}, la dirección de buzón a la que será entregada la comunicación. Para almacenar todas las comunicaciones no procesadas.
 \item Una \textit{comunicación}, básicamente la información que estará disponible al actor que procesará la tarea.
 \end{enumerate}
 
-Se puede considerar que una \textit{comunicación} pueda ser una tupla de valores. Estos valores pueden ser direcciónes de buzón, enteros, cadenas de caracteres, etc. De ser requerido, se podría poner restricciones de tipos sobre estos valores. 
+Se puede considerar que una \textit{comunicación} pueda ser una lista de valores. Estos valores pueden ser direcciones de buzón, enteros, cadenas de caracteres, etc. De ser requerido, se podría poner restricciones de tipos sobre estos valores.
+
 El \textit{destino} debe ser una dirección de buzón válida, es decir, un actor antes de enviarle una comunicación a otro actor debe tener la dirección de buzón destino, y esta debe ser valida. Existen tres formas en la cual un actor $\alpha$, al aceptar una comunicación $\bar{k}$, puede conocer la dirección de buzón de otro actor. Las formas son las siguientes:
 
 \begin{itemize}
@@ -24,25 +25,35 @@ El \textit{destino} debe ser una dirección de buzón válida, es decir, un acto
  \item El \textit{destino} es una dirección de buzón creada como resultado de aceptar la comunicación $\bar{k}$.
 \end{itemize}
 
-En realidad Agha\ [chap.~3,p.~35]\cite{Agha:1986:AMC:7929} lo define como una 3-tupla incluye un \textit{tag} para diferenciar una taréa de la otra en el sistema. Define que un \textit{tag} puede tener una representación arbitraria. Como los \textit{tag} son únicos en todo el sistema, hace uso de esta propiedad para construir la direcciónes de buzón de los nuevos actores creados esto puede verse en \cite[chap.~5,p.~104]{Agha:1986:AMC:7929}. En el modelo que se presentará esto no es necesario.
+La vida de un trabajo se podría resumir como:
 
+\begin{itemize}
+ \item Un actor crea un trabajo.
+ \item El trabajo entra en una cola de trabajos pendientes.
+ \item El actor destino procesa la comunicación asociada con ese trabajo.
+\end{itemize}
+
+La cola de trabajos pendientes no es más que una estructura de datos de tipo cola. Esta guarda todas las tareas creadas que aún no fueron procesadas. Es decir, cuando un actor crea una tarea con un actor destino, al mismo tiempo otros actores podrían estar haciendo lo mismo. Esta estructura intermedia tiene que tener la capacidad para guardar todas estas tareas hasta ser procesadas por el actor destino.
+
+En realidad Agha\ [chap.~3,p.~35]\cite{Agha:1986:AMC:7929} lo define como una 3-tupla incluye un \textit{tag} para diferenciar una tarea de la otra en el sistema. Define que un \textit{tag} puede tener una representación arbitraria. Como los \textit{tag} son únicos en todo el sistema, hace uso de esta propiedad para construir la direcciones de buzón de los nuevos actores creados esto puede verse en \cite[chap.~5,p.~104]{Agha:1986:AMC:7929}. 
+
+% En el modelo que se presentará esto no es necesario.
 % Otro de los argumentos sobre incluir este \textit{tag} esta relacionado con tener trazabilidad, como diferenciar dos tareas que tienen el mismo destino y la misma comunicación. En este trabajo podriamos incluir un numero aleatorio para permitir tener esta trazabilidad si quisieramos diferenciar estas dos tareas \textit{destino} y la misma \textit{comunicación}, pero se decidió dejarlo fuera.
 
 \subsection{El Comportamiento de un actor}
 
-Como vimos en la sección anterior toda computación en el modelo de actores es resultado de procesar comunicaciones. Un actor acepta una comunicación cuando procesa una tarea que contiene esa comunicación. Un actor solo puede procesar comunicaciones que estan dirigidas a su dirección de buzón. Como resultado de aceptar una comunicación, un actor puede, crear nuevas comunicaciones, crear nuevos actores y debe definir su comportamiento de reemplazo.
+Como vimos en la sección anterior toda computación en el modelo de actores es resultado de procesar comunicaciones. Un actor acepta una comunicación cuando procesa un trabajo que contiene esa comunicación. Un actor solo puede procesar comunicaciones que están dirigidas a su dirección de buzón. Como resultado de aceptar una comunicación, un actor puede, crear nuevas comunicaciones, crear nuevos actores y debe definir su comportamiento de reemplazo.
 
-Para un actor, el orden de llegada de las comunicaciones enviadas a ese actor debe ser lineal. Esto quiere decir que el sistema de buzones debería tener algún mecanismo de \textit{buffer} para las comunicaciones que llegen casi al mismo tiempo. El sistema de buzónes es quien está encargado de poner las comunicaciones en el \textit{buzón} correspondiende al actor destino. 
-% Si queremos tratar cuestiones relacionadas con el orden de llegada de las comunicaciones, como \textit{la garantía de entrega} de una comunicación tenemos que considerar el \textit{buzón} explícitamente.
+Para un actor, el orden de llegada de las comunicaciones enviadas a ese actor debe ser lineal. Esto quiere decir el buzón debería tener algún mecanismo de \textit{buffer} para las comunicaciones que lleguen casi al mismo tiempo. 
 
 Un actor puede describirse especificando:
 
 \begin{itemize}
- \item Su dirección de buzón, a la que le corresponde un \textit{buzón} lo suficientemente grande.
- \item Su \textit{comportamiento}, que es una función de la comunicación aceptada
+ \item Su dirección de buzón, a la que le corresponde un \textit{buzón} lo suficientemente grande. Para almacenar las comunicaciones aún no procesadas.
+ \item Su \textit{comportamiento}, que es una función. Tiene la comunicación que está siendo procesada como entrada. Como salida tiene nuevos actores, nuevos trabajos y su nuevo comportamiento de reemplazo.
 \end{itemize}
 
-Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones y se colocan en orden, y una maquina del actor que apunta a una celda particular de este \textit{buzón}. Esto se ve representado en la figura \ref{fig:mailqueue}.
+Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones, y un proceso que ejecutará su comportamiento. Este apunta a una celda particular de este \textit{buzón}. Se ve puede ver representado en la figura \ref{fig:mailqueue}.
 
 \begin{figure}[H]
 \begin{tikzpicture}
@@ -69,11 +80,11 @@ Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunic
 \node at (5.25,-1.4) [circle,draw] (x) {$X$};
 
 \end{tikzpicture}
-\caption{Representación de un actor. La maquina del actor tiena la información de su comportamiento. Acepta la comunicación actual y no puede procesar ningún otra comunicación.}
+\caption{Representación de un actor. El proceso tiene la información de su comportamiento. Acepta la comunicación actual y no puede procesar ningún otra comunicación.}
 \label{fig:mailqueue}
 \end{figure}
 
-Cuando la maquina del actores $X_n$ acepta la $(n)-esima$ comunicacion desde su buzón, crea la maquina del actor $X_{n+1}$ está ejecutará el comportamiento de reemplazo del actor. Esta nueva maquina apunta a la siguiente celda en el buzón en donde estará guardada la comunicacion $(n+1)-esima$. Esto puede verse en la figura \ref{fig:actortransition}
+Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente crea el proceso actor $X_{n+1}$ el cual ejecutará el comportamiento de reemplazo del actor. Este nuevo proceso apunta a la siguiente celda en el buzón en donde estará guardada la comunicación $(n+1)-esima$. Esto puede verse en la figura \ref{fig:actortransition}
 
 \begin{figure}[H]
 \begin{tikzpicture}
@@ -110,7 +121,6 @@ Cuando la maquina del actores $X_n$ acepta la $(n)-esima$ comunicacion desde su 
 
 \draw[->, thick] (XN) to[bend right] (4, -5);
 
-
 \node at (4.25,-7) [circle,draw] (Y) {$Y$};
 \draw[->] (Y) -- (4.25, -6);
 \node at (4.70, -4.75) {$1\quad\ldots$};
@@ -132,39 +142,96 @@ Cuando la maquina del actores $X_n$ acepta la $(n)-esima$ comunicacion desde su 
 \label{fig:actortransition}
 \end{figure}
 
+Las dos procesos $X_n$ y $X_{n+1}$ no interfieren entre sí. $X_n$ solo procesa la $(n)-esima$ comunicación. Exceptuando el caso en el cual se envíe una comunicación a si mismo. Cada uno de estos procesos crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que el proceso $X_n$ cree el proceso $X_{n+1}$, $X_n$ podría haber creado otros actores u otros trabajos. Es posible incluso, que $X_n$ este creando actores o trabajos al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicación, ni tampoco especificará ninguno otro comportamiento de reemplazo.
 
-Las dos máquinas de actores $X_n$ y $X_{n+1}$ no interfieren entre sí. $X_n$ solo procesa la $(n)-esima$ comunicación, salvando el caso en el cual se envie una comunicación a si mismo. Cada una de estas maquinas crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que la maquina $X_n$ cree la maquina $X_{n+1}$, $X_n$ podría haber creado otros actores u otras tareas. Es posible incluso, que $X_n$ este creando actores o tareas al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicacion, ni tampoco espeficiará ninguno otro comportamiento de reemplazo.
+Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos. El orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de los procesos definen un orden total entre ellos. 
 
-Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos, el orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de las máquinas del actor con cualquier dirección de buzón definen un orden total entre ellas. Esto se puede ver en la figura \ref{fig:actortransition}.
+Alguna implementación puede esperar a que el proceso anterior termine, para construir el nuevo y eliminar el viejo. Sin embargo, retrasar el reemplazo hasta que el proceso pueda ser reemplazado no es un requisito. Si hay suficientes recursos disponibles, la computación en un sistema de actores se puede acelerar simplemente aceptando la próxima comunicación ni bien su comportamiento de reemplazo esta establecido.
 
-Algunas implementación puede esperar a que la maquina de actores anterior termine, para construir la nueva y eliminar la vieja. Sin embargo, retrasar el reemplazo de la construcción hasta que la máquina vieja pueda ser reemplazada no es un requisito. Este si sería un requisito en el caso de una máquina secuencial. Si hay suficientes recursos disponibles, la computación en un sistema de actores se puede acelerar, simplemente aceptando la próxima comunicación ni bien su comportamiento de reemplazo esta establecido.
+\begin{figure}[H]
+\centering
 
-% \begin{figure}[H]
-% \begin{tikzpicture}
-% 
-% \node at (0,1) (A1) {Tareas pendientes};
-% \node at (0,0) (A2) [circle,draw];
-% \node at (0,-6) (A3) [circle,draw];
-% \node at (0,-71) (A4) {x};
-% 
-% \node at (-1.5,-4) (Tx1) {a1};
-% \node at (-3,-2) (Tx2) {destino};
-% \node at (-3,2) (Tx3) {};
-% 
-% 
-% \node at (1.5,-2) (Ax1) {a2};
-% \node at (2,-1) (Ax2) {b2};
-% 
-% 
-% \end{tikzpicture}
-% \caption{xxx}
-% \label{fig:taskprocesing}
-% \end{figure}
+\tikzstyle{circulo}=[circle,draw=black, fill=black, inner sep=0pt,minimum size=3pt]
+\tikzstyle{new}=[-latex, draw, dashed]
+\tikzstyle{msg}=[-latex, draw]
+
+\begin{subfigure}{.5\textwidth}
+\centering
+\begin{tikzpicture}[node distance=2cm]
+
+\node[] (A) {$Actor_1$};
+\node[circulo, below of=A] (A1) {};
+\node[below of=A1] (A2) {};
+\draw (A) -- (A2);
+
+\node[below of=A, right of=A, yshift=1cm] (B) {$Actor_2$};
+\node[circulo, below of=A, right of=A] (B1) {};
+\node[below of=B1] (B2) {};
+\draw (B1) -- (B2);
+
+
+%\path[msg] (-1/2,-1/2) to [bend right] node[font=\small, left] {$[42]$}  (A1) ;
+
+%\path[new] (A1) to [bend left] node[font=\small, above] {$[7]$} (B1) ;
+%\path[new] (A1) to [bend right] node[font=\small, below, pos=0.6] {$[8,9]$} (C1) ;
+
+\path[msg] (-1/2,-1/2) to [bend right] (A1) ;
+
+\path[new] (A1) to [bend left] (B1) ;
+
+
+\end{tikzpicture}
+
+\caption{  }
+\label{fig:actores:crecion:a}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+
+\centering
+\begin{tikzpicture}[node distance=2cm]
+
+\tikzstyle{circulo}=[circle,draw=black, fill=black, inner sep=0pt,minimum size=3pt]
+
+\node[] (A) {$Actor_1$};
+\node[circulo, below of=A] (A1) {};
+\node[below of=A1] (A2) {};
+\draw (A) -- (A2);
+
+\node[right of=A] (B) {$Actor_2$};
+\node[circulo, below of=A, right of=A] (B1) {};
+\node[below of=B1] (B2) {};
+\draw (B) -- (B2);
+
+\node[right of=B1, yshift=1cm] (C) {$Actor_3$};
+\node[circulo, right of=B1] (C1) {};
+\node[below of=C1] (C2) {};
+\draw (C1) -- (C2);
+
+%\path[msg] (-1/2,-1/2) to [bend right] node[font=\small, left] {$[43]$}  (A1) ;
+
+%\path[msg] (A1) to [bend left] node[font=\small, above] {$[1,2]$} (B1) ;
+%\path[new] (B1) to [bend left] node[font=\small, above] {$[3,4]$} (C1) ;
+
+\path[msg] (-1/2,-1/2) to [bend right] (A1) ;
+\path[msg] (A1) to [bend left] (B1) ;
+\path[new] (B1) to [bend left] (C1) ;
+
+\end{tikzpicture}
+
+\label{fig:actores:crecion:b}
+\caption{}
+\end{subfigure}
+
+\label{fig:actores:crecion}
+\caption{Las lineas verticales indican el paso del tiempo, las de punto indican creación de actores y las otras flechas envío de mensaje.}
+\end{figure}
+
+Como se puede ver en la Figura\ref{fig:actores:crecion} \subref{fig:actores:crecion:a}, el actor $Actor_1$ recibe una comunicación con la lista. Al procesar esta comunicación tiene como resultado, crea el actor $Actor_2$. En la Figura\ref{fig:actores:crecion} \subref{fig:actores:crecion:b} se puede ver un ejemplo similar donde $Actor_1$ recibe una comunicación, como resultado envía una comunicación a $Actor_2$ y este último crea $Actor_3$.
 
 
 \section{Programando con actores}
 
-En esta sección se definiran las construcciones necesarias para definir un nucleo de un lenguaje minimo de actores. A pesar de su simplicidad, el este lenguaje es extremadamente poderoso, captura varias características importantes de la computación dentro del paradigma de actores: La posibilidad de ditribuir una computación entre elementos concurrentes, la unificación de información procedural y declarativa, y transparencia referencial de los identificadores usados en un programa.
+En esta sección se definirán las construcciones necesarias para definir un núcleo de un lenguaje mínimo de actores. A pesar de su simplicidad, este lenguaje es extremadamente poderoso, captura varias características importantes de la computación dentro del paradigma de actores: la posibilidad de distribuir una computación entre elementos concurrentes, la unificación de información procedural y declarativa, y transparencia referencial de los identificadores usados en un programa.
 
 \subsection{Las construcciones básicas}
 
@@ -176,19 +243,16 @@ En la configuración inicial de un sistema actores, necesitamos crear algunos ac
  \item comandos \textit{send} para crear nuevas tareas.
 \end{itemize}
 
-
 \subsubsection*{Definiendo comportamientos}\label{actores:comportamientos}
-Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada uno de los comportamientos de reemplazo también tendrá un comportamiento de reemplazo, para especificar el comportamiento de un actor, necesitamos una definición potencialmente infinita. Para esto acudimos al uso de la recursión. Básicamente, se parametriza cada comportamiento mediante algún identificador. Este será una variable libre en la definición del comportamiento. 
+Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada uno de los comportamientos de reemplazo también tendrá un comportamiento de reemplazo, para especificar el comportamiento de un actor, necesitamos una definición potencialmente infinita. Para esto acudimos al uso de la reclusión. Básicamente, está parametrizado cada comportamiento mediante algún identificador. Este será una variable libre en la definición del comportamiento. 
 
 Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de comportamiento de una cuenta bancaria, se tiene que dar un valor especifico para esta cuenta.
 
-También hay un número infinito de valores posibles para las comunicaiones entrantes. En este caso tambien se expresará como una funcion de la comunicación entrante.
-
-Estas dos listas de identificadores son utilizadas en la definición de un comportamiento, la primer lista corresponde a los parámetros que son dados al momento de la creación de un actores. Esta lista es llamada \textit{acquaintance-list}. La segunda lista, que se obtienen cuando una comunicación es aceptada, se llama \textit{communication-list}. Cuando un actor es creado y se acepta una comunicación se ejecutan los comandos en el \textit{entorno} definido por los parametros enlazados a los identificadores.
+Podemos concluir que tenemos dos listas de identificadores que son utilizadas en la definición de un comportamiento. La primer lista corresponde a los parámetros que son dados al momento de la creación de un actores. Esta lista es llamada \textit{acquaintance-list}. La segunda lista, que se obtiene cuando una comunicación es aceptada, se llama \textit{communication-list}. Cuando un actor es creado y se acepta una comunicación se ejecutan los comandos en el \textit{entorno} definido por los parámetros enlazados a los identificadores.
 
 \subsubsection*{Creando actores}
 
-Los actores son creados usando expresiones de tipo \textit{new}, y esta devuelve una nueva direción de buzón del actor recien creado. La dirección de buzón tiene que estar asignada a algún identificador de caso contrario no tiene ningún sentido, ya que no puede ser utilizada.
+Los actores son creados usando expresiones de tipo \textit{new}, que devuelve una nueva dirección de buzón del actor recién creado. La dirección de buzón tiene que estar asignada a algún identificador de caso contrario no tiene ningún sentido, ya que no puede ser utilizada.
 
 La sintaxis de las expresiones de tipo \textit{new} es la siguiente:
 
@@ -196,47 +260,53 @@ La sintaxis de las expresiones de tipo \textit{new} es la siguiente:
    \langle expresi\acute{o}n\ new \rangle :== \textbf{new}\ \langle nombre\ comportamiento \rangle (expr, \{expr\}*)  
 \]
 
-$nombre\ comportamiento$ hace referencia a un identificador vinculado con un comportamiento especifio, declarado utilizando una \textit{definición de comportamiento}. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciado con los valores de las expresiones entre paréntesis. Utilizando el lexico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El valor de $expresion\ new$ es el valor de la dirección del buzón y está vinculado con un identificador. Este identificador puede ser destino de nuevas comunicaciones. 
+$nombre\ comportamiento$ hace referencia a un identificador vinculado con un comportamiento especifico, declarado utilizando una \textit{definición de comportamiento}. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciados con los valores de las expresiones entre paréntesis. Utilizando el léxico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El valor de $expresion\ new$ es el valor de la dirección del buzón y está vinculado con un identificador. Este identificador puede ser destino de nuevas comunicaciones. 
 
-Los actores son creados de manera concurrente, estos pueden cononcer entre si las dirección de buzón. Esta es una forma de definición mutuamente recursiva que es perfectamente valida en el modelo de actores. En todo actor recientemente creado lo único que el actor que esta creando un nuevo sabe de este es su dirección de buzón, es decir, no tiene ningún acceso a la estructura interna del actor creado.
+Los actores son creados de manera concurrente, estos pueden conocer entre si las dirección de buzón. Esta es una forma de definición mutuamente recursiva que es perfectamente valida en el modelo de actores. En todo actor recientemente creado lo único que el actor que esta creando un nuevo sabe de este es su dirección de buzón, es decir, no tiene ningún acceso a la estructura interna del actor creado.
 
 \subsubsection*{Creando tareas}
 
-Una tarea es creada especificando un actor destino y una comunicacion. Las comunicaciones se pueden enviar a actores que ya fueron creados o actores creados por quien está enviando la comunicación. El destino es la dirección de buzón del actor al que le queremos enviar la comunicación. La sintaxis de este comando podría ser la siguiente:
+Una tarea es creada especificando un actor destino y una comunicación. Las comunicaciones se pueden enviar a actores que ya fueron creados o actores creados por quien está enviando la comunicación. El destino es la dirección de buzón del actor al que le queremos enviar la comunicación. La sintaxis de este comando podría ser la siguiente:
 
 \[
   \langle comando\ send \rangle :== \textbf{send}\ \langle comunicaci\acute{o}n \rangle\ \textbf{to}\ \langle destino \rangle
 \]
 
-Donde $comunicaci\acute{o}n$ es una lista de expresiones, que puede ser vacia. Las expresiones pueden ser indentificadores, constantes. Las expresiones son evaluadas y se envian los valores en la comunicacion. Destino es un identificador que tiene asociado una direción de buzón de un actor.
+Donde $comunicaci\acute{o}n$ es una lista de expresiones, que puede ser vacía. Las expresiones pueden ser identificadores, constantes. Las expresiones son evaluadas y se envían los valores en la comunicación. Destino es un identificador que tiene asociado una dirección de buzón de un actor.
 
 \subsubsection*{Comandos}
 
-El proposito de los comandos es especificar las acciones que pueden ocurrir. Se mostraron los comandos para crear nuevos actores y para crear nuevas tareas. Tambien necesitamos un comando para definir el comportamiento de reemplazo. La sintaxis para este comando tiene la forma:
+El propósito de los comandos es especificar las acciones que pueden ocurrir. Se mostraron los comandos para crear nuevos actores y para crear nuevas tareas. También necesitamos un comando para definir el comportamiento de reemplazo. La sintaxis para este comando tiene la forma:
 
 \[
  \texttt{become}\ \langle expresi\acute{o}n \rangle
 \]
 
-expresión debería es una dirección de buzón, entonces este actor reenvia todos los mensajes a el nuevo buzón. Tambien se puede utilizar una similar a `new`, pero sin crear ningún nuevo buzón. Esto equivale a crear un nuevo actor, pero sin crear un nuevo buzón.
+$expresi\acute{o}n$ debería es una dirección de buzón, entonces este actor reenvía todos los mensajes a el nuevo buzón. También se puede utilizar el identificador de un comportamiento, especificando los parámetros \textit{acquaiantence-list}. Por ejemplo:
 
+\begin{align*}
+ \texttt{become}&\ \langle link \rangle \\
+ \texttt{become}&\ \langle Comp(1,2,3) \rangle
+\end{align*}
 
-\section{Lenguaje de Actor Mínimo}
+Donde $link$ es alguna dirección de buzón, y $Comp(1,2,3)$ hace referencia al comportamiento $Comp$, y su \textit{acquaiantence-list} son los valores $1$, $2$ y $3$.
+
+\section{Lenguaje de Actor Mínimo}\label{actores:sal}
 
 En este capítulo se explorará un lenguaje que implementa los conceptos básicos vistos en la capitulo anterior, tales como comportamientos, creación de nuevos actores, creación de nuevas comunicaciones y otras construcciones. El lenguaje \SAL fue desarrollado con intensiones pedagógicas y tiene una sintaxis heredada de Algol. 
 
-Se utilizará la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utilizá el símbolo \textbf{*} representa una o ninguna ocurrencias de un termino. Tambien se utilizará \textbf{+} para representar que haya al menos una ocurrencia.
+Se utilizará la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utilizá el símbolo \textbf{*} representa una o ninguna ocurrencias de un termino. También se utilizará \textbf{+} para representar que haya al menos una ocurrencia.
 
 En la última seccione se mostraran dos ejemplos de como se pueden utilizar el lenguaje.
 
-\subsection{Expresiones}
+\subsection{Expresiones}\label{actores:exp}
 Existen cuatro tipos primitivos, booleanos, enteros, cadenas, y dirección del buzón. Las operaciones posibles entre los booleanos son \textbf{or}, \textbf{and}, \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*}, \textbf{/}. Las cadenas son constantes. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo primitivo no tiene ningún operador asociado.
 
 La gramática de las expresiones booleanas es la siguiente:
 
 \begin{grammar}
 
-<bexp> ::= <bterm> `or' <bterm> | <bterm> `and' <bterm> 
+<bexp> ::= <bterm> `or' <bterm> | <bterm> `and' <bterm> | <exp> = <exp>
   
 <bterm> ::= <bool> | `not' <bterm> | `(' <bexp> `)' 
 
@@ -260,13 +330,13 @@ La gramática de los enteros es la siguiente:
 La gramática para las cadenas es la siguiente:
 
 \begin{grammar}
- <sexp> ::= `"' <caracter>+ `"'
+ <sexp> ::= `"' <carácter>+ `"'
 \end{grammar}
 
 Donde:
 
 \begin{description}
- \item \textit{caracter} es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula
+ \item \textit{carácter} es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula
 \end{description}
 
 La gramática de todas las expresiones:
@@ -277,7 +347,7 @@ La gramática de todas las expresiones:
 
 La gramática de $mexp$ es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula. 
 
-\subsection{Definición de comandos}
+\subsection{Definición de comandos}\label{actores:cmd}
 
 % agregar referencia a la seccion de comandos
 Los comandos son las acciones que permite a \SAL crear nuevos actores, enviar mensajes y definir un nuevo comportamiento. Estas describen en esencia lo que un actor puede hacer dentro de un comportamiento.
@@ -285,12 +355,13 @@ Los comandos son las acciones que permite a \SAL crear nuevos actores, enviar me
 La gramática de los comandos en SAL es la siguiente:
 
 \begin{grammar}
-  <command> ::= `send' $exp_1, exp_2, \ldots\ , exp_n$ `to' <actor>  
-  \alt `become' $B(exp_1, exp_2, ..., exp_n)$
-  \alt `let' $mexp_1$ = `new' $B_1(exp_1, exp_2, ..., exp_{1n})$, \\
-   \ldots\ \ $mexp_k$ = `new' $B_k(exp_1, exp_2, ..., exp_{kn})$   \\
+  <command> ::= `send' $exp_1, exp_2, \ldots, exp_n$ `to' <actor>  
+  \alt `become' $B(exp_1, exp_2, \ldots, exp_n)$
+  \alt `let' $mexp_1$ = `new' $B_1(exp_1, exp_2, \ldots, exp_{1n})$, \\
+   \ldots\ \ $mexp_k$ = `new' $B_k(exp_1, exp_2, \ldots, exp_{kn})$   \\
   `in' <command> 
   \alt `if` <bexp> `then' <command> `else' <command> `end if'
+  \alt <command> ; <command>
 \end{grammar}
 
 donde:
@@ -303,18 +374,17 @@ donde:
 \item [if-then-else], después de evaluar la expresión booleana, si es verdadera
   ejecuta lo que esta a continuación de \textbf{then}, en caso contrario lo que está a
   continuación de \textbf{else}. Funciona como cualquier condicional.
+\item [composición] Dos comandos que se ejecutan de manera secuencial.
+
 \end{description}
 
-La ejecución de los comandos ocurre cuando el actor recibe un mensaje, y todos
-ellos ocurren concurrentemente, la composición no es secuencial.
-
-\subsection{Definición de comportamientos}
+\subsection{Definición de comportamientos}\label{actores:beha}
 
 En esta sección se mostrará la sintaxis para definir comportamientos. Como se vio en el capitulo anterior, la definición de comportamientos tiene asociada dos listas de identificadores, \textit{acquaiantence-list} y \textit{communication-list}. 
 
 En el caso de la lista de identificadores \textit{communication-list}, esta asume que todas las comunicaciones serán una secuencia de identificadores. Supongamos el siguiente caso: un comportamiento que modela una cuenta bancaria. Resulta útil que está lista de identificadores esté dada en función de la operación que se vaya a ejecutar, por ejemplo, si la operación fuera \textit{'extracción'} solamente necesitaríamos un identificador \textit{monto} el cual tendría el valor de la extracción en cuestión. En el caso que la operación fuera \textit{'balance'} esta no requiere identificadores. 
 
-Se presenta a continuación una gramática que contempla el caso en el que solamente necesitemos una lista de identificadores (veremos un ejemplo mas adelante en el ejemplo del calculo del factorial). También se presenta una forma de bifurcarse ante diferentes ramas dependiendo del contenido de la comunicación (el ejemplo que veremos de la una pila hace uso de esto).
+Se presenta a continuación una gramática que contempla el caso en el que solamente necesitemos una lista de identificadores (veremos un ejemplo mas adelante en el ejemplo del calculo del factorial). También se presenta una forma de bifurcarse ante diferentes ramas dependiendo del contenido de la comunicación (el ejemplo que veremos de la una pila hace uso de esto). La gramática de los comportamientos es la siguiente:
 
 \begin{grammar}
 <BDef> :== `def' <beh name> `(' <acquaiantence-list> `)' <body> `end def'
@@ -350,7 +420,7 @@ Donde:
 
 Podemos pensar que los comportamientos son una función que toma dos listas de parámetros en distintos momentos, uno cuando es inicializada o es invocada desde el cuerpo de un comando utilizando el comando $become$ y el otro conjunto de parámetros los recibe en el momento de procesar un mensaje.
 
-Ambas listas, \textit{comunication-list} y \textit{acquaiantence-list}, contienen todos los identificadores libres que están en \textit{command}. Existe un identificador especial \textit{self} que puede ser utilizado para hacer referencia al buzón del actor que está se definiendo. 
+Ambas listas, \textit{comunication-list} y \textit{acquaiantence-list}, contienen todos los identificadores libres que están en \textit{command}. En el caso de \textit{match-list} los identificadores libres tienen alcance a los \textit{commands} asociado a cada \textit{case}. Existe un identificador especial \textit{self} que puede ser utilizado para hacer referencia al buzón del actor que está se definiendo. 
 
 La ejecución de \textit{command} deberá contar a lo sumo con un solo comando \textit{become}, esta propiedad tiene que ser garantizada de manera estática, de no existir ningún comando \textit{become}, el actor asumirá un comportamiento de tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 
@@ -430,6 +500,7 @@ Cuando el primer elemento de la comunicación es cero, hace que se le envíe al 
 Recordamos que $c$ había pedido el calculo del factorial $3$ en primer lugar.
 
 \begin{figure}[H]
+\centering
 \begin{tikzpicture}
 
 \draw[-latex] (6,7.3) to (8,6.5);
@@ -488,7 +559,7 @@ Recordamos que $c$ había pedido el calculo del factorial $3$ en primer lugar.
 
 \end{figure}
 
-\subsection{Una pila usando actores}
+\subsection{Una pila usando actores}\label{sal:pila}
 
 Otro ejemplo que podemos encontrar en \cite{Agha:1986:AMC:7929} es el de una pila, que está representada con una lista enlazada. Se utiliza la dirección de un buzón, como un puntero a un nodo de la esta lista. 
 
@@ -497,19 +568,19 @@ Tiene dos operaciones básicas apilar ($push$), que coloca un nodo en la pila, y
 \begin{lstlisting}[language=sal, style=simple]
 def node(content, link)[operation, customer, newcontent]
   if operation = pop then
-    send content to customer
-    become link
+    send content to customer;
+    become link;
   enf if
   if operation = push then
     let P = new node(content, link)
-      in become node(newcontent, P);
+      in become node(newcontent, P)
   end if
 end def
 
 def Main() 
   let stack = new node(10, Nil)
-    in send [push, Nil, 20] to stack 
-       send [push, Nil, 30] to stack
+    in send [push, Nil, 20] to stack;
+       send [push, Nil, 30] to stack;
   end
 end
 \end{lstlisting}

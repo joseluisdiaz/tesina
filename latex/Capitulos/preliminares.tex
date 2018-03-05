@@ -4,17 +4,47 @@
 
 \subsection{Paralelismo en CSP}
 
+Para iniciar $n$ procesos de tipo $P$ escribimos los siguientes procesos en \CSP:
+
+\begin{align*}
+P =& \texttt{comportmiento-de-P} \then STOP \\
+P_1 =& Iniciar_1 \then P \\
+P_2 =& Iniciar_2 \then P \\
+&\ldots \\
+P_n =& Iniciar_n \then P \\
+\end{align*}
+
+Como vimos en el capitulo anterior, \CSP es sincrónico, mientras qué, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si queremos transmitir entre dos procesos información, en \CSP lo escribimos de la siguiente forma:
+
+\begin{align*}
+P_1 = canal!1 \then& STOP \\
+P_2 = canal?x \then& STOP \\
+SYSTEM = P_1 \Parallel& P_2 \\
+\end{align*}
+
+Donde $P1$ le envía un uno a $P2$. Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, la escribimos de la siguiente forma:
+
+\begin{align*}
+BUFFER =& enviar?x \then recibir!x \then BUFFER_1 \\
+P_1 =& enviar!1 \then STOP \\
+P_2 =& recibir?x \then STOP \\
+SYSTEM =& ( P_1 \Parallel P_2 ) \Parallel BUFFER \\
+\end{align*}
+
+Con estas estructuras, tendríamos los elementos básicos para poder crear un proceso y enviar una comunicación de manera asicronica. Se puede ver esto en el siguiente ejemplo:
+
+\begin{align*}
+BUFFER_1 =& enviar.1?x \then recibir.1!x \then BUFFER\\
+BUFFER_2 =& enviar.2?x \then recibir.2!x \then BUFFER\\
+SUMA =& inicia_{suma} \then recibir.1?x \then enviar.2?(x + 1) \then STOP \\
+CLIENTE =& inicia_{suma}\then enviar.1!2 \then recibir.2?x \then STOP \\
+BUFFER =& BUFFER_1 \Parallel BUFFER_2 \\
+SYSTEM =& (SUMA \Parallel CLIENTE) \Parallel (BUFFER)\\t
+\end{align*}
+
+En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. Este envío es asíncrono por $BUFFER$. Cuando $SUMA$ recibe este dos, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno.
+
+Este simple ejemplo expone algunos de los problemas que se resolverán en este capitulo, tales como: enviar una comunicación a un proceso especifico, crear varios tipos de procesos.
+
 \section{CSPm}
-
-\begin{figure}[H] \label{ActorID}
-\[
-datatype\ ActorID = ACTOR_1.\{1, 2, 3\} | ACTOR_2.\{1, 2\} | Main.\{1\} \\
-\\
-\{| ActorID |\} \equiv \{ACTOR_1.1, ACTOR_1.2, ACTOR_2.3, ACTOR_2.1,  ACTOR_2.2, MAIN.1 \} \\
-\\
-\{| ACTOR_2 |\} \equiv \{ ACTOR_2.1, ACTOR_2.2 \}
-\]
-\caption{Ejemplo de notación} 
-\end{figure}
-
 
