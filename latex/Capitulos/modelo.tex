@@ -21,7 +21,7 @@ Esta construcción nombra cada uno de los actores que van ser utilizados, tambi�
 
 Ya que no existe en \CSP el concepto de instancia es necesario contar con todos los procesos que van a ser parte de la red definidos desde el principio, el valor que está entre llaves corresponde a la cantidad de actores de este tipo que van a ser necesarios. 
 
-\subsection{Buzón} 
+\subsection{Buzón}\label{modelo:buzon}
 
 Recodemos que la naturaleza de \CSP es sincrónica y los actores no lo son. Para esto necesitamos desacoplar el envío de mensajes de la recepción. Utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
 
@@ -556,7 +556,7 @@ Para resolver este problema, se plantan tres comportamientos:
 
 \subsubsection*{Comportamiento de Node}
 
-\textbf{Node} reacciona ente dos comunicación $'point_to'$ y $'msg'$. En el caso del primero de las comunicación, este cambia el nodo que tiene como siguiente su estado.
+\textbf{Node} reacciona ente dos comunicación $'point\_to'$ y $'msg'$. En el caso del primero de las comunicación, este cambia el nodo que tiene como siguiente su estado.
 Cuando procesa un mensaje de tipo $['msg']$, siempre reenvía al siguiente nodo en la lista la comunicación $['msg']$. Si el valor del contador $m$ es mayor que cero, decrementando el contador en uno y sigue con la ejecución. Si es cero, termina la ejecución en ese momento.
 
 Código en \SAL para \textbf{node}:
@@ -566,11 +566,11 @@ def Node(m, next) match
   case ['point_to', newNext]:
     become Node(m, newNext)
   case ['msg']:
-    if ( m > 0 ) then
+    if ( m = 0 ) then
       send ['msg'] to next
-      become Node(m - 1, next)
     else
       send ['msg'] to next
+      become Node(m - 1, next)
     end if
 end def
 \end{lstlisting}
@@ -580,7 +580,7 @@ Código en \CSP:
 \begin{process}
 Node(self, m, next) = \\ \quad
   \begin{block}
-  CommRecv.self?\langle 'point_to', newNext \rangle \then \\
+  CommRecv.self?\langle 'point\_to', newNext \rangle \then \\
   Node(self, m, newNext)
   \end{block} \\
 
@@ -592,12 +592,12 @@ Node(self, m, next) = \\ \quad
     \If (m == 0) \Then {} \\ \quad
       \begin{block} 
       CommSend!next.\langle 'msg' \rangle \then \\
-      Node(self, m - 1, next) 
+      STOP
       \end{block} \\
     \Else {} \\ \quad
       \begin{block}
       CommSend!next.\langle 'msg' \rangle \then \\
-      STOP
+      Node(self, m - 1, next) 
       \end{block}
     \end{block}
   \end{block} 
@@ -620,9 +620,9 @@ Código en \SAL:
 \begin{lstlisting}[language=sal, style=simple]
 def Ring()[n, m]
   let first = new Node(m, nil)
-      builder = new BuildingRing(m, first, first) 
+      builder = new BuildingRing(first, first) 
   in
-    send [n - 1] to builder
+    send [n - 1, m] to builder
     become Ring() 
 end def
 \end{lstlisting}
@@ -634,8 +634,8 @@ Ring(self) = \\ \quad
   \begin{block}
   CommRecv.self?\langle n, m \rangle \then \\
   CreateAsk?node.first!\langle m, Null \rangle \then \\
-  CreateAsk?buildingRing.builder!\langle m, node.first, node.first \rangle \then \\
-  CommSend.buildingRing.builder!\langle n - 1\rangle \then \\
+  CreateAsk?buildingRing.builder!\langle node.first, node.first \rangle \then \\
+  CommSend.buildingRing.builder!\langle n - 1, m\rangle \then \\
   Ring(self)
   \end{block}
 \end{process}
@@ -649,15 +649,15 @@ Si el contador $n$ era uno, le envía un mensaje a él nodo creado en la iteraci
 Código en \SAL:
 
 \begin{lstlisting}[language=sal, style=simple]
-def BuildingRing(m, first, lastCreated)[n]
-  if (n > 1) then
+def BuildingRing(m, first, lastCreated)[n, m]
+  if (n == 0) then
+    send ['poins_to', first] to lastCreated,
+    send ['msg'] to first
+  else
     let newNode = new Node(m, null) in
       send ['point_to', newNode] to lastCreated
-      send [ n - 1 ] to self
-      become BuildingRing(m, first, newNode)
-  else
-    send ['poins_to', first] to lastCreated
-    send ['msg'] to first
+      send [ n - 1, m ] to self
+      become BuildingRing(first, newNode)
   end if
 end def
 \end{lstlisting}
@@ -665,23 +665,23 @@ end def
 Código en \CSP:
 
 \begin{process}
-BuildingRing(self, m, first, lastCreated) = \\ \quad
+BuildingRing(self, first, lastCreated) = \\ \quad
   \begin{block}
-  CommRecv.self?\langle n \rangle \then \\ \quad
+  CommRecv.self?\langle n, m \rangle \then \\ \quad
   \begin{block} 
-  \If (n > 1) \Then {} \\ \quad
-    \begin{block} 
-    CreateAsk?node.newNode!\langle m, Null \rangle \then \\
-    CommSend!lastCreated.\langle 'point_to', node.newNode \rangle \then \\
-    CommSend!send.\langle n - 1 \rangle \then \\
-    BuildingRing(self, m, first, node.newNode) 
-    \end{block} \\
-  \Else {} \\ \quad
+  \If (n == 0) \Then {} \\ \quad
     \begin{block}
-    CommSend!lastCreated.\langle 'point_to', node.newNode \rangle \then \\
+    CommSend!lastCreated.\langle 'point\_to', first \rangle \then \\
     CommSend!first.\langle 'msg' \rangle \then \\
     STOP
-    \end{block}
+    \end{block} \\
+  \Else {} \\ \quad
+    \begin{block} 
+    CreateAsk?node.newNode!\langle m, Null \rangle \then \\
+    CommSend!lastCreated.\langle 'point\_to', node.newNode \rangle \then \\
+    CommSend!send.\langle n - 1, m \rangle \then \\
+    BuildingRing(self, first, node.newNode) 
+    \end{block} \\
   \end{block} 
 \end{block}
 \end{process}
@@ -789,17 +789,17 @@ CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(comma
 
 \section{Corriendo los modelos en FDR}
 
-Otros problemas aparecen al modelar los ejemplos usando \FDR están relacionados con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. 
+Algunas restricciones son necesarias imponer al utilizar \FDR. Están relacionas con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. En el resto de esta sección se exploraran estas restricciones. Estas modificaciones a los ejemplos pueden verse en el apéndice \ref{codigo}.
 
 \subsubsection*{Enteros pequeños}
 
-Para evitar la explosión de estados que causa utilizar el rango de enteros de 64-bits, se generó una una representación propia para reducir esta explosión. Para esto se utiliza un tipo alebraico que representa estos enteros:
+Para evitar la explosión de estados que causa utilizar el rango de enteros de \textit{64-bits}, se generó una una representación propia para reducir esta explosión. Para esto se utiliza un tipo algebraico que representa estos enteros:
 
 \begin{align*}
 datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
 \end{align*}
 
-Donde, $MAX\_INT$ es el entero mas grande que se quisiera representar. Aparte de esta representación de los enteros, se presentan las operaciones básicas:
+Donde, $MAX\_INT$ es el entero mas grande que se quisiera representar. Aparte de esta representación de los enteros, se construyeron las operaciones básicas sobre ellos:
 
 \begin{align*}
 add(SI.a, SI.b)\ =&\ let\ sum\ = a + b \\
@@ -814,25 +814,82 @@ eq(SI.a, SI.b)\ =&\ a == b \\
 eq(\_, \_)\ =&\ false
 \end{align*}
 
-Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación exede el entero máximo el resultado de esta es $Overflow$.
+Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación excede el entero máximo el resultado de esta es $Overflow$.
 
 Antes de comenzar a enumerar las ecuaciones necesarias para las operaciones básicas utilizando actores, se enunciaran algunas estructuras necesarias para construir estas funcionalidades.
 
-\subsubsection*{Cota en el buzón}
 
-Podríamos modelar un buzón que no tenga una cota superior, pero tendríamos problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón.
+\subsubsection*{Listas de parámetros y valores}
 
-\subsubsection*{Valores primitivos}
+En en modelo se utilizaron listas para representar tanto los parámetros de \textit{acquaiantence-list} y los de \textit{communication-list}. Las listas son potencialmente infinitas, pare evitar que el modelo explore todos estos estados, esto se limitó el tamaño de las listas. Se utilizaron tuplas de tamaño fijo. Para esto es necesario conocer el tamaño maximo de mensaje que se va a enviar, esta es una limitación del modelo presentado.
 
-$VALUE$ es un tipo de datos que nos permite tener cierta flexibilidad al momento de enviar mensajes o crear actores. 
+La expresividad de las comunicaciones es alta, esto quiere decir que la expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
+
+Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creó una unión de tipos llamada $VALUE$. Este tipo codifica todas los posibles valores que se quisiera enviar, buzones, enteros, booleanos y cadenas. Como las listas se definieron de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera, si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea solo un entero: $[1]$. La lista de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
 
 \[
   datatype\ VALUE = ACTOR.ActorID | INT.Int | BOOL.Bool | ATOM.Atoms | None
 \]
 
-Representaremos las cadenas de caracteres utilizando $Atoms$, estas cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación.
+Las cadenas de caracteres utilizando $Atoms$. Ya que las cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación Esta viene dada de la siguiente forma:
 
 \[
   datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
 \]
+
+\subsubsection*{Cota en el buzón}
+
+Podríaosm modelar un buzón que no tenga una cota superior, pero tendríamos nuevamente problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón. Este caso es similar al de la lista en la comunicación. 
+
+La ecuación de \textit{buzón}, con cota, es la siguiente:
+
+\begin{process}
+
+\begin{block}
+MAILBOX\_SIZE = 4
+\end{block} \\
+
+\begin{block}
+Mailbox(i, \nil) = {} \\ \quad
+CommSend?i.x \then Mailbox(i, \lseq x \rseq) 
+\end{block} \\
+
+\begin{block}
+Mailbox(i, msgs) = {} \\ \quad
+  \begin{block} 
+  \If (length(msgs) < MAILBOX\_SIZE - 1) \Then {} \\ \quad
+    \begin{block} 
+      MailboxWithSpace(i, msgs)
+    \end{block} \\
+  \Else {} \\ \quad
+    \begin{block}
+      MailboxFull(i, msgs)
+    \end{block}
+  \end{block} 
+\end{block} \\
+
+\begin{block}
+MailboxWithSpace(i, \lseq x \rseq \cat xs ) = {} \\ \quad 
+  \begin{block}
+    CommRecv!i.x \then Mailbox(i, xs) \\
+    \Extchoice \\
+    CommSend?i.y \then Mailbox(i, \lseq x \rseq \cat xs \cat \lseq y \rseq ) 
+  \end{block}
+\end{block} \\
+
+\begin{block}
+MailboxFull(i, \lseq x \rseq \cat xs ) = {} \\ \quad 
+  \begin{block}
+    CommRecv!i.x \then Mailbox(i, xs) \\
+  \end{block}
+\end{block} \\
+\end{process}
+
+La ecuación anterior le agrega a la vista en \ref{modelo:buzon}. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
+
+\begin{itemize}
+\item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
+\item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
+\item Si llegó a su capacidad máxima $MAILBOX_SIZE$ lo hace solo por el canal $CommRecv$.
+\end{itemize}
 
