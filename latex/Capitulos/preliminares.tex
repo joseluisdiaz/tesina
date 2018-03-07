@@ -1,8 +1,60 @@
 \chapter{Preliminares}
 
-\section{CSP}
+En este capitulo, en la primera sección se explorará algunas particularidades del paralelismo en \CSP, tales como: paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se mostraran algunas construcciones en \CSPm que serán útiles. 
 
-\subsection{Paralelismo en CSP}
+La sección de \CSP no pretende ser una introducción al lenguaje, se asume que el lector tiene cierta familiaridad con él. Para una introducción se puede consultar \cite{Cristia:CSP}.
+
+\section{Paralelismo en CSP}
+
+En esta sección se mostrará que se puede en \CSP solo sincronizar algunos los eventos. Es más útil para estudiar sistemas concurrentes poder tener un control mas fino de que eventos son de interés. 
+
+\subsubsection*{Paralelismo sincrónico}
+
+El operador más simple de \CSP es el que está dispuesto a sincronizar en todos los eventos. Es decir, ambos procesos compuestos por este operador, avanzan cuando encuentran un evento que ambos están dispuestos a sincronizar. Por ejemplo:
+
+\begin{align*}
+P_1 = a \then& P_1\\
+P_2 = a \then& P_2 \\
+SYSTEM = P_1 \Parallel& P_2 \\
+\end{align*}
+
+Donde $P_1$ y $P_2$ sincronizan con el evento $a$.
+
+Cuando utilizamos procesos parametrizados muchas veces es útil, supongamos que queremos 
+
+\begin{align*}
+P_1 = canal!1 \then& STOP \\
+P_2 = canal?x \then& P(x) \\
+SYSTEM = P_1 \Parallel& P_2 \\
+\end{align*}
+
+Donde $canal!1$ y que $canal?x$ lo recibe. Para entender un poco más como funciona la notación que involucra ``$?$'' y ``$!$'', supongamos que $x$ está restringido a los valores $1$, $2$ y $3$. Podría pensarse $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
+
+\begin{align*}
+P_2 & =  canal.1 \then STOP \\
+      & \Extchoice canal.2 \then STOP \\
+      & \Extchoice canal.3 \then STOP 
+\end{align*}
+
+y qué $P_1$ equivale a: 
+
+\begin{align*}
+P_1  = canal.1 \then STOP \\
+\end{align*}
+
+Como $x$ es una variable libre, y el evento que termina sincronizando es $canal.1$ esta toma el valor $1$. Esta intuición va a resultar muy util para
+
+
+Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, la escribimos de la siguiente forma:
+
+\begin{align*}
+BUFFER =& enviar?x \then recibir!x \then BUFFER_1 \\
+P_1 =& enviar!1 \then STOP \\
+P_2 =& recibir?x \then STOP \\
+SYSTEM =& ( P_1 \Parallel P_2 ) \Parallel BUFFER \\
+\end{align*}
+
+Con estas estructuras, tendríamos los elementos básicos para poder crear un proceso y enviar una comunicación de manera asicronica. Se puede ver esto en el siguiente ejemplo:
 
 Para iniciar $n$ procesos de tipo $P$ escribimos los siguientes procesos en \CSP:
 
@@ -16,22 +68,11 @@ P_n =& Iniciar_n \then P \\
 
 Como vimos en el capitulo anterior, \CSP es sincrónico, mientras qué, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si queremos transmitir entre dos procesos información, en \CSP lo escribimos de la siguiente forma:
 
-\begin{align*}
-P_1 = canal!1 \then& STOP \\
-P_2 = canal?x \then& STOP \\
-SYSTEM = P_1 \Parallel& P_2 \\
-\end{align*}
+\subsubsection*{Entrelazado}
 
-Donde $P1$ le envía un uno a $P2$. Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, la escribimos de la siguiente forma:
+\subsubsection*{Generalizado}
 
-\begin{align*}
-BUFFER =& enviar?x \then recibir!x \then BUFFER_1 \\
-P_1 =& enviar!1 \then STOP \\
-P_2 =& recibir?x \then STOP \\
-SYSTEM =& ( P_1 \Parallel P_2 ) \Parallel BUFFER \\
-\end{align*}
-
-Con estas estructuras, tendríamos los elementos básicos para poder crear un proceso y enviar una comunicación de manera asicronica. Se puede ver esto en el siguiente ejemplo:
+\subsubsection*{Alfabetizado}
 
 \begin{align*}
 BUFFER_1 =& enviar.1?x \then recibir.1!x \then BUFFER\\
@@ -47,4 +88,15 @@ En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. E
 Este simple ejemplo expone algunos de los problemas que se resolverán en este capitulo, tales como: enviar una comunicación a un proceso especifico, crear varios tipos de procesos.
 
 \section{CSPm}
+
+
+\subsubsection{Canales}
+
+\subsubsection{Tipos algebraicos}
+
+\subsubsection{Secuencias}
+
+\subsubsection{Parlelismo}
+
+
 
