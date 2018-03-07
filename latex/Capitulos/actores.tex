@@ -1,10 +1,30 @@
-\chapter{Actores}
+\chapter{Sistemas de actores}
 
 En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda se darán conceptos básicos para definir un lenguaje mínimo de actores. En la tercera sección se definirá la sintaxis de un lenguaje mínimo de actores, para terminar con algunos ejemplos de este lenguaje.
 
-\section{Definiendo un Sistema de Actores}
+\section{Describiendo un sistema de actores}
+El sistema de actores consiste de configuraciones. Una configuración está definida por actores y las comunicaciones que no fueron procesadas. Las comunicaciones están definidas por el par buzón destino y mensaje, de la siguiente forma:
 
-Los cálculos en un sistema de actores son en respuesta a las comunicaciones enviadas al sistema, es decir, el sistema de actores evoluciona a partir de estas comunicaciónes. Cuando una comunicación es procesada puede generar nuevos comunicaciones y nuevos actores. Todas las comunicaiones que fueron procesadas y todos los actores que ya no son útiles pueden ser liberadas con algún tipo de ``Garabage Collector''. La idea de cuando un actor deja de ser útil será definida con mejor precisión más adelante. Esto no afecta el comportamiento del sistema. La configuración de un sistema de actores viene dada por los actores que tiene, y el conjunto de las comunicaciones no procesadas. 
+\[
+\mathcal{K} = \mathcal{B} \times \mathcal{M}
+\]
+Donde $\mathcal{B}$ es el conjunto de todas las direcciones buzón. $\mathcal{M}$ es el conjunto de todos los posibles mensajes. 
+
+Los actores están dado por una dirección de buzón y un comportamiento. Un comportamiento es una función que dado un mensaje, crea nuevas comunicaciones, nuevos actores y define un comportamiento de reemplazo para la dirección de buzón del actor que está procesando la comunicación. Definición de comportamiento:
+\[
+C : \mathcal{M} \rightarrow ( \{ c_1, c_2, \ldots, c_m \}, \{ \alpha_1, \alpha_2, \ldots, \alpha_n \}, \gamma )
+\]
+
+Donde: $c_1, c_2, \ldots, c_m$ son las comunicaciones nuevas, $\alpha_1, \alpha_2, \ldots, \alpha_n$ son los nuevos actores creados. El comportamiento de reemplazo esta definido por $\gamma$.
+
+Se representa con la función $f_{actor}$ como los comportamientos de los actores en un determinado momento. Ya que la cantidad de actores que existen en una configuración determinada son finitos, esta es una función parcial que tiene como dominio todas las posibles dirección de buzón, y como codominio todos los comportamientos posibles. La definición de la función esta dada por:
+
+\[
+f_{actor} : \mathsf{B} \rightarrow  \mathcal{C}
+\]
+
+Donde $\mathsf{B}$ es subconjunto de $\mathcal{B}$ y $\mathsf{C}$ el conjunto de todos los comportamientos. Con estas definiciones definimos a una configuración como la tupla $(f_{actor}, \kappa)$
+La evolución de un sistema de actores ocurre cuando una comunicación es procesada, es decir, que se pasa de una configuración a otra configuración.
 
 \subsection{Comunicaciones}
 
@@ -25,22 +45,14 @@ El \textit{destino} debe ser una dirección de buzón válida, es decir, un acto
  \item El \textit{destino} es una dirección de buzón creada como resultado de aceptar la comunicación $\bar{k}$.
 \end{itemize}
 
-El ciclo de una comunicación viene dada de la siguiente manera:
-
-\begin{itemize}
- \item Un actor crea una comunicaión.
- \item Este entra una cola de mensajes pendientes.
- \item El actor destino procesa este mensaje.
-\end{itemize}
-
-Existe una cola de trabajos pendientes por buzón. Esta guarda todas las comunicaciones creadas, y que aún no fueron procesadas. Esta estructura tiene que tener la capacidad para guardar todas estas tareas hasta ser procesadas por el actor destino, ya que más de una actor al mismo tiempo podría estar enviando una comunicación a este buzón.
+Es probable que más de una actor al mismo tiempo quiera enviar una comunicación a un buzón. Para esto es necesario alguna estructura intermedia que guarde todas las comunicaciones creadas, y que aún no fueron procesadas. Esta estructura tiene que tener la capacidad para guardar todas las comunicaciones hasta ser procesadas por el actor destino. 
 
 %En realidad Agha\ [chap.~3,p.~35]\cite{Agha:1986:AMC:7929} lo define como una 3-tupla incluye un \textit{tag} para diferenciar una tarea de la otra en el sistema. Define que un \textit{tag} puede tener una representación arbitraria. Como los \textit{tag} son únicos en todo el sistema, hace uso de esta propiedad para construir la direcciones de buzón de los nuevos actores creados esto puede verse en \cite[chap.~5,p.~104]{Agha:1986:AMC:7929}. 
 
 % En el modelo que se presentará esto no es necesario.
 % Otro de los argumentos sobre incluir este \textit{tag} esta relacionado con tener trazabilidad, como diferenciar dos tareas que tienen el mismo destino y la misma comunicación. En este trabajo podriamos incluir un numero aleatorio para permitir tener esta trazabilidad si quisieramos diferenciar estas dos tareas \textit{destino} y la misma \textit{comunicación}, pero se decidió dejarlo fuera.
 
-\subsection{El Comportamiento de un actor}
+\subsection{Actores}
 
 Como vimos en la sección anterior toda computación en el modelo de actores es resultado de procesar comunicaciones. Un actor acepta una mensaje cuando este es procesado. Un actor solo puede procesar comunicaciones que están dirigidas a su dirección de buzón. Como resultado de aceptar una comunicación, un actor puede, crear nuevas comunicaciones, crear nuevos actores y debe definir su comportamiento de reemplazo.
 
@@ -231,8 +243,6 @@ Como se puede ver en la Figura\ref{fig:actores:crecion} \subref{fig:actores:crec
 \section{Programando con actores}
 
 En esta sección se definirán las construcciones necesarias para definir un núcleo de un lenguaje mínimo de actores. A pesar de su simplicidad, este lenguaje es extremadamente poderoso, captura varias características importantes de la computación dentro del paradigma de actores: la posibilidad de distribuir una computación entre elementos concurrentes, la unificación de información procedural y declarativa, y transparencia referencial de los identificadores usados en un programa.
-
-\subsection{Las construcciones básicas}
 
 En la configuración inicial de un sistema actores, necesitamos crear algunos actores y poderle enviar algunas comunicaciones. Un programa en un sistema de actores esta compuesto por:
 
