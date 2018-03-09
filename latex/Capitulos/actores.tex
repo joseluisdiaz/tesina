@@ -10,21 +10,35 @@ El sistema de actores consiste de configuraciones. Una configuración está defi
 \]
 Donde $\mathcal{B}$ es el conjunto de todas las direcciones buzón. $\mathcal{M}$ es el conjunto de todos los posibles mensajes. 
 
-Los actores están dado por una dirección de buzón y un comportamiento. Un comportamiento es una función que dado un mensaje, crea nuevas comunicaciones, nuevos actores y define un comportamiento de reemplazo para la dirección de buzón del actor que está procesando la comunicación. Definición de comportamiento:
+Los actores están dado por una dirección de buzón y un comportamiento. Un comportamiento es una función que dado un mensaje, crea nuevas comunicaciones, nuevos actores y define un comportamiento de reemplazo para la dirección de buzón del actor que está procesando la comunicación. La definición de comportamiento es la siguiente:
 \[
-C : \mathcal{M} \rightarrow ( \{ c_1, c_2, \ldots, c_m \}, \{ \alpha_1, \alpha_2, \ldots, \alpha_n \}, \gamma )
+C : \mathcal{K} \rightarrow ( \{ c_1, c_2, \ldots, c_m \}, \{ \alpha_1, \alpha_2, \ldots, \alpha_n \}, \gamma )
 \]
 
 Donde: $c_1, c_2, \ldots, c_m$ son las comunicaciones nuevas, $\alpha_1, \alpha_2, \ldots, \alpha_n$ son los nuevos actores creados. El comportamiento de reemplazo esta definido por $\gamma$.
 
-Se representa con la función $f_{actor}$ como los comportamientos de los actores en un determinado momento. Ya que la cantidad de actores que existen en una configuración determinada son finitos, esta es una función parcial que tiene como dominio todas las posibles dirección de buzón, y como codominio todos los comportamientos posibles. La definición de la función esta dada por:
+De alguna forma es necesario vincular las direcciónes de buzónes con un determinado comportamiento. Se usa una función parcial que tiene como dominio todas las dirección de buzón, y como codominio todos los comportamientos asociados a este buzón. La definición de la función esta dada por:
 
 \[
 f_{actor} : \mathsf{B} \rightarrow  \mathcal{C}
 \]
 
-Donde $\mathsf{B}$ es subconjunto de $\mathcal{B}$ y $\mathsf{C}$ el conjunto de todos los comportamientos. Con estas definiciones definimos a una configuración como la tupla $(f_{actor}, \kappa)$
-La evolución de un sistema de actores ocurre cuando una comunicación es procesada, es decir, que se pasa de una configuración a otra configuración.
+Donde $\mathsf{B}$ es subconjunto de $\mathcal{B}$ y $\mathsf{C}$ el conjunto de todos los comportamientos. Esta función modela los actores que fueron creados, ya que un actor no es más que una dirección de buzón y su comportamiento.
+
+Con estas definiciones definimos a una configuración como la tupla $(f_{actor}, \kappa)$. La evolución de un sistema de actores ocurre cuando una comunicación es procesada, es decir, que se pasa de una configuración a otra configuración.
+
+Para que sistema evolucione de una configuración a otra, los siguientes pasos estan involucrados:
+\begin{itemize}
+ \item Es necesario tomar un elemento (y removerlo) del conjunto de las comunicaciones no procesadas. 
+ \item La comunicación sera de la forma $(b,m)$, donde $b$ es buzón destino y $m$ un mensaje. 
+ \item Al aplicar $b$ en $f_{actor}$ el elemento buzón destino obtendremos el comportamiento $c$. 
+ \item Al aplicar en el comportamiento $c$ el mensaje anterior $m$, se obtendran los nuevos actores, los nuevos mensajes, y el comportamiento de reemplazo.
+ \item A los actores se los agrega en la $f_{actor}$. (Pueden ser el conjunto vacío)
+ \item Se agregan las nuevas comunicaciones en $\kappa$. (Pueden ser el conjunto vacío)
+ \item Se reemplaza en $f_{actor}$, el comportamiento obtenido para el valor de buzón $b$.
+\end{itemize} 
+
+Estos pasos muestra como un sistema de actores va de una configuración a otra.
 
 \subsection{Comunicaciones}
 
@@ -54,7 +68,7 @@ Es probable que más de una actor al mismo tiempo quiera enviar una comunicació
 
 \subsection{Actores}
 
-Como vimos en la sección anterior toda computación en el modelo de actores es resultado de procesar comunicaciones. Un actor acepta una mensaje cuando este es procesado. Un actor solo puede procesar comunicaciones que están dirigidas a su dirección de buzón. Como resultado de aceptar una comunicación, un actor puede, crear nuevas comunicaciones, crear nuevos actores y debe definir su comportamiento de reemplazo.
+Como vimos en la sección anterior toda computación en el modelo de actores es resultado de procesar comunicaciones. Un actor acepta una mensaje cuando este es procesado. Un actor solo puede procesar comunicaciones que están dirigidas a su dirección de buzón. Como resultado de aceptar una comunicación, un actor puede: crear nuevas comunicaciones, crear nuevos actores y debe definir su comportamiento de reemplazo.
 
 %Para un actor, el orden de llegada de las comunicaciones enviadas a ese actor debe ser lineal. Esto quiere decir el buzón debería tener algún mecanismo de \textit{buffer} para las comunicaciones que lleguen casi al mismo tiempo. 
 
@@ -65,38 +79,38 @@ Un actor puede describirse especificando:
  \item Su \textit{comportamiento}, que es una función. Tiene la comunicación que está siendo procesada como entrada. Como salida tiene nuevos actores, nuevos trabajos y su nuevo comportamiento de reemplazo.
 \end{itemize}
 
-Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones, y un proceso que ejecutará su comportamiento. Este apunta a una celda particular de este \textit{buzón}. Se ve puede ver representado en la figura \ref{fig:mailqueue}.
+Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones, y un proceso que ejecutará su comportamiento. Este apunta a una celda particular de este \textit{buzón}. 
 
-\begin{figure}[H]
-\begin{tikzpicture}
+% \begin{figure}[H]
+% \begin{tikzpicture}
+% 
+% \draw (0,0) -- (7,0);
+% \draw (0,1) -- (7,1);
+% 
+% \draw (0,0) -- (0,1);
+% \draw (0.5,0) -- (0.5,1);
+% \draw (1,0) -- (1,1);
+% 
+% \draw (5,0) -- (5,1);
+% \draw (5.5,0) -- (5.5,1);
+% 
+% \node at (0.9,1.2) {$1\quad2\quad\ldots$};
+% 
+% \node at (5.25,1.2) {$n$};
+% 
+% \node at (7.8,0.5) {comunicaciones sin procesar};
+% 
+% \node at (6.4,-1.4) {proceso};
+% 
+% \draw[->] (5.25,-1) -- (5.25,0);
+% \node at (5.25,-1.4) [circle,draw] (x) {$X$};
 
-\draw (0,0) -- (7,0);
-\draw (0,1) -- (7,1);
+% \end{tikzpicture}
+% \caption{Representación de un actor. El proceso tiene la información de su comportamiento. Acepta la comunicación actual y no puede procesar ningún otra comunicación.}
+% \label{fig:mailqueue}
+% \end{figure}
 
-\draw (0,0) -- (0,1);
-\draw (0.5,0) -- (0.5,1);
-\draw (1,0) -- (1,1);
-
-\draw (5,0) -- (5,1);
-\draw (5.5,0) -- (5.5,1);
-
-\node at (0.9,1.2) {$1\quad2\quad\ldots$};
-
-\node at (5.25,1.2) {$n$};
-
-\node at (7.8,0.5) {comunicaciones sin procesar};
-
-\node at (6.4,-1.4) {proceso};
-
-\draw[->] (5.25,-1) -- (5.25,0);
-\node at (5.25,-1.4) [circle,draw] (x) {$X$};
-
-\end{tikzpicture}
-\caption{Representación de un actor. El proceso tiene la información de su comportamiento. Acepta la comunicación actual y no puede procesar ningún otra comunicación.}
-\label{fig:mailqueue}
-\end{figure}
-
-Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente se crea el proceso actor $X_{n+1}$ el cual ejecutará el comportamiento de reemplazo del actor. Este nuevo proceso apunta a la siguiente celda en el buzón en donde estará guardada la comunicación $(n+1)-esima$. Esto puede verse en la figura \ref{fig:actortransition}
+Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente crea el proceso $X_{n+1}$ el cual ejecutará el comportamiento de reemplazo definido por $X_n$. Este nuevo proceso apunta a la siguiente celda en el buzón en donde estará guardada la comunicación $(n+1)-esima$. Esto puede verse en la figura \ref{fig:actortransition}
 
 \begin{figure}[H]
 \begin{tikzpicture}
@@ -124,7 +138,8 @@ Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente se cr
 
 \draw[->] (XN) -- (XN1);
 
-\node at (2,-3) [circle,draw] (T) {$comunicaciones$};
+\node at (2,-2.6) {nuevas};
+\node at (2,-3) [circle,draw] (T) {comunicaciones};
 
 \draw (4,-5) -- (11,-5);
 \draw (4,-6) -- (11,-6);
@@ -139,15 +154,14 @@ Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente se cr
 
 \draw[->] (XN) -- (T);
 
-\node at (2,-2) {crea tareas};
 \node at (5,-4.25) {crea actores};
 
 \node at (8,-3.5) {comportamiento de reemplazo};
 
 \draw[->] (5.5,-3.5) to[bend left] (4.7,-2.5); 
 
-\node at (7.5,0.5) {buzón};
-\node at (7,-5.5) {buzón};
+\node at (8.3,0.5) {Comunicaciones sin procesar};
+\node at (7,-5.5) {Comunicaciones sin procesar};
 
 \end{tikzpicture}
 \caption{Una transición entre dos comportamientos}
@@ -156,7 +170,7 @@ Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente se cr
 
 Las dos procesos $X_n$ y $X_{n+1}$ no interfieren entre sí. $X_n$ solo procesa la $(n)-esima$ comunicación. Exceptuando el caso en el cual se envíe una comunicación a si mismo. Cada uno de estos procesos crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que el proceso $X_n$ cree el proceso $X_{n+1}$, $X_n$ podría haber creado otros actores u otros trabajos. Es posible incluso, que $X_n$ este creando actores o trabajos al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicación, ni tampoco especificará ninguno otro comportamiento de reemplazo.
 
-Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos. El orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de los procesos definen un orden total entre ellos. 
+% Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos. El orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de los procesos definen un orden total entre ellos. 
 
 Alguna implementación puede esperar a que el proceso anterior termine, para construir el nuevo y eliminar el viejo. Sin embargo, retrasar el reemplazo hasta que el proceso pueda ser reemplazado no es un requisito. Si hay suficientes recursos disponibles, la computación en un sistema de actores se puede acelerar simplemente aceptando la próxima comunicación ni bien su comportamiento de reemplazo esta establecido.
 
@@ -242,9 +256,9 @@ Como se puede ver en la Figura\ref{fig:actores:crecion} \subref{fig:actores:crec
 
 \section{Programando con actores}
 
-En esta sección se definirán las construcciones necesarias para definir un núcleo de un lenguaje mínimo de actores. A pesar de su simplicidad, este lenguaje es extremadamente poderoso, captura varias características importantes de la computación dentro del paradigma de actores: la posibilidad de distribuir una computación entre elementos concurrentes, la unificación de información procedural y declarativa, y transparencia referencial de los identificadores usados en un programa.
+En esta sección se definirán las construcciones necesarias para definir un núcleo de un lenguaje mínimo de actores. A pesar de su simplicidad, este lenguaje es extremadamente poderoso, captura varias características importantes de la computación dentro del paradigma de actores: la posibilidad de distribuir una computación entre elementos concurrentes.
 
-En la configuración inicial de un sistema actores, necesitamos crear algunos actores y poderle enviar algunas comunicaciones. Un programa en un sistema de actores esta compuesto por:
+En la configuración inicial de un sistema actores, necesitamos crear  actores y enviar comunicaciones. Un programa en un sistema de actores esta compuesto por:
 
 \begin{itemize}
  \item \textit{definición de comportamientos} asocia un esquema de comportamiento con un identificador, no crea ningún actor.
@@ -253,19 +267,14 @@ En la configuración inicial de un sistema actores, necesitamos crear algunos ac
 \end{itemize}
 
 \subsubsection*{Definiendo comportamientos}\label{actores:comportamientos}
-Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada uno de los comportamientos de reemplazo también tendrá un comportamiento de reemplazo, para especificar el comportamiento de un actor, necesitamos una definición potencialmente infinita. Para esto acudimos al uso de la reclusión. Básicamente, cada comportamiento está parametrizado mediante algún identificador. Este será una variable libre en la definición del comportamiento. 
+Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada uno de los comportamientos de reemplazo también tendrá un comportamiento de reemplazo.
 
-Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de comportamiento de una cuenta bancaria, se tiene que dar un valor especifico para esta cuenta.
+Cada comportamiento está parametrizado. Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de comportamiento de una cuenta bancaria, se tiene que dar un valor especifico para esta cuenta.
 
-Podemos concluir que tenemos dos listas de parametros que estan involucradas en la definición de un comportamiento. La primer lista corresponde a los parámetros que son dados al momento de la creación de un actor. La segunda lista, que se obtiene cuando una comunicación es aceptada. 
-
-%Cuando un actor es creado y se acepta una comunicación se ejecutan los comandos en el \textit{entorno} definido por los parámetros enlazados a los identificadores.
+Podemos concluir que tenemos dos listas de parametros que estan involucradas en la definición de un comportamiento. La primer lista corresponde a los parámetros que son dados al momento de la creación de un actor, esta lista es llamada \textit{acquaintance-list}. La segunda lista, que se obtiene cuando una comunicación es aceptada esta lista es llamada \textit{comunication-list}.
 
 \subsubsection*{Creando actores}
-
-Los actores son creados usando expresiones de tipo \textit{new}, que devuelve una nueva dirección de buzón del actor recién creado. La dirección de buzón tiene que estar asignada a algún identificador de caso contrario no tiene ningún sentido, ya que no puede ser utilizada.
-
-La sintaxis de las expresiones de tipo \textit{new} es la siguiente:
+Los actores son creados usando expresiones de tipo \textit{new}, que devuelve una nueva dirección de buzón del actor recién creado. La sintaxis de las expresiones de tipo \textit{new} es la siguiente:
 
 \[
    \langle expresi\acute{o}n\ new \rangle :== \textbf{new}\ \langle nombre\ comportamiento \rangle (expr, \{expr\}*)  
