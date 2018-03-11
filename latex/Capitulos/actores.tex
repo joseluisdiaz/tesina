@@ -1,9 +1,9 @@
 \chapter{Sistemas de actores}
 
-En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda se darán conceptos básicos para definir un lenguaje mínimo de actores. En la tercera sección se definirá la sintaxis de un lenguaje mínimo de actores, para terminar con algunos ejemplos de este lenguaje.
+En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda sección se definirá la sintaxis de un lenguaje mínimo de actores, para terminar con algunos ejemplos de este lenguaje.
 
 \section{Describiendo un sistema de actores}
-Un sistema de actores, consiste de configuraciones. Una configuración viene dada por una colección de actores concurrentes y una colección de comunicaciones en tránsito. Cada actor tiene un nombre único y un comportamiento. Se comunica con otros actores a través de mensajes asíncronos. Los actores son reactivos, es decir, se ejecutan solo en respuesta a los mensajes recibidos. Un el comportamiento de un actor es determinista, ya que la respuesta está determinada por el contenido del mensaje que procesa. 
+Un sistema de actores, consiste de configuraciones. Una configuración viene dada por una colección de actores concurrentes y una colección de comunicaciones en tránsito. Cada actor tiene un nombre único y un comportamiento. Se comunica con otros actores a través de mensajes asíncronos. Los actores son reactivos, es decir, se ejecutan solo en respuesta a los mensajes recibidos. El comportamiento de un actor es determinista, ya que la respuesta está determinada por el contenido del mensaje que procesa. 
 
 Las comunicaciones están definidas por el par buzón destino y mensaje, de la siguiente forma:
 
@@ -19,13 +19,13 @@ C : \mathcal{K} \rightarrow ( \{ c_1, c_2, \ldots, c_m \}, \{ \alpha_1, \alpha_2
 
 Donde: $c_1, c_2, \ldots, c_m$ son las comunicaciones nuevas, $\alpha_1, \alpha_2, \ldots, \alpha_n$ son los nuevos actores creados. El comportamiento de reemplazo esta definido por $\gamma$.
 
-Es necesario vincular las direcciones de buzones con un determinado comportamiento. Se usa una función parcial que tiene como dominio todas las dirección de buzón, y como codominio todos los comportamientos asociados a este buzón. La definición de la función esta dada por:
+Es necesario vincular las direcciones de buzones con un determinado comportamiento. Se usa una función parcial que tiene como dominio las dirección de buzón, y como codominio los comportamientos asociados a este buzón. La definición de la función esta dada por:
 
 \[
 f_{actor} : \mathsf{B} \rightarrow  \mathcal{C}
 \]
 
-Donde $\mathsf{B}$ es subconjunto de $\mathcal{B}$ y $\mathsf{C}$ el conjunto de todos los comportamientos. Esta función modela los actores que fueron creados, ya que un actor no es más que una dirección de buzón y su comportamiento.
+Donde $\mathsf{B}$ es subconjunto de $\mathcal{B}$ y $\mathsf{C}$ el conjunto de los comportamientos. Esta función modela los actores que fueron creados, ya que un actor no es más que una dirección de buzón y su comportamiento.
 
 Con estas definiciones definimos a una configuración como la tupla $(f_{actor}, \kappa)$. La evolución de un sistema de actores ocurre cuando una comunicación es procesada, es decir, que se pasa de una configuración a otra configuración.
 
@@ -33,7 +33,7 @@ Para que sistema evolucione de una configuración a otra, los siguientes pasos e
 \begin{itemize}
  \item Es necesario tomar un elemento (y removerlo) del conjunto de las comunicaciones no procesadas. 
  \item La comunicación sera de la forma $(b,m)$, donde $b$ es buzón destino y $m$ un mensaje. 
- \item Al aplicar $b$ en $f_{actor}$ el elemento buzón destino obtendremos el comportamiento $c$. 
+ \item Al aplicar $b$ en $f_{actor}$ el elemento buzón destino: obtendremos el comportamiento $c$. 
  \item Al aplicar en el comportamiento $c$ el mensaje anterior $m$, se obtendrán los nuevos actores, los nuevos mensajes, y el comportamiento de reemplazo.
  \item A los actores se los agrega en la $f_{actor}$. 
  \item Se agregan las nuevas comunicaciones en $\kappa$. 
@@ -207,7 +207,6 @@ Alguna implementación puede esperar a que el proceso anterior termine, para con
 
 \path[new] (A1) to [bend left] (B1) ;
 
-
 \end{tikzpicture}
 
 \caption{  }
@@ -259,8 +258,7 @@ Como se puede ver en la figura\ref{fig:actores:crecion} \subref{fig:actores:crec
 
 \section{Programando con actores}\label{actores:sal}
 
-En esta sección se explorará un lenguaje que implementa los conceptos básicos del modelo de actores, tales como comportamientos, creación de nuevos actores y creación de nuevas comunicaciones. El lenguaje \SAL fue desarrollado con intensiones pedagógicas y tiene una sintaxis heredada de Algol. 
-
+En esta sección se explorará un lenguaje que implementa los conceptos básicos del modelo de actores. El lenguaje \SAL fue desarrollado con intensiones pedagógicas y tiene una sintaxis heredada de Algol. 
 En la configuración de un sistema actores, necesitamos crear actores y enviar comunicaciones. Un programa en un sistema de actores esta compuesto por:
 
 \begin{itemize}
@@ -271,10 +269,12 @@ En la configuración de un sistema actores, necesitamos crear actores y enviar c
 
 Primero se explorará la sintaxis de las expresiones, luego como definir comportamientos para terminar con la definición de los comandos. Las expresiones son utilizadas tanto por la definición de comportamientos como por los comandos por eso se muestran primero. Luego se presentará como definir comportamientos. Para terminar esta sección mostrando la definición de comandos.
 
-Se utilizará la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utilizá el símbolo $\langle \textbf{*} \rangle$ representa una o ninguna ocurrencias de un termino. También se utilizará $\langle \textbf{+} \rangle$ para representar que haya al menos una ocurrencia.
+%Se utilizará la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utilizá el símbolo $\langle \textbf{*} \rangle$ representa una o ninguna ocurrencias de un termino. También se utilizará $\langle \textbf{+} \rangle$ para representar que haya al menos una ocurrencia.
+
+Se utilizará la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utilizá el símbolo $\langle \textbf{+} \rangle$ haya al menos una ocurrencia de un termino.
 
 \subsection{Expresiones}\label{actores:exp}
-Existen cuatro tipos primitivos: booleanos, enteros, cadenas, y dirección del buzón. Las operaciones posibles entre los booleanos son \textbf{or}, \textbf{and}, \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*}, \textbf{/}. Las cadenas son constantes. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo primitivo no tiene ningún operador asociado.
+Existen cuatro tipos primitivos: booleanos, enteros, cadenas, y dirección del buzón. Las operaciones posibles entre los booleanos son \textbf{or}, \textbf{and} y \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*} y \textbf{/}. Las cadenas son constantes. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo primitivo no tiene ningún operador asociado.
 
 La gramática de las expresiones booleanas es la siguiente:
 
@@ -292,12 +292,12 @@ La gramática de los enteros es la siguiente:
 
 \begin{grammar}
 
-<iexp> ::= <iterm> `*' <iterm> | <iterm> `/' <iterm>  
-  \alt <iterm> `+' <iterm>  | <iterm> `-' <iterm>
+<iexp> ::= <iterm> `*' <iterm> | <iterm> `/' <iterm> 
+\alt <iterm> `+' <iterm>  | <iterm> `-' <iterm>
 
-<numero> ::= `1' | `2' | `3' | `4' | `5' | `6' | `7' | `8' | `9' | `0'
+<número> ::= `1' | `2' | `3' | `4' | `5' | `6' | `7' | `8' | `9' | `0'
 
-<iterm> ::= <numero> "*" | `-' <iterm> | `(' <iexp> `)'
+<iterm> ::= <número> + | `-' <iterm> | `(' <iexp> `)'
 
 \end{grammar}
 
@@ -315,12 +315,12 @@ La gramática de todas las expresiones viene dada por:
 <exp> :: = <iexp> | <bexp> | <sexp> | <mexp>  
 \end{grammar}
 
-La gramática de $mexp$ es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula. 
+En el caso de $mexp$, es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula. 
 
 \subsection{Definición de comportamientos}\label{actores:beha}
-Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada comportamiento está parametrizado. Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de comportamiento de una cuenta bancaria, se tiene que dar un valor especifico para esta cuenta.
+Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada comportamiento está parametrizado. Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de una cuenta bancaria, se tiene que dar un valor especifico de saldo.
 
-Se puede concluir que tenemos dos listas de parámetros que están involucradas en la definición de un comportamiento. La primer lista corresponde a los parámetros que son dados al momento de la creación de un actor, esta lista es llamada \textit{acquaintance-list}. La segunda lista, que se obtiene cuando una comunicación es aceptada esta lista es llamada \textit{comunication-list}.
+Existen dos listas de parámetros que están involucradas en la definición de un comportamiento. La primer lista corresponde a los parámetros que son dados al momento de la creación de un actor, esta lista es llamada \textit{acquaintance-list}. La segunda lista, que se obtiene cuando una comunicación es aceptada esta lista es llamada \textit{comunication-list}.
 
 En el caso de la lista de identificadores \textit{communication-list}, esta asume que todas las comunicaciones serán una secuencia de identificadores. Supongamos el siguiente caso: un comportamiento que modela una cuenta bancaria. Resulta útil que está lista de identificadores esté dada en función de la operación que se vaya a ejecutar, por ejemplo, si la operación fuera \textit{'extracción'} solamente necesitaríamos un identificador \textit{monto} el cual tendría el valor de la extracción en cuestión. En el caso que la operación fuera \textit{'balance'} esta no requiere identificadores. 
 
@@ -392,7 +392,7 @@ Una comunicación es creada especificando un actor destino y un mensaje. Las com
   <command> ::= `send' `[' <expr_list> `]' `to' <mexp>  
 \end{grammar}
 
-Donde $expr_list$ es una lista de expresiones, que puede ser vacía. Las expresiones son evaluadas y se envían los valores en la comunicación. Destino es un identificador que tiene asociado una dirección de buzón de un actor. $mexp$ es un identificador de buzón.
+Donde $expr\_list$ es una lista de expresiones, que puede ser vacía. Las expresiones son evaluadas y se envían los valores en la comunicación. $mexp$ es un identificador que tiene asociado una dirección de buzón de un actor. 
 
 \subsubsection*{Comportamiento de reemplazo}
 
@@ -408,8 +408,8 @@ El propósito de los comandos es especificar las acciones que pueden ocurrir. Se
 También se puede utilizar el identificador de un comportamiento, especificando los parámetros \textit{acquaiantence-list}. Donde $mexp$ es una dirección de buzón, en este caso reenvía todos los mensajes a el nuevo buzón.  Por ejemplo:
 
 \begin{align*}
- \texttt{become}&\ \langle link \rangle \\
- \texttt{become}&\ \langle Comp(1,2,3) \rangle
+ \texttt{become}&\ link \\
+ \texttt{become}&\ Comp(1,2,3) 
 \end{align*}
 
 Donde $link$ es alguna dirección de buzón, y $Comp(1,2,3)$ hace referencia al comportamiento $Comp$, y su \textit{acquaiantence-list} son los valores $1$, $2$ y $3$.

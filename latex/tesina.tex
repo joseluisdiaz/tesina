@@ -1,5 +1,4 @@
 \documentclass[a4paper, 10pt]{book}
-% 
 \usepackage[spanish,activeacute,es-noindentfirst, es-noquoting, es-nodecimaldot]{babel}   
 \usepackage{subcaption}
 
@@ -45,16 +44,27 @@
     case, of, ||}
 }
 
+\lstdefinelanguage{cspm}{
+  keywords = {|, =, datatype}
+}
+
+
+\lstdefinestyle{sinnumeros}{
+  basewidth=0.5em
+}
 
 \lstdefinestyle{simple}{
   numbers=left,
   basewidth=0.5em
 }
 
-\newcommand{\SAL}{\textbf{SAL}\xspace}
-\newcommand{\CSP}{\textbf{CSP}\xspace}
-\newcommand{\CSPm}{\textbf{CSPm}\xspace}
-\newcommand{\FDR}{\textbf{FDR}\xspace}
+\newcommand{\SAL}{\textit{SAL}\xspace}
+\newcommand{\CSP}{\textit{CSP}\xspace}
+\newcommand{\CSPm}{\textit{CSPm}\xspace}
+\newcommand{\FDR}{\textit{FDR}\xspace}
+\newcommand{\ACT}{\textit{ACT}\xspace}
+
+
 
 \begin{document}
 

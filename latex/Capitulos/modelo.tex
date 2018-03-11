@@ -789,11 +789,11 @@ CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(comma
 
 \section{Corriendo los modelos en FDR}
 
-Algunas restricciones son necesarias imponer al utilizar \FDR. Están relacionas con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. En el resto de esta sección se exploraran estas restricciones. Estas modificaciones a los ejemplos pueden verse en el apéndice \ref{codigo}.
+Es necesario imponer restricciones al utilizar \FDR. Están relacionas con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. En el resto de esta sección se exploraran estas restricciones. Estas modificaciones a los ejemplos pueden verse en el apéndice \ref{codigo}.
 
 \subsubsection*{Enteros pequeños}
 
-Para evitar la explosión de estados que causa utilizar el rango de enteros de \textit{64-bits}, se generó una una representación propia para reducir esta explosión. Para esto se utiliza un tipo algebraico que representa estos enteros:
+Para evitar la explosión de estados que causa utilizar el rango de enteros de \textit{64-bits}, se generó una una representación propia para reducirla. Para esto se utiliza un tipo algebraico que representa estos enteros:
 
 \begin{align*}
 datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
@@ -816,22 +816,18 @@ eq(\_, \_)\ =&\ false
 
 Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación excede el entero máximo el resultado de esta es $Overflow$.
 
-Antes de comenzar a enumerar las ecuaciones necesarias para las operaciones básicas utilizando actores, se enunciaran algunas estructuras necesarias para construir estas funcionalidades.
-
-
 \subsubsection*{Listas de parámetros y valores}
-
 En en modelo se utilizaron listas para representar tanto los parámetros de \textit{acquaiantence-list} y los de \textit{communication-list}. Las listas son potencialmente infinitas, pare evitar que el modelo explore todos estos estados, esto se limitó el tamaño de las listas. Se utilizaron tuplas de tamaño fijo. Para esto es necesario conocer el tamaño maximo de mensaje que se va a enviar, esta es una limitación del modelo presentado.
 
-La expresividad de las comunicaciones es alta, esto quiere decir que la expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
+La expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
 
-Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creó una unión de tipos llamada $VALUE$. Este tipo codifica todas los posibles valores que se quisiera enviar, buzones, enteros, booleanos y cadenas. Como las listas se definieron de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera, si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea solo un entero: $[1]$. La lista de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
+Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creó una unión de tipos llamada $VALUE$. Este tipo codifica todos los posibles valores que se quisiera enviar, buzones, enteros, booleanos y cadenas. Como las listas se definieron de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera, si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea solo un entero: $[1]$. La tupla de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
 
 \[
   datatype\ VALUE = ACTOR.ActorID | INT.Int | BOOL.Bool | ATOM.Atoms | None
 \]
 
-Las cadenas de caracteres utilizando $Atoms$. Ya que las cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación Esta viene dada de la siguiente forma:
+Las cadenas de caracteres se representa utilizando $Atoms$. Ya que las cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación Esta viene dada de la siguiente forma:
 
 \[
   datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
@@ -839,7 +835,7 @@ Las cadenas de caracteres utilizando $Atoms$. Ya que las cadenas son inmutables 
 
 \subsubsection*{Cota en el buzón}
 
-Podríaosm modelar un buzón que no tenga una cota superior, pero tendríamos nuevamente problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón. Este caso es similar al de la lista en la comunicación. 
+Se puede modelar un buzón que no tenga una cota superior, pero tendríamos nuevamente problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón. Este caso es similar al de la lista en la comunicación. 
 
 La ecuación de \textit{buzón}, con cota, es la siguiente:
 
@@ -885,11 +881,11 @@ MailboxFull(i, \lseq x \rseq \cat xs ) = {} \\ \quad
 \end{block} \\
 \end{process}
 
-La ecuación anterior le agrega a la vista en \ref{modelo:buzon}. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
+La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un limite definido por $MAILBOX\_SIZE$. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
 
 \begin{itemize}
 \item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
 \item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
-\item Si llegó a su capacidad máxima $MAILBOX_SIZE$ lo hace solo por el canal $CommRecv$.
+\item Si llegó a su capacidad máxima $MAILBOX\_SIZE$ lo hace solo por el canal $CommRecv$.
 \end{itemize}
 
