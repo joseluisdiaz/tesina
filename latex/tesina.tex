@@ -29,8 +29,7 @@
 \usepackage[margin=1.55in]{geometry} %page size
 
 \usepackage{setspace}
-%\onehalfspacing
-
+\onehalfspacing
 
 \newtheorem{definicion}{Definición}[section]
 
@@ -65,12 +64,21 @@
 \newcommand{\ACT}{\textit{ACT}\xspace}
 
 
-
 \begin{document}
 
+
 \include{Capitulos/caratula}
+\thispagestyle{empty}
+
+\include{Capitulos/resumen}
+\thispagestyle{empty}
+
+\frontmatter
 
 \tableofcontents
+
+\mainmatter
+
 
 \input{Capitulos/intro} % Introducción
 

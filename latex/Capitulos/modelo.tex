@@ -883,9 +883,63 @@ MailboxFull(i, \lseq x \rseq \cat xs ) = {} \\ \quad
 
 La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un limite definido por $MAILBOX\_SIZE$. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
 
+
 \begin{itemize}
 \item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
 \item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
 \item Si llegó a su capacidad máxima $MAILBOX\_SIZE$ lo hace solo por el canal $CommRecv$.
 \end{itemize}
+
+\subsubsection*{Grafico de entrelazado}
+
+La herramienta \FDR permitió ver grafico de entrelazado de los distintos actores. Como muestra la figura \ref{c:grafo}.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=15 cm]{img/fact.png}
+\label{c:grafo}
+\caption{Grafo de entralazado para el ejemplo del factorial}
+\end{center}
+\end{figure}
+
+Se pueden ver en la figura \ref{c:grafo} las siguientes acciones:
+
+\begin{itemize}
+\item $Main$ crea un actor con el comportamiento $Factorial$
+\item $Main$ le envía a $Factorial$, un mensaje con su dirección de buzón y el número 3.
+\item Se crea el actor $Factorial$
+\item $Factorial$ recibe el mensaje con la dirección de $Main$ y el numero 3.
+
+\item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_1$). Está inicializado con los parámetros: el entero 3, y el buzón del actor $Main$.
+\item $Factorial$ se auto envía el mensaje con el valor 2 y la dirección de buzón de $factorialWorker_1$.
+\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_1$ y el numero 2.
+\item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_1$.
+
+\item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_2$). Está inicializado con los parámetros: el entero 3, y el buzón del actor $factorialWorker_1$.
+\item $Factorial$ se auto envía el mensaje con el valor 1 y la dirección de buzón de $factorialWorker_2$.
+\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_2$ y el numero 1.
+\item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_2$.
+
+\item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_3$). Está inicializado con los parámetros: el entero 1, y el buzón del actor $factorialWorker_2$.
+\item $Factorial$ se auto envía el mensaje con el valor 0 y la dirección de buzón de $factorialWorker_3$.
+\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_3$ y el numero 0.
+\item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_3$.
+
+\item $Factorial$ le envía a $factorialWorker_3$ el entero 1.
+\item $factorialWorker_3$ recibe el valor 1.
+
+\item $factorialWorker_3$ le envía a $factorialWorker_2$ el entero 1.
+\item $factorialWorker_2$ recibe el valor 1.
+
+\item $factorialWorker_2$ le envía a $factorialWorker_1$ el entero 2.
+\item $factorialWorker_1$ recibe el valor 2.
+
+\item $factorialWorker_1$ le envía a $Main$ el entero 6.
+\item $Main$ recibe el valor 6.
+
+\end{itemize}
+
+Esta captura fue realizada utilizando el comando \verb=:probe SYSTEM= en \FDR en el código de factorial del apéndice \ref{codigo}.
+
+
 
