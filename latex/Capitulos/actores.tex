@@ -1,6 +1,6 @@
 \chapter{Sistemas de actores}
 
-En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda sección se definirá la sintaxis de un lenguaje mínimo de actores, para terminar con algunos ejemplos de este lenguaje.
+En este capitulo se explicará cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introducirá el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda sección se definirá la sintaxis de un lenguaje mínimo de actores, para terminar con algunos ejemplos utilizando este lenguaje.
 
 \section{Describiendo un sistema de actores}
 Un sistema de actores, consiste de configuraciones. Una configuración viene dada por una colección de actores concurrentes y una colección de comunicaciones en tránsito. Cada actor tiene un nombre único y un comportamiento. Se comunica con otros actores a través de mensajes asíncronos. Los actores son reactivos, es decir, se ejecutan solo en respuesta a los mensajes recibidos. El comportamiento de un actor es determinista, ya que la respuesta está determinada por el contenido del mensaje que procesa. 
@@ -81,7 +81,7 @@ Un actor puede describirse especificando:
  \item Su \textit{comportamiento}, que es una función. Tiene la comunicación que está siendo procesada como entrada. Como salida tiene nuevos actores, nuevos trabajos y su nuevo comportamiento de reemplazo.
 \end{itemize}
 
-Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones, y un proceso que ejecutará su comportamiento. Este apunta a una celda particular de este \textit{buzón}. 
+Podemos pensar que un actor es un \textit{buzón} donde llegan todas las comunicaciones, y un proceso que ejecutará su comportamiento. Este proceso apunta a una celda particular de este \textit{buzón}. 
 
 % \begin{figure}[H]
 % \begin{tikzpicture}
@@ -170,9 +170,11 @@ Cuando el proceso $X_n$ acepta la $(n)-esima$ comunicación, eventualmente crea 
 \label{fig:actortransition}
 \end{figure}
 
-Las dos procesos $X_n$ y $X_{n+1}$ no interfieren entre sí. $X_n$ solo procesa la $(n)-esima$ comunicación. Exceptuando el caso en el cual se envíe una comunicación a si mismo. Cada uno de estos procesos crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que el proceso $X_n$ cree el proceso $X_{n+1}$, $X_n$ podría haber creado otros actores u otros trabajos. Es posible incluso, que $X_n$ este creando actores o trabajos al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicación, ni tampoco especificará ninguno otro comportamiento de reemplazo.
+Las dos procesos $X_n$ y $X_{n+1}$ no interfieren entre sí, pero la creación de $X_{n+1}$ depende de que $X_{n}$ haya definido su comportamiento de reemplazo. $X_n$ solo procesa la $(n)-esima$ comunicación. Exceptuando el caso en el cual se envíe una comunicación a si mismo. Cada uno de estos procesos crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que el proceso $X_n$ cree el proceso $X_{n+1}$, $X_n$ podría haber creado otros actores u otros trabajos. Es posible incluso, que $X_n$ este creando actores o trabajos al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicación, ni tampoco especificará ninguno otro comportamiento de reemplazo.
 
 % Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos. El orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de los procesos definen un orden total entre ellos. 
+
+Esto parecería definir algún tipo de orden con respecto a como se van a procesar los mensajes. En el trabajo de Agha\cite{Agha:1986:AMC:7929} no se define ningún orden especifico sobre el procesamiento de comunicaciones. La única garantía que tiene sobre las comunicaciones, esta relacionada con el eventual proceso de los mensajes. Tanto la implementación de Erlang\cite{Cesarini:2009:EP:1717841} como la implementación de Akka\cite{Wyatt:2013:AC:2663429}, entregaran al menos una vez la comunicación a un actor, esto no garantiza la entrega.
 
 Alguna implementación puede esperar a que el proceso anterior termine, para construir el nuevo y eliminar el viejo. Sin embargo, retrasar el reemplazo hasta que el proceso pueda ser reemplazado no es un requisito. Si hay suficientes recursos disponibles, la computación en un sistema de actores se puede acelerar simplemente aceptando la próxima comunicación ni bien su comportamiento de reemplazo esta establecido.
 
@@ -245,15 +247,15 @@ Alguna implementación puede esperar a que el proceso anterior termine, para con
 
 \end{tikzpicture}
 
-\label{fig:actores:crecion:b}
 \caption{}
+\label{fig:actores:crecion:b}
 \end{subfigure}
 
-\label{fig:actores:crecion}
 \caption{Las lineas verticales indican el paso del tiempo, las de punto indican creación de actores y las otras flechas envío de mensaje.}
+\label{fig:actores:crecion}
 \end{figure}
 
-Como se puede ver en la figura\ref{fig:actores:crecion} \subref{fig:actores:crecion:a}, el actor $Actor_1$ recibe una comunicación con la lista. Al procesar esta comunicación tiene como resultado, crea el actor $Actor_2$. En la Figura\ref{fig:actores:crecion} \subref{fig:actores:crecion:b} se puede ver un ejemplo similar donde $Actor_1$ recibe una comunicación, como resultado envía una comunicación a $Actor_2$ y este último crea $Actor_3$.
+Como se puede ver en la figura \ref{fig:actores:crecion} \subref{fig:actores:crecion:a}, el actor $Actor_1$ recibe una comunicación. Al procesar esta comunicación, crea el actor $Actor_2$. En la Figura\ref{fig:actores:crecion} \subref{fig:actores:crecion:b} se puede ver un ejemplo similar donde $Actor_1$ recibe una comunicación, como resultado envía una comunicación a $Actor_2$ y este último crea $Actor_3$.
 
 
 \section{Programando con actores}\label{actores:sal}
@@ -315,7 +317,7 @@ La gramática de todas las expresiones viene dada por:
 <exp> :: = <iexp> | <bexp> | <sexp> | <mexp>  
 \end{grammar}
 
-En el caso de $mexp$, es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula. 
+En el caso de $mexp$, es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula. Y representa los identificador de la dirección de buzón.
 
 \subsection{Definición de comportamientos}\label{actores:beha}
 Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada comportamiento está parametrizado. Por ejemplo, el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especificará el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de una cuenta bancaria, se tiene que dar un valor especifico de saldo.
@@ -364,7 +366,7 @@ Ambas listas, \textit{comunication-list} y \textit{acquaiantence-list}, contiene
 La ejecución de \textit{command} deberá contar a lo sumo con un solo comando \textit{become}, esta propiedad tiene que ser garantizada de manera estática, de no existir ningún comando \textit{become}, el actor asumirá un comportamiento de tipo \textit{bottom}, es es básicamente ignorar los mensajes que se le envíen.
 
 \subsection{Definición de comandos}\label{actores:cmd}
-Los comandos son las acciones que permite a \SAL crear nuevos actores, enviar mensajes y definir un nuevo comportamiento. Estas describen en esencia lo que un actor puede hacer dentro de un comportamiento.
+Los comandos son las acciones que permite a \SAL crear nuevos actores, enviar mensajes y definir un nuevo comportamiento. Estos describen en esencia lo que un actor puede hacer dentro de un comportamiento.
 
 \subsubsection*{Creando actores}
 Los actores son creados usando expresiones de tipo \textit{new}, que devuelve una nueva dirección de buzón del actor recién creado. La sintaxis de las expresiones de tipo \textit{new} es la siguiente:
@@ -412,7 +414,7 @@ También se puede utilizar el identificador de un comportamiento, especificando 
  \texttt{become}&\ Comp(1,2,3) 
 \end{align*}
 
-Donde $link$ es alguna dirección de buzón, y $Comp(1,2,3)$ hace referencia al comportamiento $Comp$, y su \textit{acquaiantence-list} son los valores $1$, $2$ y $3$.
+Donde $link$ es alguna dirección de buzón, y $Comp(1,2,3)$ hace referencia al comportamiento $Comp$, y su \textit{acquaiantence-list} son los valores $1$, $2$ y $3$. La sintaxis del comportamiento se describe en la sección \ref{actores:beha}
 
 
 \subsubsection*{Otros comandos}

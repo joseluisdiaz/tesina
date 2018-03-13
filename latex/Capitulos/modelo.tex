@@ -81,7 +81,7 @@ Mailboxes = \Interleave_{ actor : ActorID } Mailbox(actor, \nil)
 
 Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}.
 
-\subsection{Crear nuevos actores}\label{modelo:crear}
+\subsection{Crear nuevos actores}
 
 Como se menciono en las anteriormente, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación dos abstracciones.
 
@@ -221,7 +221,7 @@ Este comportamiento es muy simple, en el momento de creación recibe dos paráme
 
 En este caso no cuenta con comportamiento de reemplazo, entonces termina con $STOP$.
 
-Tanto para $Factorial$ y para $FactorialWorker$ faltan definir los procesos que van a dar inicio a los actores. Estos fueron definidos definidas en la sección \cite{modelo:crear}. 
+Tanto para $Factorial$ y para $FactorialWorker$ faltan definir los procesos que van a dar inicio a los actores. Estos fueron definidos definidas en la sección \ref{modelo:crear}. 
 
 \subsection{Ejemplo: Una pila}
 En este ejemplo se construirá una estructura de datos de tipo \textbf{pila}, la cual esta compuesta de un solo comportamiento $node$ que es el que se encarga de recibir las operaciones $PUSH$ y $POP$. En este caso se agrega al modelo $fwd$ que como veremos, está encargado de modelar el comportamiento $\textbf{become}\ buzon$.
