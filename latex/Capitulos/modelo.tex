@@ -1,7 +1,7 @@
 \chapter{Un modelo en CSP}
-En este capítulo se modelará un sistema de actores utilizando \CSP. Este incluirá las funciones definidas por \SAL, que se comentaron previamente. Tales como crear nuevos actores, enviar mensajes, y definir un comportamiento de reemplazo. 
+En este capítulo se modela un sistema de actores utilizando \CSP. Este incluye las funciones definidas por \SAL, que se comentaron previamente. Tales como crear nuevos actores, enviar mensajes, y definir un comportamiento de reemplazo. 
 
-Se empezará con un pequeño ejemplo que mostrará las ideas básicas, seguido por una descripción detallada de cada componete, algunos ejemplos de traducción de \SAL a \CSP. Mostraremos una función que traduce de \SAL a \CSP. Para terminar con algunas particularidades sobre el modelo propuesto al utilizar la herramienta \FDR.
+Se comienza por una descripción detallada de cada componete, algunos ejemplos de traducción de \SAL a \CSP. Se presenta una función que traduce de \SAL a \CSP. Para terminar con algunas particularidades sobre el modelo propuesto al utilizar la herramienta \FDR.
 
 \section{Describiendo el sistema de actores} 
 Dentro de las acciones que un actor efectúa está la de crear otro actor. En \CSP los actores corresponden a procesos, como todos los procesos tienen que estar definidos desde el comienzo, en \CSP no existe la posibilidad de crear dinámicamente un nuevo proceso.
@@ -23,7 +23,7 @@ Ya que no existe en \CSP el concepto de instancia es necesario contar con todos 
 
 \subsection{Buzón}\label{modelo:buzon}
 
-Recodemos que la naturaleza de \CSP es sincrónica y los actores no lo son. Para esto necesitamos desacoplar el envío de mensajes de la recepción. Utilizamos una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
+Recodemos que la naturaleza de \CSP es sincrónica y los actores no lo son. Para esto se necesita desacoplar el envío de mensajes de la recepción. Se utiliza una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
 
 La ecuación de \textit{buzón} es la siguiente:
 
@@ -81,13 +81,13 @@ Mailboxes = \Interleave_{ actor : ActorID } Mailbox(actor, \nil)
 
 Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}.
 
-\subsection{Crear nuevos actores}
+\subsection{Crear nuevos actores}\label{modelo:crear}
 
-Como se menciono en las anteriormente, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación dos abstracciones.
+Como se menciono anteriormente, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación dos abstracciones.
 
 La primera abstracción es un preámbulo a un comportamiento, le asigna a este de los parámetros \textit{acquaiantence-list} y al mismo tiempo el otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un conjunto de procesos puestos en paralelo, y un canal para comunicarse con ella.
 
-El canal para comunicarse con la los procesos que están esperando ser iniciados, se define de la siguiente forma:
+El canal para comunicarse con los procesos que están esperando ser iniciados, se define de la siguiente forma:
 
 \[
 channel\ Create:actorid:params
@@ -111,9 +111,9 @@ Donde:
 
 En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create$ para arrancar con el comportamiento definido. 
 
-El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos en $ActorID$. Por esto es que decimos que no solo define el nombre, sino que al mismo tiempo está estableciendo cuantos actores del tipo $ACTOR_k$ vamos a tener.
+El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos en $ActorID$. Por esto es que decimos que no sólo define el nombre, sino que al mismo tiempo está estableciendo cuantos actores del tipo $ACTOR_k$ se va a tener.
 
-El proceso que representa a todos los actores que van ser iniciados en paralelo, utiliza el operador de \textit{Interleave}. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos. 
+El proceso que representa a todos los actores que van a ser iniciados en paralelo, utiliza el operador de \textit{Interleave}. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos. 
 
 La segunda abstracción es un proceso que vuelve asincrónica el mensaje de creación, de la creación como tal. Para esto se utiliza una estructura intermedia $create$ y un canal para comunicarse con ella. $create$ se define de la siguiente forma: 
 
@@ -132,7 +132,7 @@ Donde:
  \item $\Interleave_{actor : ActorID}$ pone en paralelo todos los actores definidos en $ActorId$ utilizando $create$. 
 \end{description}
 
-El canal que para comunicarse con esta estructura se define:
+El canal para comunicarse con esta estructura se define como:
 
 \[
 channel\ CreateAsk:actorid.params
@@ -140,7 +140,7 @@ channel\ CreateAsk:actorid.params
 
 Donde: $channel\ Create:actorid.params$ define el canal $Create$, el primer parámetro es cualquier $ActorID$, representa el actor destino. El segundo parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
 
-Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ existan. Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental en la construcción total del sistema, esto tiene que ver con en \CSP se puede elegir los eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando veamos como compone todo el sistema esta idea quedará mas clara.
+Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ existan. Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental en la construcción total del sistema, esto tiene que ver con en \CSP se puede elegir los eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando como se compone todo el sistema, esta idea quedará más clara.
 
 \subsection{Definición de comportamientos}
 La idea de comportamiento fue introducida en la sección \ref{actores:comportamientos}, podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida, nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el actor que esta procesando la comunicación.
@@ -159,12 +159,12 @@ La idea de comportamiento fue introducida en la sección \ref{actores:comportami
 
 \section{Ejemplos}
 
-En esta sección se mostraran cuatro ejemplos de. Los dos primeros son los vistos en la sección \ref{sal:factorial} y \ref{sal:pila}. Los siguientes dos son nuevos, uno es la estructura de datos \textbf{cola} y ejercicio tomado del libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}.
+En esta sección se muestran cuatro ejemplos. Los dos primeros son los vistos en la sección \ref{sal:factorial} y \ref{sal:pila}. Los siguientes dos son nuevos, uno es la estructura de datos \textbf{cola} y el otro un ejercicio tomado del libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}.
 
 \subsection{Ejemplo: cálculo de factorial en CSP}
-En esta sección se describirá el funcionamiento de factorial, guarda cierta similitud con el ejemplo antes visto en sal \SAL. Está compuesto por dos comportamientos $Factorial$ y $FactorialWorker$.
+En esta sección se describe el funcionamiento del factorial, que guarda cierta similitud con el ejemplo antes visto en \SAL. Está compuesto por dos comportamientos $Factorial$ y $FactorialWorker$.
 
-Continuando con la mecánica al capitulo anterior, primero se mostrara código en \CSP, luego se comentaran las lineas de interés, para terminar con un pequeño detalle del funcionamiento.
+Continuando con la mecánica del capítulo anterior, primero se presenta el código en \CSP, luego se comentan las líneas de interés, para terminar con un pequeño detalle del funcionamiento.
 
 El primero de los comportamientos, es el de $Factorial$ que viene dado por la siguiente forma:
 \begin{process}
@@ -221,10 +221,10 @@ Este comportamiento es muy simple, en el momento de creación recibe dos paráme
 
 En este caso no cuenta con comportamiento de reemplazo, entonces termina con $STOP$.
 
-Tanto para $Factorial$ y para $FactorialWorker$ faltan definir los procesos que van a dar inicio a los actores. Estos fueron definidos definidas en la sección \ref{modelo:crear}. 
+Tanto para $Factorial$ y para $FactorialWorker$ faltan definir los procesos que van a dar inicio a los actores. Los cuales se encuentran definidas en la sección \ref{modelo:crear}. 
 
 \subsection{Ejemplo: Una pila}
-En este ejemplo se construirá una estructura de datos de tipo \textbf{pila}, la cual esta compuesta de un solo comportamiento $node$ que es el que se encarga de recibir las operaciones $PUSH$ y $POP$. En este caso se agrega al modelo $fwd$ que como veremos, está encargado de modelar el comportamiento $\textbf{become}\ buzon$.
+En este ejemplo se construye una estructura de datos de tipo \textbf{pila}, la cual está compuesta de un solo comportamiento $node$ que es el que se encarga de recibir las operaciones $PUSH$ y $POP$. En este caso se agrega al modelo $fwd$ que como veremos, está encargado de modelar el comportamiento $\textbf{become}\ buzon$.
 
 El comportamiento de $fwd$ está definido de la siguiente forma:
 
@@ -269,7 +269,7 @@ Cuando la operación es de tipo $push$, la pila crea un nuevo actor $node$. Se c
 
 \subsection{Ejemplo: Un una cola}
 
-En este ejemplo se explorará como construir una estructura de datos de tipo \textit{cola}, se intentó modelarla como si fuera una máquina de estados, dónde cada comportamiento corresponde a un estado y las comunicaciones son quienes disparan las transiciones de estos. Primero se mostrará el ejemplo escrito utilizando \SAL, y luego su equivalente en \CSP.
+En este ejemplo se explora cómo construir una estructura de datos de tipo \textit{cola}, la cual se modela como si fuera una máquina de estados, dónde cada comportamiento corresponde a un estado y las comunicaciones son quienes disparan las transiciones de estos. Primero se muestra el ejemplo escrito utilizando \SAL, y luego su equivalente en \CSP.
 
 Existen dos operaciones posibles para efectuarse en una \textit{cola} $QUEUE$ o encolar, y $DEQUEUE$ desencolar. La primera operación agrega un nodo al final, y la segunda lo remueve del principio. 
 
@@ -301,8 +301,8 @@ end def
 Donde:
 
 \begin{description}
- \item [Lineas 2-3] Si la operación es $delete$, envía su contenido a $mailbox$. Como no hay comportamiento de reemplazo, este nodo termina su ejecución en este momento.
- \item [Lineas 4-5] Si la operación es $insert$, el comportamiento de reemplazo tiene un nuevo nodo al que apunta. Esta operación básicamente cambia, el nodo que está próximo en la \textit{cola}.
+ \item [Líneas 2-3] Si la operación es $delete$, envía su contenido a $mailbox$. Como no hay comportamiento de reemplazo, este nodo termina su ejecución en este momento.
+ \item [Líneas 4-5] Si la operación es $insert$, el comportamiento de reemplazo tiene un nuevo nodo al que apunta. Esta operación básicamente cambia, el nodo que está próximo en la \textit{cola}.
 \end{description}
 
 Código en \CSP:
@@ -330,7 +330,7 @@ Donde:
  \item $CommSend.mailbox!\langle link, content \rangle$ Envía una comunicación al buzón $mailbox$, con la lista $link$ y $content$
  \item $STOP$ Al no haber comportamiento de reemplazo, el actor termina su ejecución.
  \item $CommRecv.self?\langle 'insert', ACTOR.mailbox \rangle$ Espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'insert'$, guarda en $mailbox$ el valor del segundo elemento de la lista, que es una dirección de buzón.
- \item $Node(self, content, mailbox)$ Define el comportamiento de reemplazo, utiliza el parámetro $mailbox$ recibido en el linea como reemplazo del anterior $link$. Es decir reemplaza al nodo que apunta.
+ \item $Node(self, content, mailbox)$ Define el comportamiento de reemplazo, utiliza el parámetro $mailbox$ recibido en la línea como reemplazo del anterior $link$. Es decir reemplaza al nodo que apunta.
 \end{description}
 
 \subsubsection*{Comportamiento de emptyQueue}
@@ -349,8 +349,8 @@ end def
 Donde:
 
 \begin{description}
- \item [Linea 3] Si la operación fue $enqueue$, entonces crea un nuevo nodo con el valor recibido. Como es el primer nodo que va a tener la cola, el parámetro del siguiente nodo en la pila es $nil$.
- \item [Linea 4] El comportamiento de reemplazo para este actor es $Queue$. Como es el único nodo que tiene la \textit{cola} el primer y el ultimo actor es el actor creado en la linea anterior.
+ \item [Línea 3] Si la operación fue $enqueue$, entonces crea un nuevo nodo con el valor recibido. Como es el primer nodo que va a tener la cola, el parámetro del siguiente nodo en la pila es $nil$.
+ \item [Línea 4] El comportamiento de reemplazo para este actor es $Queue$. Como es el único nodo que tiene la \textit{cola} el primer y el último actor es el actor creado en la linea anterior.
 \end{description}
 
 Código en \CSP:
@@ -390,12 +390,12 @@ end def
 Donde:
 
 \begin{description}
- \item [Linea 1] $first$ y $last$ son respectivamente, el primer y último nodo de la \textit{cola}.
- \item [Linea 3] Si la operación fue $enqueue$, entonces crea un nuevo nodo con el valor recibido. 
- \item [Linea 4] Le envía un mensaje a $last$ para que intercambie el valor al que apunta, por el valor del nodo recién creado.
- \item [Linea 5] El comportamiento de reemplazo es el mismo, lo único que cambia es el valor del buzón del último nodo ($last$) por el nodo recién creado.
- \item [Linea 7] Borra el primer nodo en la lista.
- \item [Linea 8] El nuevo comportamiento es un estado intermedio llamado $waitDelete$.
+ \item [Línea 1] $first$ y $last$ son respectivamente, el primer y último nodo de la \textit{cola}.
+ \item [Línea 3] Si la operación fue $enqueue$, entonces crea un nuevo nodo con el valor recibido. 
+ \item [Línea 4] Le envía un mensaje a $last$ para que intercambie el valor al que apunta, por el valor del nodo recién creado.
+ \item [Línea 5] El comportamiento de reemplazo es el mismo, lo único que cambia es el valor del buzón del último nodo ($last$) por el nodo recién creado.
+ \item [Línea 7] Borra el primer nodo en la lista.
+ \item [Línea 8] El nuevo comportamiento es un estado intermedio llamado $waitDelete$.
 \end{description}
 
 Código en \CSP:
@@ -448,9 +448,9 @@ end def
 Donde: 
 
 \begin{description}
- \item [Linea 2] Reenvía a $client$ el valor $content$ recibido
- \item [Linea 4] Si el valor del primer nodo es nulo, el comportamiento de reemplazo es $emptyQueue$
- \item [Linea 6] El comportamiento de reemplazo es $queue$. Utiliza como primer nodo el nodo recibido en la comunicación.
+ \item [Línea 2] Reenvía a $client$ el valor $content$ recibido
+ \item [Línea 4] Si el valor del primer nodo es nulo, el comportamiento de reemplazo es $emptyQueue$
+ \item [Línea 6] El comportamiento de reemplazo es $queue$. Utiliza como primer nodo el nodo recibido en la comunicación.
 \end{description}
 
 Código en \CSP:
@@ -686,7 +686,7 @@ BuildingRing(self, first, lastCreated) = \\ \quad
 \end{block}
 \end{process}
 
-\section{Una semantica en CSP}
+\section{Una semántica en CSP}
 
 En esta sección se describirán como traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utilizará la gramática definida en \ref{actores:sal}. Las funciones estarán definidas de manera inductiva.
 

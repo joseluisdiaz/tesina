@@ -1,12 +1,12 @@
 \chapter{Preliminares}
 
-En este capitulo, en la primera sección se explorará algunas particularidades del paralelismo en \CSP, tales como: paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se mostraran algunas construcciones en \CSPm que serán útiles. 
+En este capítulo, en la primera sección se explora algunas particularidades del paralelismo en \CSP, tales como: paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se muestra algunas construcciones en \CSPm que resultan útiles. 
 
 La sección de \CSP no pretende ser una introducción al lenguaje, se asume que el lector tiene cierta familiaridad con él. Para una introducción se puede consultar \cite{Cristia:CSP}, para una referencia completa \cite{Roscoe:1997:TPC:550448}
 
 \section{Paralelismo en CSP}
 
-En esta sección se mostrará que se puede en \CSP solo sincronizar algunos eventos. Es útil para estudiar sistemas concurrentes poder tener un control mas fino de que eventos son de interés. 
+En esta sección se muestra que se puede en \CSP solo sincronizar algunos eventos. Es útil para estudiar sistemas concurrentes poder tener un control mas fino de que eventos son de interés. 
 
 \subsubsection*{Paralelismo sincrónico}
 
@@ -26,7 +26,7 @@ P_2 =& canal?x \then P(x) \\
 SYSTEM =& P_1 \parallel P_2 \\
 \end{align*}
 
-Donde $canal!1$ y que $canal?x$ lo recibe. Para entender un poco más como funciona la notación que involucra $\langle ? \rangle$ y $\langle ! \rangle$, supongamos que $x$ puede tomar los valores $1$, $2$ y $3$. La expresión $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
+Donde $canal!1$ y que $canal?x$ lo recibe. Para entender un poco más cómo funciona la notación que involucra $\langle ? \rangle$ y $\langle ! \rangle$, supongamos que $x$ puede tomar los valores $1$, $2$ y $3$. La expresión $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
 \begin{align*}
 P_2 & =  canal.1 \then STOP \\
       & \Extchoice canal.2 \then STOP \\
@@ -43,9 +43,9 @@ Como $x$ es una variable libre, y el evento que termina sincronizando es $canal.
 
 \subsubsection*{Paralelismo alfabetizado}
 
-Mientras más procesos combinemos utilizando el operador $\parallel$, mas procesos tienen que ponerse de acuerdo en los eventos a sincronizar, ponemos en paralelo los procesos $P$ y $Q$ no necesariamente todas las comunicaciones de $P$ son para $Q$.
+Mientras más procesos combinemos utilizando el operador $\parallel$, más procesos tienen que ponerse de acuerdo en los eventos a sincronizar, ponemos en paralelo los procesos $P$ y $Q$ no necesariamente todas las comunicaciones de $P$ son para $Q$.
 
-Si $X$ e $Y$ son dos conjunto de eventos, $P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q$ es la combinación en donde $P$ tiene solo permitido comunicar los eventos $X$ y donde $Q$ tiene solo permitido comunicar los eventos $Y$, y solo tienen que ponerse de acuerdo en la intersección $X \cap Y$. Por ejemplo:
+Si $X$ e $Y$ son dos conjunto de eventos, $P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q$ es la combinación en donde $P$ tiene solo permitido comunicar los eventos $X$ y donde $Q$ tiene sólo permitido comunicar los eventos $Y$, y únicamente tienen que ponerse de acuerdo en la intersección $X \cap Y$. Por ejemplo:
 
 \[ 
  ( a \then b \then b \then STOP )\  \textsubscript{\{a, b\}} \parallel \textsubscript{\{b, c\}}\ ( b \then c \then b \then STOP ) 
@@ -83,7 +83,7 @@ Si $\Sigma$ fueran todos los eventos posibles en un sistema dado podemos definir
 
 \subsubsection*{Actores y CSP}
 
-Como vimos en el capitulo anterior, \CSP es sincrónico, mientras qué, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si se quiere transmitir entre dos procesos información en \CSP lo escribimos (como vimos en \textit{Paralelismo sincrónico}), de la siguiente forma:
+Como vimos en el capítulo anterior, \CSP es sincrónico, mientras que, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si se quiere transmitir entre dos procesos información en \CSP lo escribimos (como vimos en \textit{Paralelismo sincrónico}), de la siguiente forma:
 
 \begin{align*}
 P_1 =& canal!1 \then STOP \\
@@ -91,7 +91,7 @@ P_2 =& canal?x \then STOP \\
 SYSTEM =& P_1 \Parallel P_2  
 \end{align*}
 
-Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, la escribimos de la siguiente forma:
+Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, cuya escritura es:
 
 \begin{align*}
 BUFFER =& enviar?x \then recibir!x \then BUFFER \\
@@ -102,7 +102,7 @@ SYSTEM =& ( P_1 \Interleave P_2 ) \Parallel BUFFER \\
 
 Como la comunicación es desde $P_1$ hacia $BUFFER$ y desde $BUFFER$ hacia $P_2$, no hay ninguna comunicación entre $P_1$ y $P_2$. Por esto se utiliza el operador de entrelazado.
 
-Como en \CSP no existe el concepto de instancia, y se debe tener definida la red de procesos desde el comienzo. Para iniciar $n$ procesos de tipo $P$ se escriben los siguientes procesos en \CSP:
+En \CSP no existe el concepto de instancia, y se debe definir la red de procesos desde el comienzo. Para iniciar $n$ procesos de tipo $P$ se escriben los siguientes procesos en \CSP:
 
 \begin{align*}
 P =& \texttt{comportmiento-de-P} \then STOP \\
@@ -133,7 +133,7 @@ Este último ejemplo muestra dos de los aspectos que se desarrollaran en el capi
 
 \subsubsection{Tipos algebraicos}
 
-Permite declarar tipos estructurados, son similares a las declaraciones de tipo \textit{data} de Haskell. La mas simple de las declaraciones es utilizando constantes.
+Permite declarar tipos estructurados, son similares a las declaraciones de tipo \textit{data} de Haskell. La más simple de las declaraciones es utilizando constantes.
 
 \begin{lstlisting}[language=cspm, style=sinnumeros]
 datatype ColorSimple = Rojo | Verde | Azul
@@ -154,7 +154,7 @@ Si se declara un tipo de datos T, entonces a T se adjunta el conjunto de todos l
 
 \subsubsection{Canales}
 
-Los canales de \CSPm son utilizado para crear eventos, y se declaran de una manera similar a los tipos de datos. Por ejemplo:
+Los canales de \CSPm son utilizados para crear eventos, y se declaran de una manera similar a los tipos de datos. Por ejemplo:
 
 \begin{lstlisting}[language=cspm, style=sinnumeros]
 channel estaListo
@@ -176,7 +176,7 @@ f(_) = error("Error")
 Funciona de manera similar a Haskell, también se pueden utilizar otras construcciones como secuencias o algún tipo algebraico.
 
 \subsubsection{Otras construcciones}
-En esta sección se mostrará alguna de las conversiones útiles para entender un programa en \CSPm.
+En esta sección se muestran algunas de las conversiones útiles para entender un programa en \CSPm.
 
 Tabla de conversión para secuencias:
 
