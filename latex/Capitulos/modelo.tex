@@ -424,14 +424,14 @@ Donde:
  \item $CommRecv.self? \langle 'enqueue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $ATOM.ENQUEUE$, guarda en $value$ el valor del segundo elemento de la lista.
  \item $CreateAsk?node.pid!\langle value, Null \rangle$ crea un nuevo actor de tipo $node$, guarda en en $newLast$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el valor $value$ y $Null$.
  \item $CommSend.first!\langle 'insert', node.newLast \rangle$ Envía una comunicación al buzón $first$, con la lista $'insert'$ y el actor creado en la linea anterior. 
- \item $Queue(self, first, node.newLast)$ Define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Pasa como parámetro la dirección del buzón del actor antes creado como reemplazo del ultimo nodo de la pila.
+ \item $Queue(self, first, node.newLast)$ Define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Pasa como parámetro la dirección del buzón del actor antes creado como reemplazo del último nodo de la pila.
  \item $CommRecv.self?\langle 'dequeue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'queue'$, guarda en value el valor del segundo elemento de la lista,.
  \item $CommSend.first!\langle 'delete', self \rangle$ Envía una comunicación al buzón $first$, con la lista $'delete'$ y la dirección del buzón de la actor \textit{cola}. 
  \item $WaitDelete(self, client, last)$ el comportamiento de reemplazo es $WaitDelete$.
  \end{description}
 
 \subsubsection*{Comportamiento de waitDelete}
-Este comportamiento es un estado intermedio, está a la espera de los datos de nodo que está siendo removido. Una vez que llega el contenido, este se envía a quien originalmente pidió remover el nodo. Si el nodo que se borró era el último, el nodo al que apuntaba será $nil$, entonces se tiene que comportar como si la cola estuviera vacía. En caso contrario se comporta como la cola con al menos un elemento.
+Este comportamiento es un estado intermedio, está a la espera de los datos del nodo que está siendo removido. Una vez que llega el contenido, este se envía a quien originalmente pidió remover el nodo. Si el nodo que se borró era el último, el nodo al que apuntaba será $nil$, entonces se tiene que comportar como si la cola estuviera vacía. En caso contrario se comporta como la cola con al menos un elemento.
 
 Código en \SAL:
 
@@ -480,9 +480,9 @@ Donde:
  \item $Queue(self, newFirst, last)$ El comportamiento de reemplazo es $Queue$. Cambia el valor del primer nodo por $newFirst$.
  \end{description}
  
-La \textit{cola} tiene dos transiciones, cuando está vacía y se agrega un nodo cambia del comportamiento $EmptyQueue$ al comportamiento $Queue$. Cuando tiene un único nodo y se lo remueve, cambia del comportamiento $Queue$ a $EmptyQueue$. También tiene un funcionamiento habitual, es decir cuando se agregan y quitan nodos y hay mas de un nodo en la \textit{cola}.
+La \textit{cola} tiene dos transiciones, cuando está vacía y se agrega un nodo cambia del comportamiento $EmptyQueue$ al comportamiento $Queue$. Cuando tiene un único nodo y se lo remueve, cambia del comportamiento $Queue$ a $EmptyQueue$. También tiene un funcionamiento habitual, es decir cuando se agregan y quitan nodos y hay más de un nodo en la \textit{cola}.
 
-Supongamos que queremos insertar un nodo ($'enqueue'$), con el valor $42$ en una \textit{cola} con ningún nodo en ella. La interacción entre los actores tendría la siguiente forma:
+Supongamos que se quiere insertar un nodo ($'enqueue'$), con el valor $42$ en una \textit{cola} con ningún nodo en ella. La interacción entre los actores tendría la siguiente forma:
 
 \begin{itemize}
  \item El buzón del actor que tiene el comportamiento $EmptyQueue$:
@@ -497,7 +497,7 @@ Supongamos que queremos insertar un nodo ($'enqueue'$), con el valor $42$ en una
 \begin{itemize}
  \item El buzón del actor que tiene el comportamiento $Queue$:
  \subitem Recibe una comunicación con la lista $'enqueue'$ y $42$.
- \subitem Crea un nuevo nodo, y guarda su guarda la dirección del buzón en $newLast$.
+ \subitem Crea un nuevo nodo, y guarda la dirección del buzón en $newLast$.
  \subitem Reenvía un mensaje al último nodo en la \textit{cola} ($last$) para que cambie al nodo que apunta.
  \subitem Cambia cual es el último nodo en $Queue$, ahora es $newLast$.
  \item El buzón del nodo que hasta ese momento era el último ($last$):
@@ -513,15 +513,17 @@ Supongamos que queremos remover el primer nodo ($'dequeue'$), y enviarle el cont
  \subitem Cambia en un comportamiento intermedio, el cual esperará el contenido del nodo que será borrado.
  \item El buzón del nodo que hasta ese momento era el primero ($first$):
  \subitem Recibe una comunicación con la lista $delete$ y $mailbox$.
- \subitem Envía su contenido, tanto $link$ que es a la dirección de buzón que apunta (el siguiente nodo en la \textit{cola}), como contenido que guarda al buzón $mailbox$. Como no tiene comportamiento de reemplazo, este actor termina su ejecución en este momento.
- \item El buzón del actor que tiene el comportamiento $WaitDelete$ recibe una comunicación con la lista $content$ y una dirección de buzón. Esta dirección es la dirección a la que el primer nodo, es decir el segundo nodo en la lista.
+ \subitem Envía su contenido, tanto $link$ que es a la dirección de buzón al que apunta (el siguiente nodo en la \textit{cola}), como contenido que guarda al buzón $mailbox$. Como no tiene comportamiento de reemplazo, este actor termina su ejecución en este momento.
+ \item El buzón del actor que tiene el comportamiento $WaitDelete$ recibe una comunicación con la lista $content$ y una dirección de buzón. Esta dirección ea a la que el primer nodo apunta, es decir el siguiente nodo.
  \subitem Se envía el contenido a quien originalmente lo pidió ($client$).
  \subitem Si la dirección a la que apuntaba era $Null$, esto quiere decir que era el último nodo en la lista. Se comporta como $emptyQueue$.
  \subitem En caso contrario, cambia al comportamiento $Queue$, con un nuevo nodo como el primer nodo en la \textit{cola}.
 \end{itemize}
 
+
+
 \subsection{Ejemplo: Un anillo de actores}
-Está propuesto como ejercicio en el libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}\footnote{Página 115, Ejercicio 4-2: The Process Ring}. El ejercicio propone crear una red de $n$ procesos como muestra la figura \ref{fig:anillo}. Una vez terminada de establecer, se tienen que enviar $m$ mensajes en la red, luego de recibir estos $m$ mensajes los nodos deberían finalizar.
+Está propuesto como ejercicio en el libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}\footnote{Página 115, Ejercicio 4-2: The Process Ring}. El ejercicio propone crear una red de $n$ procesos como muestra la figura \ref{fig:anillo}. Una vez terminada de establecer, se tienen que enviar $m$ mensajes en el anillo, luego de recibir estos $m$ mensajes los nodos deberían terminar su ejecución.
 
 
 \begin{figure}[H]
@@ -546,7 +548,7 @@ Está propuesto como ejercicio en el libro \textit{Programming Erlang}\cite{Cesa
 \label{fig:anillo}
 \end{figure}
 
-Para resolver este problema, se plantan tres comportamientos:
+Para resolver este problema, se plantean tres comportamientos:
 
 \begin{description}
  \item [Node] modela cada nodo del anillo.
@@ -556,8 +558,8 @@ Para resolver este problema, se plantan tres comportamientos:
 
 \subsubsection*{Comportamiento de Node}
 
-\textbf{Node} reacciona ente dos comunicación $'point\_to'$ y $'msg'$. En el caso del primero de las comunicación, este cambia el nodo que tiene como siguiente su estado.
-Cuando procesa un mensaje de tipo $['msg']$, siempre reenvía al siguiente nodo en la lista la comunicación $['msg']$. Si el valor del contador $m$ es mayor que cero, decrementando el contador en uno y sigue con la ejecución. Si es cero, termina la ejecución en ese momento.
+\textbf{Node} reacciona ante dos tipos de mensajes diferentes: $'point\_to'$ y $'msg'$. En el caso de $'point\_to'$, cuando lo procesa, cambia al nodo que apunta. 
+Cuando procesa un mensaje de tipo $['msg']$, siempre reenvía al siguiente nodo en la lista la comunicación $['msg']$. Si el valor del contador $m$ es mayor que cero, se disminuye el contador en uno y sigue con la ejecución. Si es cero, termina la ejecución en ese momento.
 
 Código en \SAL para \textbf{node}:
 
@@ -613,7 +615,7 @@ Node(self, m, next) = \\ \quad
 
 \subsubsection*{Comportamiento de Ring}
 
-Cuando \textbf{Ring} recibe una comunicación con una lista que tiene un par de enteros, el primero de los enteros es la cantidad de nodos a crear, y el segundo es la cantidad de comunicaciones a mandar. Crea el primer nodo que va a tener el anillo y el actor que va a estar encargado de crear el resto del anillo. Le envía un mensaje a $builder$ con el numero de nodos que tiene que crear. Como el primero fue inicialiado este es decrementado en uno.
+Cuando \textbf{Ring} recibe una comunicación con una lista que tiene un par de enteros, el primero de los enteros es la cantidad de nodos a crear, y el segundo es la cantidad de comunicaciones a mandar. Crea el primer nodo que va a tener el anillo y el actor que va a estar encargado de crear el resto del anillo. Le envía un mensaje a $builder$ con el número de nodos que tiene que crear. Como el primero fue inicialiado este es decrementado en uno.
 
 Código en \SAL:
 
@@ -642,9 +644,9 @@ Ring(self) = \\ \quad
 
 \subsubsection*{Comportamiento de BuildingRing}
 
-Esta es una estructura de control, siempre que procese una comunicación con $n$ mayor a uno. Creara un nuevo nodo. Le enviará al nodo que creó en la iteración anterior un mensaje para que apunte al nuevo nodo creado. Se auto enviará un mensaje decrementando en uno el contador de nodos a crear. El comportamiento de reemplazo cambia el nodo $lastCreated$.
+Esta es una estructura de control, siempre que procese una comunicación con $n$ mayor a uno, crea un nuevo nodo. Le envía al nodo que creó en la iteración anterior un mensaje para que apunte al nuevo nodo creado. Se auto enviá un mensaje decrementando en uno el contador de nodos a crear. El comportamiento de reemplazo cambia el nodo $lastCreated$.
 
-Si el contador $n$ era uno, le envía un mensaje a él nodo creado en la iteración anterior para que apunta al primer nodo creado ($first$). De esta manera cierra el anillo. Le envía una comunicación a el primer nodo, que da inicio al envío de mensajes. 
+Si el contador $n$ era uno, le envía un mensaje al nodo creado en la iteración anterior para que apunte al primer nodo creado ($first$). De esta manera cierra el anillo. Le envía una comunicación al primer nodo, que da inicio al envío de mensajes. 
 
 Código en \SAL:
 
@@ -688,11 +690,11 @@ BuildingRing(self, first, lastCreated) = \\ \quad
 
 \section{Una semántica en CSP}
 
-En esta sección se describirán como traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utilizará la gramática definida en \ref{actores:sal}. Las funciones estarán definidas de manera inductiva.
+En esta sección se describen como traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza la gramática definida en \ref{actores:sal}. Las funciones esta definidas de manera inductiva.
 
 \subsubsection*{Expresiones}
 
-En la sección \ref{actores:exp} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizaran las siguientes funciones:
+En la sección \ref{actores:exp} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las siguientes funciones:
 
 La función $exp_{tr}$ viene dada de la siguiente forma:
 
@@ -720,7 +722,7 @@ iexp_{tr}(- iexp) &=& - iexp_{tr}(iexp)
 \end{array}
 \end{equation*}
 
-La función expresiones booleanas $bexp_{tr}$ viene dada de la siguiente forma:
+La función expresiones booleanas $bexp_{tr}$ es finalmente:
 
 \begin{equation*}
 \begin{array}{l c l}
@@ -735,7 +737,7 @@ Tanto $mexp_{tr}$ como $sexp_{tr}$ no tienen una traducción asociada, podrían 
 
 \subsubsection*{Comandos}
 
-En la sección \ref{actores:cmd} se definió la gramática para los comandos. Para traducir los comandos se utilizara la función $cmd_{tr}$, que viene definida de la siguiente forma:
+En la sección \ref{actores:cmd} se definió la gramática para los comandos. Para traducir los comandos se utiliza la función $cmd_{tr}$, que se define de la siguiente forma:
 
 \begin{multline*}
 cmd_{tr} (\textbf{send } exp_1, exp_2, \ldots\ , exp_n \textbf{to } mexp) = \\
@@ -765,7 +767,7 @@ cmd_{tr}(command)
 \end{multline*}
 
 \subsubsection*{Comportamientos}
-En la sección \ref{actores:beha} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizará la función $beha_{tr}$ y $body_{tr}$.
+En la sección \ref{actores:beha} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las funciones $beha_{tr}$ y $body_{tr}$.
 
 La función $beha_{tr}$ viene dada por la forma:
 
@@ -789,17 +791,17 @@ CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(comma
 
 \section{Corriendo los modelos en FDR}
 
-Es necesario imponer restricciones al utilizar \FDR. Están relacionas con como la herramienta explora los estados posibles del modelo, por ejemplo, si utilizamos el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. En el resto de esta sección se exploraran estas restricciones. Estas modificaciones a los ejemplos pueden verse en el apéndice \ref{codigo}.
+Es necesario imponer restricciones al utilizar \FDR. Están relacionas a cómo la herramienta explora los estados posibles del modelo, por ejemplo, si se utiliza el rango completo de enteros intentará revisar cada uno de estos enteros, haciendo cada exploración exponencial en cada estado que se visite. En el resto de esta sección se exploran estas restricciones. Estas modificaciones a los ejemplos pueden verse en el apéndice \ref{codigo}.
 
 \subsubsection*{Enteros pequeños}
 
-Para evitar la explosión de estados que causa utilizar el rango de enteros de \textit{64-bits}, se generó una una representación propia para reducirla. Para esto se utiliza un tipo algebraico que representa estos enteros:
+Para evitar la explosión de estados que causa utilizar el rango de enteros de \textit{64-bits}, se genera una una representación propia para reducirla. Para esto se utiliza un tipo algebraico que representa estos enteros:
 
 \begin{align*}
 datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
 \end{align*}
 
-Donde, $MAX\_INT$ es el entero mas grande que se quisiera representar. Aparte de esta representación de los enteros, se construyeron las operaciones básicas sobre ellos:
+Donde, $MAX\_INT$ es el entero más grande que se quisiera representar. Aparte de esta representación de los enteros, se construyeron las operaciones básicas sobre ellos:
 
 \begin{align*}
 add(SI.a, SI.b)\ =&\ let\ sum\ = a + b \\
@@ -817,17 +819,17 @@ eq(\_, \_)\ =&\ false
 Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación excede el entero máximo el resultado de esta es $Overflow$.
 
 \subsubsection*{Listas de parámetros y valores}
-En en modelo se utilizaron listas para representar tanto los parámetros de \textit{acquaiantence-list} y los de \textit{communication-list}. Las listas son potencialmente infinitas, pare evitar que el modelo explore todos estos estados, esto se limitó el tamaño de las listas. Se utilizaron tuplas de tamaño fijo. Para esto es necesario conocer el tamaño maximo de mensaje que se va a enviar, esta es una limitación del modelo presentado.
+En en modelo se utilizan listas para representar tanto los parámetros de \textit{acquaiantence-list} y los de \textit{communication-list}. Las listas son potencialmente infinitas, pare evitar que el modelo explore todos estos estados, se limita el tamaño de las listas. Se utilizan tuplas de tamaño fijo. Para esto es necesario conocer el tamaño máximo del mensaje que se va a enviar, esta es una limitación del modelo presentado.
 
 La expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
 
-Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creó una unión de tipos llamada $VALUE$. Este tipo codifica todos los posibles valores que se quisiera enviar, buzones, enteros, booleanos y cadenas. Como las listas se definieron de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera, si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea solo un entero: $[1]$. La tupla de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
+Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creá una unión de tipos llamada $VALUE$. Este tipo codifica todos los posibles valores que se quisieran enviar, buzones, enteros, booleanos y cadenas. Como las listas se definen de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera: si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea solo un entero: $[1]$. La tupla de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
 
 \[
   datatype\ VALUE = ACTOR.ActorID | INT.Int | BOOL.Bool | ATOM.Atoms | None
 \]
 
-Las cadenas de caracteres se representa utilizando $Atoms$. Ya que las cadenas son inmutables y la única operación que se efectuá sobre ellas es la comparación Esta viene dada de la siguiente forma:
+Las cadenas de caracteres se representa utilizando $Atoms$. Ya que las cadenas son inmutables y la única operación que se efectúa sobre ellas es la comparación. Esta viene dada de la siguiente forma:
 
 \[
   datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
@@ -835,7 +837,7 @@ Las cadenas de caracteres se representa utilizando $Atoms$. Ya que las cadenas s
 
 \subsubsection*{Cota en el buzón}
 
-Se puede modelar un buzón que no tenga una cota superior, pero tendríamos nuevamente problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón. Este caso es similar al de la lista en la comunicación. 
+Se puede modelar un buzón que no tenga una cota superior, pero se tendría nuevamente problemas de explosión de estados ya que \FDR intentaría explorar todas las combinaciones posibles de buzón. Este caso es similar al de la lista en la comunicación. 
 
 La ecuación de \textit{buzón}, con cota, es la siguiente:
 
@@ -881,8 +883,7 @@ MailboxFull(i, \lseq x \rseq \cat xs ) = {} \\ \quad
 \end{block} \\
 \end{process}
 
-La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un limite definido por $MAILBOX\_SIZE$. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
-
+La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un límite definido por $MAILBOX\_SIZE$. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
 
 \begin{itemize}
 \item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
@@ -892,37 +893,39 @@ La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un
 
 \subsubsection*{Grafico de entrelazado}
 
-La herramienta \FDR permitió ver grafico de entrelazado de los distintos actores. Como muestra la figura \ref{c:grafo}.
+La herramienta \FDR permite ver gráfico de entrelazado de los distintos actores. Como muestra la figura \ref{grafo}.
 
 \begin{figure}[H]
+
 \begin{center}
 \includegraphics[width=15 cm]{img/fact.png}
-\label{c:grafo}
 \caption{Grafo de entralazado para el ejemplo del factorial}
 \end{center}
+
+\label{grafo}
 \end{figure}
 
-Se pueden ver en la figura \ref{c:grafo} las siguientes acciones:
+Se pueden ver en la figura \ref{grafo} las siguientes acciones:
 
 \begin{itemize}
 \item $Main$ crea un actor con el comportamiento $Factorial$
 \item $Main$ le envía a $Factorial$, un mensaje con su dirección de buzón y el número 3.
 \item Se crea el actor $Factorial$
-\item $Factorial$ recibe el mensaje con la dirección de $Main$ y el numero 3.
+\item $Factorial$ recibe el mensaje con la dirección de $Main$ y el número 3.
 
 \item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_1$). Está inicializado con los parámetros: el entero 3, y el buzón del actor $Main$.
 \item $Factorial$ se auto envía el mensaje con el valor 2 y la dirección de buzón de $factorialWorker_1$.
-\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_1$ y el numero 2.
+\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_1$ y el número 2.
 \item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_1$.
 
 \item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_2$). Está inicializado con los parámetros: el entero 3, y el buzón del actor $factorialWorker_1$.
 \item $Factorial$ se auto envía el mensaje con el valor 1 y la dirección de buzón de $factorialWorker_2$.
-\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_2$ y el numero 1.
+\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_2$ y el número 1.
 \item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_2$.
 
 \item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_3$). Está inicializado con los parámetros: el entero 1, y el buzón del actor $factorialWorker_2$.
 \item $Factorial$ se auto envía el mensaje con el valor 0 y la dirección de buzón de $factorialWorker_3$.
-\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_3$ y el numero 0.
+\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_3$ y el número 0.
 \item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_3$.
 
 \item $Factorial$ le envía a $factorialWorker_3$ el entero 1.
