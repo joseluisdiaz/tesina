@@ -6,7 +6,7 @@ La sección de \CSP no pretende ser una introducción al lenguaje, se asume que 
 
 \section{Paralelismo en CSP}
 
-En esta sección se muestra que se puede en \CSP solo sincronizar algunos eventos. Es útil para estudiar sistemas concurrentes poder tener un control mas fino de que eventos son de interés. 
+En esta sección se muestra en \CSP se puede en solo sincronizar algunos eventos. Para estudiar sistemas concurrentes es útil tener un control mas fino de que eventos son de interés. 
 
 \subsubsection*{Paralelismo sincrónico}
 
@@ -18,7 +18,7 @@ P_2 =& a \then P_2 \\
 SYSTEM =& P_1 \parallel P_2
 \end{align*}
 
-Donde $P_1$ y $P_2$ sincronizan con el evento $a$. Cuando utilizamos procesos parametrizados muchas veces es útil enviar información. El siguiente ejemplo muestra esto:
+donde $P_1$ y $P_2$ sincronizan con el evento $a$. Cuando utilizamos procesos parametrizados muchas veces es útil enviar información. El siguiente ejemplo muestra esto:
 
 \begin{align*}
 P_1 =& canal!1 \then STOP \\
@@ -110,20 +110,21 @@ P_1 =& Iniciar_1 \then P \\
 P_2 =& Iniciar_2 \then P \\
 &\ldots \\
 P_n =& Iniciar_n \then P \\
+SYSTEM =& P_1 \Interleave P_2 \Interleave \ldots \Interleave P_n
 \end{align*}
 
 Con estas estructuras, se tienen los elementos básicos para poder crear un proceso y enviar una comunicación de manera asincrónica. Se puede ver esto en el siguiente ejemplo:
 
 \begin{align*}
-BUFFER_1 &= enviar.1?x \then recibir.1!x \then BUFFER\\
-BUFFER_2 &= enviar.2?x \then recibir.2!x \then BUFFER\\
+BUFFER_1 &= enviar.1?x \then recibir.1!x \then BUFFER_1\\
+BUFFER_2 &= enviar.2?x \then recibir.2!x \then BUFFER_2\\
 SUMA &= inicia_{suma} \then recibir.1?x \then enviar.2?(x + 1) \then STOP \\
 CLIENTE &= inicia_{suma}\then enviar.1!2 \then recibir.2?x \then STOP \\
 BUFFER &= BUFFER_1 \Interleave BUFFER_2 \\
 SYSTEM &= (SUMA \Parallel\limits_{\{inicia_{suma}\}} CLIENTE) \Parallel\limits_{Y}\ BUFFER
 \end{align*}
 
-En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. Este envío es asíncrono por $BUFFER$. Cuando $SUMA$ recibe este dos, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo los valores de $Y$ vienen dado por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber que valores puede tomar $x$, asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $recibir.m.n$ con $m = 1 \ldots 2$  y $n = 1 \ldots 3$ unión $enviar.m.n$ con $m = 1 \ldots 2$  y $n = 1 \ldots 3$, es decir todos los eventos inherentes a $BUFFER$.
+En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. Este envío es asíncrono por $BUFFER_1$. Cuando $SUMA$ recibe este dos, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo los valores de $Y$ vienen dado por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber que valores puede tomar $x$, asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $recibir.m.n$ con $m = 1 \ldots 2$  y $n = 1 \ldots 3$ unión $enviar.m.n$ con $m = 1 \ldots 2$  y $n = 1 \ldots 3$, es decir todos los eventos inherentes a $BUFFER$.
 
 Este último ejemplo muestra dos de los aspectos que se desarrollaran en el capitulo siguiente: como desacoplar el envío de mensajes y como simular la creación de un proceso. También puede verse el uso de los distintos operadores paralelo.
  
@@ -175,6 +176,19 @@ f(_) = error("Error")
 
 Funciona de manera similar a Haskell, también se pueden utilizar otras construcciones como secuencias o algún tipo algebraico.
 
+\subsubsection{Operadores replicados}
+\FDR tiene una versión replicada o indexada de alguno de sus operadores. Estos proveen una forma simple de construir un proceso que consiste en una serie de procesos compuestos utilizando el mismo operador. Por ejemplo se define P de la siguiente manera:, \lstinline[language=cspm, style=sinnumeros]{P :: (Int) -> Proc} luego, \lstinline[language=cspm, style=sinnumeros]=||| x: { 0..2 } @ P(x) = evalúa P para cada valor de x en el conjunto dado y los compone utilizando el operador de entrelazado. Por lo tanto, lo anterior es equivalente a \lstinline[language=cspm, style=sinnumeros]{P (0) ||| P (1) ||| P (2)}.
+
+
+La forma general de un operador replicado es:
+
+\begin{lstlisting}[language=cspm, style=sinnumeros]
+op <declaraciones> @ P
+\end{lstlisting}
+
+donde op es operador, puede ser el de entrelazado, selección interna, etc. Las declaraciones son una lista de declaraciones y P es la definición de proceso, este puede hacer uso de las variables definidas por las declaraciones. Cada uno de los operadores evalúa P para cada valor que toman las declaraciones antes de componerlas juntas usando op.
+
+
 \subsubsection{Otras construcciones}
 En esta sección se muestran algunas de las conversiones útiles para entender un programa en \CSPm.
 
@@ -217,18 +231,8 @@ Tabla de conversión para la definición de procesos:
   $p \intchoice q$ & \verb=p |~| q= \\
   $p \interleave q $ & \verb=p ||| q= \\
   $p \parallel q $ & \verb=p || q= \\
-  $p \textsubscript{X} \parallel \textsubscript{Y} q$ & \verb=p |[|X|]| q= \\
+  $p\ \textsubscript{X} \parallel \textsubscript{Y}\ q$ & \verb=p |[|X|]| q= \\
   $p \Parallel\limits_{X} q$ & \verb=p |[x||y]| q= \\
   \end{tabular}
 \end{center}
 
-Table de conversión, versiones con indices:
-
-\begin{center}
-\begin{tabular}{ l l }
- $ \Extchoice x : a @ p $ & \verb=[] x : a @ p= \\
- $ \Intchoice x : a @ p $ & \verb=|~| x : a @ p= \\
- $ \Interleave x : a @ p $ & \verb=||| x:a @ p= \\
- $ \Parallel x : a @ b \circ p $ & \verb=|| x:a @ [b] p= \\
-  \end{tabular}
-\end{center}
