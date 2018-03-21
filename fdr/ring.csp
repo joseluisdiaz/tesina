@@ -106,10 +106,11 @@ Main =
   CommSend!ring.pid.(INT.SI.3, INT.SI.1) ->
   STOP
 --
-COMM = {|CommSend, CommRecv, Create, CreateAsk|}
+COMM = {|CommSend, CommRecv|}
+INIT = {|Create, CreateAsk|}
 --
 
 SYSTEM =
   (Rings ||| BuildingRings ||| Nodes ||| Main)
-    [|COMM|]
+    [|union(COMM, INIT)|]
   (mailboxes ||| creates)

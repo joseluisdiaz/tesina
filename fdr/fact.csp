@@ -85,7 +85,11 @@ Main =
   CommRecv?main.1.(INT.v, None) ->
   STOP
 --
-COMM = {|CommSend, CommRecv, Create, CreateAsk|}
+COMM = {|CommSend, CommRecv|}
+INIT = {|Create, CreateAsk|}
 --
 
-SYSTEM = (Factorials ||| FactorialWorkers ||| Main) [|COMM|] (mailboxes ||| creates)
+SYSTEM =
+  (Factorials ||| FactorialWorkers ||| Main)
+    [|union(COMM,INIT)|] 
+  (mailboxes ||| creates)

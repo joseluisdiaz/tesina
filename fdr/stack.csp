@@ -86,10 +86,11 @@ Main =
     STOP
 
 --
-COMM = {|CommSend, CommRecv, Create, CreateAsk|}
+COMM = {|CommSend, CommRecv|}
+INIT = {|Create, CreateAsk|}
 --
 
 SYSTEM =
   ( Nodes ||| Main )
-    [|COMM|]
+    [|union(COMM, INIT)|]
   ( mailboxes ||| creates )

@@ -114,11 +114,19 @@ actor_main2_r(pid) =
       actor_main2_r(pid)
 
 --
-COMM = {|CommSend, CommRecv, Create, CreateAsk|}
+COMM = {|CommSend, CommRecv|}
+INIT = {|Create, CreateAsk|}
 --
 
-SYSTEM1 = (Queues ||| Nodes ||| actor_main1) [|COMM|] ( mailboxes ||| creates )
-SYSTEM2 = (Queues ||| Nodes ||| actor_main2) [|COMM|] ( mailboxes ||| creates )
+SYSTEM1 =
+  (Queues ||| Nodes ||| actor_main1)
+    [|union(COMM,INIT)|]
+  ( mailboxes ||| creates )
+
+SYSTEM2 =
+  (Queues ||| Nodes ||| actor_main2)
+    [|union(COMM,INIT)|]
+  ( mailboxes ||| creates )
 
 assert SYSTEM2 [T= SYSTEM1
 assert SYSTEM1 [T= SYSTEM2
