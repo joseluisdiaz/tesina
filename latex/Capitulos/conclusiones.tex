@@ -1,8 +1,8 @@
 \chapter{Conclusiones}
 
-La primera motivación de este trabajo consistió comprender los elementos básicos del modelo de actores. En segunda instancia fue generar un modelo en \CSP, y hacer con este algunas pruebas en \FDR. Fue interesante explorar los distintos mecanismos de paralelismo que tiene \CSP a la hora de componer procesos.
+La primera motivación de este trabajo consistió comprender los elementos básicos del modelo de actores. En segunda instancia fue generar un modelo en \CSP, y hacer con este algunas pruebas en \FDR. Fue interesante explorar los distintos mecanismos de paralelismo que tiene \CSP a la hora de componer procesos. 
 
-El mayor esfuerzo involucrado tiene que ver con lograr que el modelo de actores corriera en \FDR, de ahí vienen las restricciones enunciadas en el capítulo anterior. Fue interesante poder observar el grafo de entrelazado utilizando el comando \verb=probe= de \FDR. 
+El mayor esfuerzo involucrado tiene que ver con lograr que el modelo de actores corriera en \FDR, de ahí vienen las restricciones enunciadas en el capítulo anterior. Sin dudar el aporte de \FDR permitió entender que el modelo realmente funcionaba. Fue interesante poder observar el árbol de ejecución utilizando el comando \verb=probe= de \FDR. 
 
 El trabajo original de Agha\cite{Agha:1986:AMC:7929}, modelaba los mensajes como una 3-tupla. Además del actor destino y el mensaje este agregaba un \textit{TAG} que después utilizaba en el modelo denotacional que construyó para prefijar la creación de las nuevas direcciones de buzón. Este claramente no es un problema trivial de resolver, en el caso del presente trabajo varios modelos se probaron hasta llegar el propuesto en la sección \ref{modelo:crear}. El momento de creación y el paso inicial de mensajes es uno de los puntos fuertes del modelo de actores.
 

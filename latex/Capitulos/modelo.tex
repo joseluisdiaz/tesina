@@ -119,15 +119,15 @@ La segunda abstracción es un proceso que vuelve asincrónica el mensaje de crea
 
 \[
 \begin{array}{l}
-create(actorId) = CreateAsk!actorId?m \then Create.actorId!m \then STOP \\
-creates = \Interleave_{actor : ActorID} create(actor)
+Create(actorId) = CreateAsk!actorId?m \then Create.actorId!m \then STOP \\
+Creates = \Interleave_{actor : ActorID} create(actor)
 \end{array}
 \]
 
 Donde:
 
 \begin{description}
- \item $create(actorId)$ es un proceso parametrizado.
+ \item $Create(actorId)$ es un proceso parametrizado.
  \item $CreateAsk!actorId?m$ sincroniza en el canal $CreateAsk$. Envía $actorId$ y recibe la lista de valores $m$
  \item $\Interleave_{actor : ActorID}$ pone en paralelo todos los actores definidos en $ActorId$ utilizando $create$. 
 \end{description}
@@ -788,22 +788,22 @@ cmd_{tr}(command)
 
 \subsubsection*{Pasos finales}
 
-El sistema final cuenta de todos los componentes del sistema de actores en paralelo. Estos componentes son: los buzones vistos en la sección \ref{modelo:buzon}, los procesos que separan la intención de crear de la creación propiamente dicha vistos en la sección \ref{modelo:crear} y los preámbulos vistos en la misma sección.
+El sistema final cuenta de todos los componentes del sistema de actores en paralelo. Los componentes a poner en paralelo son: los buzones vistos en la sección \ref{modelo:buzon}, los procesos que separan la intención de crear de la creación propiamente dicha vistos en la sección \ref{modelo:crear} y los preámbulos vistos en la misma sección.
 
-La comunicación va desde estos preámbulos hacia los buzones. Los eventos de interés en este caso son todos los generados por los buzones. Es decir el conjunto generado $CommSend.i.j$ donde $i$ son todos los posibles actores e $j$ son las mensajes a enviar. A estos eventos se le debe unir el conjunto generado por los eventos $CommRecv.i.j$ donde $i$ son todos los posibles actores y $j$ son las mensajes a enviar. Este es el conjunto de todas los eventos posible de loa buzones. Este conjunto se denomina: $Comm$.
+La comunicación que va desde estos preámbulos hacia los buzones es una de las comunicaciones de interés. Los eventos en este caso son todos los generados por los buzones. Es decir el conjunto generado por: $CommSend.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. A estos eventos se le debe unir el conjunto generado por: $CommRecv.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. Este es el conjunto de todos los eventos posible de los buzones. Este conjunto se denomina: $Comm$.
 
-Otra forma de comunicación es desde estos preámbulos hacia los procesos que separan la intención de crear a la creación, Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generador por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
+Otra forma de comunicación a tener en cuenta, es desde estos preámbulos hacia los procesos que separan la intención de crear de la creación. Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generador por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
 
-Ahora suponiendo que tenemos dos conjunto de actores $ks$ y $js$ definidos a continuación.
+Ahora suponiendo que tenemos dos conjunto de actores $ks$ y $js$. Definidos de la siguiente manera:
 
 \begin{align*}
 ks = \Interleave_{ self : ACTOR_k } & Create!self?<p1, p2> \then \\
-& K(self, p1, p2)  \\ 
+& K(self, p1, p2)  \\ 1
 js = \Interleave_{ self : ACTOR_j } & Create!self?<p1, p2> \then \\
 & J(self, p1, p2) 
 \end{align*}
 
-donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores tendríamos que escribir la siguiente ecuación:
+donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores se escribe siguiente ecuación:
 
 \begin{align*}
 SYSTEM =  (ks \Interleave js) \Parallel\limits_{Comm \cup Init} (Mailboxes \Interleave Creates)
@@ -929,7 +929,7 @@ A continuación se muestran dos resultados obtenidos utilizando el modelo propue
 
 \subsubsection*{Gráfico de interacciones}
 
-Utilizando la función \textit{probe} de la herramienta \FDR, se puede ver permite ver gráfico de interacciones de los distintos procesos. En el caso del modelo, permite ver como las diferentes interacciones de los actores.
+Utilizando la función \textit{probe} en herramienta \FDR, se puede ver permite ver gráfico de interacciones de los distintos procesos. En el caso del modelo, permite ver como las diferentes interacciones de los actores.
 
 \begin{figure}[H]
 
@@ -1055,7 +1055,7 @@ Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afir
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=15 cm]{img/contraejemplo.png}
-\caption{Contraejemplo de SYSTEM2 refina en  SYSTEM1}\label{modelo:contraejemplo}
+\caption{Contraejemplo de SYSTEM2 no refina en SYSTEM1}\label{modelo:contraejemplo}
 \end{center}
 \end{figure}
  

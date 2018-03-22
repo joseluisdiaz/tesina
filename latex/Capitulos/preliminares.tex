@@ -136,15 +136,15 @@ Este último ejemplo muestra dos de los aspectos que se desarrollaran en el capi
 
 Permite declarar tipos estructurados, son similares a las declaraciones de tipo \textit{data} de Haskell. La más simple de las declaraciones es utilizando constantes.
 
-\begin{lstlisting}[language=cspm, style=sinnumeros]
+\begin{verbatim}
 datatype ColorSimple = Rojo | Verde | Azul
-\end{lstlisting}
+\end{verbatim}
 
 Esto declara Rojo, Verde y Azul, como símbolos del tipo Color, y vincula Color al conjunto \{Rojo, Verde, Azul \}. Estos tipos de datos puede tener parámetros. Por ejemplo, se pude agregar un constructor de datos RGB, a saber:
 
-\begin{lstlisting}[language=cspm, style=sinnumeros]
+\begin{verbatim}
 datatype ColorComplejo = Nombre.ColorSimple | RGB.{0..255}.{0..255}.{0..255}
-\end{lstlisting}
+\end{verbatim}
 
 Esto declara Nombre, como un constructor de datos, de tipo $ColorSimple \Rightarrow ColorComplejo$ y a $RGB$ como un constructor de datos de  tipo $Int \Rightarrow Int \Rightarrow Int \Rightarrow ColorComplejo$ y ColorComplejo es el conjunto:
 \begin{multline*}
@@ -157,36 +157,41 @@ Si se declara un tipo de datos T, entonces a T se adjunta el conjunto de todos l
 
 Los canales de \CSPm son utilizados para crear eventos, y se declaran de una manera similar a los tipos de datos. Por ejemplo:
 
-\begin{lstlisting}[language=cspm, style=sinnumeros]
+\begin{verbatim}
 channel estaListo
 channel x, y : {0..1}.Bool
-\end{lstlisting}
+\end{verbatim}
 
-Declara tres canales, uno que no toma parámetros (listo es de tipo Event), y dos que tienen dos componentes. Cualquier valor del conjunto \{0,1\} y un booleano. El conjunto de los eventos definidos es el siguiente: \{ estaListo, x.0.false, x.1.false, x.0.true, x.1.true, y.0.false, y.1.false, y.0.true, y.1.true \}. Estos eventos pueden ser parte de la declaración de procesos como por ejemplo \lstinline[language=cspm, style=sinnumeros]{P = x?a?b -> STOP}.
+Declara tres canales, uno que no toma parámetros (listo es de tipo Event), y dos que tienen dos componentes. Cualquier valor del conjunto \verb={0,1}= y un booleano. El conjunto de los eventos definidos es el siguiente: \verb={ estaListo, x.0.false, x.1.false, x.0.true, x.1.true, y.0.false, y.1.false, y.0.true, y.1.true }=. Estos eventos pueden ser parte de la declaración de procesos como por ejemplo \verb#{P = x?a?b -> STOP}#.
 
 \subsubsection{Búsqueda de patrones}
 
 Es posible en \CSP que los valores puedan ser buscados por coincidencia de patrones. Por ejemplo, la siguiente función toma un entero, se puede usar la búsqueda de patrones para especificar un comportamiento diferente dependiendo de este argumento:
 
-\begin{lstlisting}[language=cspm, style=sinnumeros]
+\begin{verbatim}
 f(0) = True
 f(1) = False
 f(_) = error("Error")
-\end{lstlisting}
+\end{verbatim}
 
 Funciona de manera similar a Haskell, también se pueden utilizar otras construcciones como secuencias o algún tipo algebraico.
 
 \subsubsection{Operadores replicados}
-\FDR tiene una versión replicada o indexada de alguno de sus operadores. Estos proveen una forma simple de construir un proceso que consiste en una serie de procesos compuestos utilizando el mismo operador. Por ejemplo se define P de la siguiente manera:, \lstinline[language=cspm, style=sinnumeros]{P :: (Int) -> Proc} luego, \lstinline[language=cspm, style=sinnumeros]=||| x: { 0..2 } @ P(x) = evalúa P para cada valor de x en el conjunto dado y los compone utilizando el operador de entrelazado. Por lo tanto, lo anterior es equivalente a \lstinline[language=cspm, style=sinnumeros]{P (0) ||| P (1) ||| P (2)}.
+\FDR tiene una versión replicada o indexada de alguno de sus operadores. Estos proveen una forma simple de construir un proceso que consiste en una serie de procesos compuestos utilizando el mismo operador. Por ejemplo se define P de la siguiente manera:, \verb=P :: (Int) -> Proc= luego, \verb=||| x: { 0..2 } @ P(x)= evalúa P para cada valor de x en el conjunto dado y los compone utilizando el operador de entrelazado. Por lo tanto, lo anterior es equivalente a \verb=P (0) ||| P (1) ||| P (2)=.
 
 
 La forma general de un operador replicado es:
 
-\begin{lstlisting}[language=cspm, style=sinnumeros]
+\begin{verbatim}
 op <declaraciones> @ P
-\end{lstlisting}
+\end{verbatim}
 
-donde op es operador, puede ser el de entrelazado, selección interna, etc. Las declaraciones son una lista de declaraciones y P es la definición de proceso, este puede hacer uso de las variables definidas por las declaraciones. Cada uno de los operadores evalúa P para cada valor que toman las declaraciones antes de componerlas juntas usando op.
+donde op es un operador que puede ser el de entrelazado, selección interna, etc. P es la definición de un proceso, puede hacer uso de las variables definidas por las declaraciones. Cada uno de los operadores evalúa P para cada valor que toman las declaraciones antes de componerlas juntas usando op.
+
+En \CSPm las declaraciones puede ser construcciones por comprensión, por ejemplo las que generan nuevos conjuntos basados en conjuntos existentes. Por ejemplo, el conjunto por comprensión: \verb={x + 1 | x <- xs}= incrementa cada elemento del conjunto xs en 1. 
+
+Otra forma de construcción por compresión es utilizar la siguiente expresión: \verb={| CANAL |}=, que genera el conjunto de todos los elementos del canal. Por ejemplo, dada la siguiente definición de canal \verb=channel X : {0..1}.Bool=, el conjunto generado por \verb={| X |}=es: \verb={X.0.false, X.0.true, X.1.false, X.1.true}=.
+
 
 
 \subsubsection{Otras construcciones}
