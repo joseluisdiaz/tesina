@@ -690,11 +690,8 @@ BuildingRing(self, first, lastCreated) = \\ \quad
 En esta sección se describen cómo traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza la gramática definida en \ref{actores:sal}. Las funciones esta definidas de manera inductiva.
 
 \subsubsection*{Expresiones}
-
 En la sección \ref{actores:exp} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las siguientes funciones:
-
 La función $exp_{tr}$ viene dada de la siguiente forma:
-
 \begin{equation*}
   exp_{tr}(exp) =
   \setlength{\arraycolsep}{0pt}
@@ -706,9 +703,7 @@ La función $exp_{tr}$ viene dada de la siguiente forma:
         sexp_{tr}(exp)    & \text{cuando exp es de tipo sexp} \\
   \end{array}\right.
 \end{equation*}
-
 La función para las expresiones de enteros, $iexp_{tr}$ viene dada de la siguiente forma:
-
 \begin{equation*}
 \begin{array}{l c l}
 iexp_{tr}(iexp_1 + iexp_2) &=& iexp_{tr}(iexp_1) + iexp_{tr}(iexp_2) \\
@@ -718,9 +713,7 @@ iexp_{tr}(iexp_1 / iexp_2) &=& iexp_{tr}(iexp_1) / iexp_{tr}(iexp_2) \\
 iexp_{tr}(- iexp) &=& - iexp_{tr}(iexp)
 \end{array}
 \end{equation*}
-
 La función expresiones booleanas $bexp_{tr}$ es finalmente:
-
 \begin{equation*}
 \begin{array}{l c l}
 bexp_{tr}(bexp_1 \textbf{ or } bexp_2) &=& bexp_{tr}(iexp_1) \vee bexp_{tr}(iexp_2) \\
@@ -729,26 +722,20 @@ bexp_{tr}(\textbf{not } bexp) &=& \neg bexp_{tr}(bexp) \\
 bexp_{tr}(exp_1 == iexp_2) &=& exp_{tr}(exp_1) == exp_{tr}(exp_2) \\
 \end{array}
 \end{equation*}
-
 Tanto $mexp_{tr}$ como $sexp_{tr}$ no tienen una traducción asociada, podrían definirse como la función identidad.
 
 \subsubsection*{Comportamientos}
 En la sección \ref{actores:beha} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las funciones $beha_{tr}$ y $body_{tr}$.
-
 La función $beha_{tr}$ viene dada por la forma:
-
 \begin{multline*}
 beha_{tr}(\textbf{def } BehName(p_1, p_2,\ldots, p_n)\ body \textbf{ end def}) = \\
 BehName(self, p_1, p_2,\ldots, p_n) = body_{tr}(body) 
 \end{multline*}
-
 La función $body_{tr}$ viene dada por la forma:
-
 \begin{multline*}
 body_{tr}([ p_1, p_2,\ldots, p_n]\ command) = \\
  CommRecv.self?\langle p_1, p_2,\ldots, p_n \rangle \then cmd_{tr}(command)
 \end{multline*}
-
 \begin{multline*}
 body_{tr}(\textbf{ case } [p_{11}, p_{12},\ldots, p_{1n}]: command_1 \ldots \textbf{ case } [p_{n1}, p_{n2},\ldots, p_{nk}]: command_n ) = \\
 CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(command_1) \ldots \\
@@ -758,26 +745,21 @@ CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(comma
 \subsubsection*{Comandos}
 
 En la sección \ref{actores:cmd} se definió la gramática para los comandos. Para traducir los comandos se utiliza la función $cmd_{tr}$, que se define de la siguiente forma:
-
 \begin{multline*}
 cmd_{tr} (\textbf{send } exp_1, exp_2, \ldots\ , exp_n \textbf{to } mexp) = \\
 CommSend.mexp. \langle exp_{tr}(exp_1), exp_{tr}(exp_2), \ldots, exp_{tr}(exp_m) \rangle
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr} (\textbf{become}\ B(exp_1, exp_2,\ \ldots, exp_n)) = \\
 B(exp_{tr}(exp_1), exp_{tr}(exp_2), \ldots, exp_{tr}(exp_n)) \rangle
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr} (command_1 \textbf{;} command_2) = cmd_{tr}(command_1) \then cmd_{tr}(command_2)
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr} (\textbf{if } bexp \textbf{ then } command_1 \textbf{ else } command_2 \textbf{ end if }) = \\
 \textbf{if } (bexp_{tr}(bexp))\textbf{ then } cmd_{tr}(command_1) \textbf{ else } cmd_{tr}(command_2)
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr}( \textbf{let}\ mexp_1 = \textbf{new} B_1(exp_{11}, exp_{12},\ \ldots, exp_{1m}), \ldots, \\
 mexp_n = \textbf{ new }B_n(exp_{n1}, exp_{n2},\ldots, exp_{nk}) \textbf{ in }command) = \\
@@ -795,20 +777,16 @@ La comunicación que va desde estos preámbulos hacia los buzones es una de las 
 Otra forma de comunicación a tener en cuenta, es desde estos preámbulos hacia los procesos que separan la intención de crear de la creación. Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generador por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
 
 Ahora suponiendo que tenemos dos conjunto de actores $ks$ y $js$. Definidos de la siguiente manera:
-
 \begin{align*}
 ks = \Interleave_{ self : ACTOR_k } & Create!self?<p1, p2> \then \\
 & K(self, p1, p2)  \\ 1
 js = \Interleave_{ self : ACTOR_j } & Create!self?<p1, p2> \then \\
 & J(self, p1, p2) 
 \end{align*}
-
 donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores se escribe siguiente ecuación:
-
 \begin{align*}
 SYSTEM =  (ks \Interleave js) \Parallel\limits_{Comm \cup Init} (Mailboxes \Interleave Creates)
 \end{align*}
-
 Donde $Mailboxes$ está definido en la sección \ref{modelo:buzon} y $Creates$ en la sección \ref{modelo:crear}. Entre $ks$ y $js$ nunca existe ningún tipo de comunicación, por eso se usa el operador de entrelazado. Lo mismo ocurre con $Mailboxes$ y $Creates$.
 
 \section{Corriendo los modelos en FDR}
@@ -980,55 +958,22 @@ Esta captura fue realizada utilizando el comando \verb=:probe SYSTEM= en \FDR en
 
 \subsubsection*{Refinamiento}
 
-En \FDR para probar si un proceso P refina en proceso Q se escribe \verb$assert P [T= Q$. En esta prueba de refinamiento, se utilizó el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código \CSPm se encuentra en el apéndice \ref{codigo:cola}.
+En \FDR para probar si un proceso P refina en un proceso Q se escribe \verb$assert P [T= Q$. Para hacer una prueba de refinamiento se utiliza el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código en \CSPm de este se encuentra en el apéndice \ref{codigo:cola}. El mismo cuenta con dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=, donde:
 
-Dado dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=:
-
-\begin{verbatim}
-actor_main1 = CreateAsk?queue.pid!(None, None) ->
-              actor_main1_r(queue.pid)
-
-actor_main1_r(pid) =
-    CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> 
-    actor_main1_r(pid) 
-    |~| 
-    CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> 
-    actor_main1_r(pid)
-    |~| 
-    CommSend.pid!(ATOM.DEQUEUE, ACTOR.main.1) -> 
-    CommRecv.main.1?(INT.V, None) -> 
-    actor_main1_r(pid)
-
-\end{verbatim}
-Donde el actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
+El actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
 \begin{itemize}
  \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 1]$
  \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
  \item enviar a el actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
-\begin{verbatim}
-
-actor_main2 = CreateAsk?queue.pid!(None, None) ->
-              actor_main2_r(queue.pid)
-
-actor_main2_r(pid) =
-      CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> 
-      CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> 
-      actor_main2_r(pid) 
-      |~|
-      CommSend.pid!(ATOM.DEQUEUE, ACTOR.main.1) -> 
-      CommRecv.main.1?(INT.V, None) -> 
-      actor_main2_r(pid)
-\end{verbatim}
-
-Donde el actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
+El actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
 \begin{itemize}
  \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 1]$, seguido de enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
  \item enviar a el actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
-El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=.
+El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=. Esto puede verse en el código de \CSPm.
 
 \begin{figure}[H]
 \begin{center}
@@ -1037,20 +982,11 @@ El resultado de poner en paralelo todos los componentes del sistema utilizando \
 \end{center}
 \end{figure}
 
-Para probar si $SYSTEM1$, refina en $SYSTEM2$ se utiliza la siguiente afirmación:
+Para probar si $SYSTEM1$, refina en $SYSTEM2$ se utiliza la siguiente afirmación: \verb$assert SYSTEM1 [T= SYSTEM2$. Para probar si $SYSTEM2$, refina en $SYSTEM1$ se utiliza la siguiente afirmación: \verb$assert SYSTEM2 [T= SYSTEM1$.
 
-\begin{verbatim}
-assert SYSTEM1 [T= SYSTEM2 
-\end{verbatim}
+Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afirmaciones. Utilizando la herramienta se encuentra un contraejemplo donde $SYSTEM2$ no refina en $SYSTEM1$ como muestra la figura \ref{modelo:contraejemplo}.
 
-Para probar si $SYSTEM2$, refina en $SYSTEM1$ se utiliza la siguiente afirmación:
-
-\begin{verbatim}
-assert SYSTEM2 [T= SYSTEM1 
-\end{verbatim}
-
-Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afirmaciones. Utilizando la herramienta se encuentra un contraejemplo donde  SYSTEM2 no refina en SYSTEM1 como muestra la figura \ref{modelo:contraejemplo}.
- 
+La intuición detrás de por que $SYSTEM1$ refina en $SYSTEM2$, y que $SYSTEM2$ no refina en $SYSTEM1$ tiene que ver con que $SYSTEM1$ es menos restrictivo que $SYSTEM2$. El actor \verb=actor_main1= puede elegir entre entre dos opciones para desencolar, y el actor \verb=actor_main2= solo una y con un orden preestablecido.
 
 \begin{figure}[H]
 \begin{center}
