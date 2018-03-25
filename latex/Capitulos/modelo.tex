@@ -690,11 +690,8 @@ En esta sección se describen cómo traducir las expresiones, los comandos y los
 Para notar cuando $x$ tiene la forma gramatical $H$, con la siguiente construcción: $x \equiv H$. 
 
 \subsubsection*{Expresiones}
-
 En la sección \ref{actores:exp} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las siguientes funciones:
-
 La función $exp_{tr}$ viene dada de la siguiente forma:
-
 \begin{equation*}
   exp_{tr}(exp) =
   \setlength{\arraycolsep}{0pt}
@@ -721,7 +718,6 @@ iexp_{tr}(id) &=& id
 \end{equation*}
 
 La función expresiones booleanas, $bexp_{tr}$, es finalmente:
-
 \begin{equation*}
 \begin{array}{l c l}
 bexp_{tr}(bexp_1 \textbf{ or } bexp_2) &=& bexp_{tr}(iexp_1) \vee bexp_{tr}(iexp_2) \\
@@ -793,6 +789,7 @@ Ahora se supone que tenemos dos conjuntos de actores $ks$ y $js$, definidos de l
 ks = \Interleave_{ i : \{ 0 .. N\_KS \} } & Create.k?self?<p1, p2> \then K(self, p1, p2)  \\ 
 js = \Interleave_{ i : \{ 0 .. N\_JS \} } & Create.j?self?<p1, p2> \then J(self, p1, p2) 
 \end{align*}
+
 donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores se escribe la siguiente ecuación:
 \begin{align*}
 SYSTEM =  (ks \Interleave js) \Parallel\limits_{Comm \cup Init} (Mailboxes \Interleave Creates)
@@ -968,55 +965,22 @@ Esta captura fue realizada utilizando el comando \verb=:probe SYSTEM= en \FDR en
 
 \subsubsection*{Refinamiento}
 
-En \FDR para probar si un proceso P refina en proceso Q se escribe \verb$assert P [T= Q$. En esta prueba de refinamiento, se utilizó el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código \CSPm se encuentra en el apéndice \ref{codigo:cola}.
+En \FDR para probar si un proceso P refina en un proceso Q se escribe \verb$assert P [T= Q$. Para hacer una prueba de refinamiento se utiliza el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código en \CSPm de este se encuentra en el apéndice \ref{codigo:cola}. El mismo cuenta con dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=, donde:
 
-Dado dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=:
-
-\begin{verbatim}
-actor_main1 = CreateAsk?queue.pid!(None, None) ->
-              actor_main1_r(queue.pid)
-
-actor_main1_r(pid) =
-    CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> 
-    actor_main1_r(pid) 
-    |~| 
-    CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> 
-    actor_main1_r(pid)
-    |~| 
-    CommSend.pid!(ATOM.DEQUEUE, ACTOR.main.1) -> 
-    CommRecv.main.1?(INT.V, None) -> 
-    actor_main1_r(pid)
-
-\end{verbatim}
-Donde el actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
+El actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
 \begin{itemize}
  \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 1]$
  \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
  \item enviar a el actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
-\begin{verbatim}
-
-actor_main2 = CreateAsk?queue.pid!(None, None) ->
-              actor_main2_r(queue.pid)
-
-actor_main2_r(pid) =
-      CommSend.pid!(ATOM.ENQUEUE, INT.SI.1) -> 
-      CommSend.pid!(ATOM.ENQUEUE, INT.SI.2) -> 
-      actor_main2_r(pid) 
-      |~|
-      CommSend.pid!(ATOM.DEQUEUE, ACTOR.main.1) -> 
-      CommRecv.main.1?(INT.V, None) -> 
-      actor_main2_r(pid)
-\end{verbatim}
-
-Donde el actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
+El actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
 \begin{itemize}
  \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 1]$, seguido de enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
  \item enviar a el actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
-El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=.
+El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=. Esto puede verse en el código de \CSPm.
 
 \begin{figure}[H]
 \begin{center}
@@ -1025,20 +989,11 @@ El resultado de poner en paralelo todos los componentes del sistema utilizando \
 \end{center}
 \end{figure}
 
-Para probar si $SYSTEM1$, refina en $SYSTEM2$ se utiliza la siguiente afirmación:
+Para probar si $SYSTEM1$, refina en $SYSTEM2$ se utiliza la siguiente afirmación: \verb$assert SYSTEM1 [T= SYSTEM2$. Para probar si $SYSTEM2$, refina en $SYSTEM1$ se utiliza la siguiente afirmación: \verb$assert SYSTEM2 [T= SYSTEM1$.
 
-\begin{verbatim}
-assert SYSTEM1 [T= SYSTEM2 
-\end{verbatim}
+Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afirmaciones. Utilizando la herramienta se encuentra un contraejemplo donde $SYSTEM2$ no refina en $SYSTEM1$ como muestra la figura \ref{modelo:contraejemplo}.
 
-Para probar si $SYSTEM2$, refina en $SYSTEM1$ se utiliza la siguiente afirmación:
-
-\begin{verbatim}
-assert SYSTEM2 [T= SYSTEM1 
-\end{verbatim}
-
-Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afirmaciones. Utilizando la herramienta se encuentra un contraejemplo donde  SYSTEM2 no refina en SYSTEM1 como muestra la figura \ref{modelo:contraejemplo}.
- 
+La intuición detrás de por que $SYSTEM1$ refina en $SYSTEM2$, y que $SYSTEM2$ no refina en $SYSTEM1$ tiene que ver con que $SYSTEM1$ es menos restrictivo que $SYSTEM2$. El actor \verb=actor_main1= puede elegir entre entre dos opciones para desencolar, y el actor \verb=actor_main2= solo una y con un orden preestablecido.
 
 \begin{figure}[H]
 \begin{center}
