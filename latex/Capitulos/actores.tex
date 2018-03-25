@@ -167,9 +167,7 @@ Cuando el proceso $X_n$ acepta la $(n)-\acute{e}sima$ comunicación, eventualmen
 \caption{Una transición entre dos comportamientos}
 \label{fig:actortransition}
 \end{figure}
-
 Los dos procesos $X_n$ y $X_{n+1}$ no interfieren entre sí, pero la creación de $X_{n+1}$ depende de que $X_{n}$ haya definido su comportamiento de reemplazo. $X_n$ solo procesa la $(n)-\acute{e}sima$ comunicación. Exceptuando el caso en el cual se envíe una comunicación a si mismo. Cada uno de estos procesos crean sus propias tareas, sus propios actores como esta definido en sus comportamientos. Antes que el proceso $X_n$ cree el proceso $X_{n+1}$, $X_n$ podría haber creado otros actores u otros trabajos. Es posible incluso, que $X_n$ esté creando actores o trabajos al mismo tiempo que lo está haciendo $X_{n+1}$. Es importante notar que $X_n$ no recibirá ninguna otra comunicación, ni tampoco especificará ningún otro comportamiento de reemplazo.
-
 % Si definimos que la creación de un actor, la creación de una tarea o especificar el comportamiento de reemplazo son eventos. El orden en que se generan estos eventos debido a que se acepto una comunicación define un orden parcial. El reemplazo de los procesos definen un orden total entre ellos. 
 
 Esto parecería definir algún tipo de orden con respecto a cómo se van a procesar los mensajes. En el trabajo de Agha\cite{Agha:1986:AMC:7929} no se define ningún orden específico sobre el procesamiento de comunicaciones. La única garantía que tiene sobre las comunicaciones, está relacionada con el eventual proceso de los mensajes. Tanto la implementación de Erlang\cite{Cesarini:2009:EP:1717841} como la implementación de Akka\cite{Wyatt:2013:AC:2663429}, entregarán al menos una vez la comunicación a un actor, lo cual no garantiza la entrega.
@@ -257,7 +255,6 @@ Como se puede ver en la figura \ref{fig:actores:crecion} \subref{fig:actores:cre
 
 
 \section{Programando con actores}\label{actores:sal}
-
 En esta sección se explora un lenguaje que implementa los conceptos básicos del modelo de actores. 
 
 El lenguaje \SAL fue desarrollado con intensiones pedagógicas y tiene una sintaxis heredada de Algol. En la configuración de un sistema actores, necesitamos crear actores y enviar comunicaciones. Un programa en un sistema de actores esta compuesto por:
@@ -275,7 +272,9 @@ Primero se explora la sintaxis de las expresiones, ya que las expresiones son ut
 Se utiliza la notación \textbf{Backus-Naur}\cite{McCracken:2003:BF:1074100.1074155} para describir la gramática. Adjunto a la notación se utiliza el símbolo $\langle \textbf{+} \rangle$ cuando haya al menos una ocurrencia de un término.
 
 \subsection{Expresiones}\label{actores:exp}
-Existen cuatro tipos primitivos: booleanos, enteros, cadenas, y dirección del buzón. Las operaciones posibles entre los booleanos son \textbf{or}, \textbf{and} y \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*} y \textbf{/}. Las cadenas son constantes. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo primitivo no tiene ningún operador asociado.
+Existen cuatro tipos primitivos: booleanos, enteros, cadenas, y dirección del buzón. Las operaciones posibles entre los booleanos son \textbf{or}, \textbf{and} y \textbf{not}. Los enteros se pueden operar utilizando \textbf{+}, \textbf{-}, \textbf{*} y \textbf{/}. Las cadenas son constantes. La dirección de un buzón es un identificador que es devuelto cuando se crea un nuevo actor, este tipo primitivo no tiene ningún operador asociado. 
+
+En el caso de $id$, es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula y representa las variables. Estas pueden ser recibidas en el momento de creación o cuando recibe una comunicación.
 
 La gramática de las expresiones booleanas es la siguiente:
 
@@ -283,14 +282,12 @@ La gramática de las expresiones booleanas es la siguiente:
 
 <bexp> ::= <bterm> `or' <bterm> | <bterm> `and' <bterm> | <exp> = <exp>
   
-<bterm> ::= <bool> | `not' <bterm> | `(' <bexp> `)' 
+<bterm> ::= <bool> | `not' <bterm> | `(' <bexp> `)' | <id>
 
 <bool> ::= `TRUE' | `FALSE'
 
 \end{grammar}
-
 La gramática de los enteros es la siguiente:
-
 \begin{grammar}
 
 <iexp> ::= <iterm> `*' <iterm> | <iterm> `/' <iterm> 
@@ -298,25 +295,21 @@ La gramática de los enteros es la siguiente:
 
 <número> ::= `1' | `2' | `3' | `4' | `5' | `6' | `7' | `8' | `9' | `0'
 
-<iterm> ::= <número>$^{+}$ | `-' <iterm> | `(' <iexp> `)'
+<iterm> ::= <número>$^{+}$ | `-' <iterm> | `(' <iexp> `)' | <id> 
 
 \end{grammar}
-
 La gramática para las cadenas es la siguiente:
-
 \begin{grammar}
- <sexp> ::= `"' <carácter>$^{+}$ `"'
+ <id> ::= `"' <carácter>$^{+}$ `"'
 \end{grammar}
-
 Donde: \textit{carácter} es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula.
 
 La gramática de todas las expresiones viene dada por:
 
 \begin{grammar}
-<exp> :: = <iexp> | <bexp> | <sexp> | <mexp>  
+<exp> :: = <iexp> | <bexp> | <sexp> | <id>  
 \end{grammar}
 
-En el caso de $mexp$, es simplemente cualquier carácter entre la $A$ y la $Z$ tanto mayúscula como minúscula y representa los identificador es la dirección de buzón.
 
 \subsection{Definición de comportamientos}\label{actores:beha}
 Cada vez que un actor acepta una comunicación, define un comportamiento de reemplazo. Cada comportamiento está parametrizado. Por ejemplo, si el comportamiento de una cuenta bancaria depende de su saldo. Entonces se especifica el comportamiento de la cuenta como una función de su saldo. Cada vez que se crea una cuenta, o se define un comportamiento de reemplazo, que usa la definición de una cuenta bancaria, se tiene que dar un valor específico de saldo.

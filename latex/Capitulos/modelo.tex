@@ -8,19 +8,6 @@ Dentro de las acciones que un actor efectúa está la de crear otro actor. En \C
 
 Se simula la creación definiendo cada proceso con la espera de un mensaje que de inicio. Esto podría verse como la palabra reservada $new$ en varios lenguajes de programación orientados a objetos. 
 
-\subsection{Identificadores de actores}\label{model:id}
-Esta construcción nombra cada uno de los actores que van ser utilizados, también guarda la cantidad de actores de un tipo dado. Esto se verá en detalle más adelante.
-
-\begin{align*}
-  ACTOR_1 &= \{actor_1.1 \ldots actor_1.N_1\} \\
-  ACTOR_2 &= \{actor_2.1, \ldots ,actor_2.N_2\} \\
-  ACTOR_k &= \{actor_k.1, \ldots, actor_k.N_k\} \\
-  MAIN &= \{main.1\} \\
-  ActorID &= ACTOR_1 \cup ACTOR_2 \ldots \cup ACTOR_K
-\end{align*}
-
-Ya que no existe en \CSP el concepto de instancia es necesario contar con todos los procesos que van a ser parte de la red definidos desde el principio. El valor $N_i$ corresponde a la cantidad de actores de este tipo que van a ser necesarios. 
-
 \subsection{Buzón}\label{modelo:buzon}
 
 Recodemos que la naturaleza de \CSP es sincrónica y los actores no lo son. Para esto se necesita desacoplar el envío de mensajes de la recepción. Se utiliza una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
@@ -47,14 +34,14 @@ Mailbox(i, \lseq x \rseq \cat xs ) = {} \\ \quad
 Donde $Mailbox(i, \nil)$ es cuando \textit{buzón} está vacío. $Mailbox(i, \lseq x \rseq \cat xs )$ es cuando tiene al menos un mensaje. Los canales para comunicarse con el buzón se definen de la siguiente forma:
 
 \begin{align*}
-channel\ CommSend:actorid.params \\
-channel\ CommRecv:actorid.params
+channel\ CommSend:mailboxId.params \\
+channel\ CommRecv:mailboxId.params
 \end{align*}
 
 Donde:
 \begin{description}
- \item $channel\ CommSend:actorid.params$ define el canal $CommSend$. El primer parámetro es cualquier $ActorID$ y representa el actor destino. El segundo parámetro, es una lista. Representa las comunicaciones enviadas. 
- \item $channel\ CommRecv:actorid.params$ define el canal $CommRecv$. Los parámetros son idénticos a los anteriores.
+ \item $channel\ CommSend:mailboxId.params$ define el canal $CommSend$. El primer parámetro es cualquier $mailboxId$ y representa el mailbox destino. El segundo parámetro, es una lista. Representa las comunicaciones enviadas. 
+ \item $channel\ CommRecv:mailboxId.params$ define el canal $CommRecv$. Los parámetros son idénticos a los anteriores.
 \end{description}
 
 Un \textit{buzón} puede guardar más de una comunicación en su interior. Las comunicaciones se agregan al final, y se consumen sobre el principio. En este sentido, es una cola d tipo FIFO, del acrónimo inglés de First In, First Out (``primero en entrar, primero en salir'').
@@ -73,30 +60,42 @@ Puede que los nombre de los canales suenen poco intuitivos, es importante notar 
 \item $CommRecv$ canal utilizado para comunicar del buzón hacia el actor asociado.
 \end{description}
 
-Por cada actor en la red, existe un \textit{buzón} con el mismo $ActorID$ asociado. Para esto utilizamos la siguiente ecuación:
+Por cada actor en la red, existe un \textit{buzón} con el mismo $mailboxId$ asociado. Para esto utilizamos la siguiente ecuación:
 
 \[
-Mailboxes = \Interleave_{ actor : ActorID } Mailbox(actor, \nil) 
+Mailboxes = \Interleave_{ actor : MailboxIDS } Mailbox(actor, \nil) 
 \]
 
-Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}.
+Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}. $MailboxIDS$ es un conjunto de enteros, este representa un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios. Esto se verá en las siguientes secciones. 
+
+
+\subsection{Identificadores de actores}\label{model:id}
+
+Ya que no existe en \CSP el concepto de instancia es necesario contar con todos los procesos que van a ser parte de la red definidos desde el principio. El valor $N_i$ corresponde a la cantidad de actores de este tipo que van a ser necesarios. 
+
 
 \subsection{Crear nuevos actores}\label{modelo:crear}
 
-Como se menciono anteriormente, en \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación dos abstracciones.
+Para identificar que actor se está queriendo crear, se utiliza un conjunto con los nombres de los actores que van a ser creados. 
+
+\begin{align*}
+  ActorID &= { ACTOR_1, ACTOR_2, \ldots, ACTOR_K, MAIN }
+\end{align*}
+
+En \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación un dos abstracciones.
 
 La primera abstracción es un preámbulo a un comportamiento, le asigna a este los parámetros \textit{acquaiantence-list} y al mismo tiempo le otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un conjunto de procesos puestos en paralelo, y un canal para comunicarse con ella.
 
 El canal para comunicarse con los procesos que están esperando ser iniciados, se define de la siguiente forma:
 
 \[
-channel\ Create:actorid.params
+channel\ Create:actorid.mailboxid.params
 \]
 
-Donde $channel\ Create:actorid.params$ define el canal $Create$. El primer parámetro es cualquier $ActorID$, representa el actor destino. El segundo parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
+Donde $channel\ Create:actorid.mailboxid.params$ define el canal $Create$. El primer parámetro es cualquier $ActorID$, representa el actor a ser creado. El segundo parámetro es el identificador de buzón. El tercer parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
 
 \begin{align*}
-ks = \Interleave_{ self : ACTOR_k } & Create!self?<p1, p2> \then \\
+ks = \Interleave_{i: \{1 .. N\_KS\}} & Create.k?self?<p1, p2> \then \\
 & K(self, p1, p2) 
 \end{align*}
 
@@ -104,14 +103,14 @@ Donde:
 
 \begin{itemize}
  \item $ks$ es el conjunto de todos los procesos puestos en paralelo.
- \item $self : ACTOR_k$ es el conjunto de todos los actor $ActorID$ disponibles para $ACTOR_k$.
- \item $Create!self?<p1, p2>$, sincroniza en el canal $Create$ envía $self$ como parámetro y recibe $<p1, p2>$. En este caso estamos suponiendo que $K$ tiene solo dos parámetros de tipo \textit{acquaiantence-list}.
+ \item $N\_KS$ define la cantidad de actores de tipo $K$ que se van a estar disponibles.
+ \item $Create.k?self?<p1, p2>$, sincroniza en el canal $Create.k$ recibe el identificador de buzón $self$ como parámetro y la lista  $<p1, p2>$. En este caso estamos suponiendo que $K$ tiene solo dos parámetros de tipo \textit{acquaiantence-list}.
  \item $K(self, p1, p2)$ llama al proceso parametrizado definido como $K$ con los parámetros $self$, $p1$ y $p2$. $K$ representa el comportamiento del actor
 \end{itemize}
 
-En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create$ para arrancar con el comportamiento definido. 
+En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create.k$ para arrancar con el comportamiento definido. 
 
-El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos en $ActorID$. Por esto es que decimos que no sólo define el nombre, sino que al mismo tiempo está estableciendo cuantos actores del tipo $ACTOR_k$ se va a tener.
+%El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos en $ActorID$. Por esto es que decimos que no sólo define el nombre, sino que al mismo tiempo está estableciendo cuantos actores del tipo $ACTOR_k$ se va a tener.
 
 El proceso que representa a todos los actores que van a ser iniciados en paralelo, utiliza el operador de \textit{Interleave}. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos. 
 
@@ -119,41 +118,41 @@ La segunda abstracción es un proceso que vuelve asincrónica el mensaje de crea
 
 \[
 \begin{array}{l}
-Create(actorId) = CreateAsk!actorId?m \then Create.actorId!m \then STOP \\
-Creates = \Interleave_{actor : ActorID} create(actor)
+Create(mailboxId) = CreateAsk?actorId!mailboxId?m \then Create.actorId?mailboxId!m \then STOP \\
+Creates = \Interleave_{mailboxId : MailboxIDS} create(mailboxId)
 \end{array}
 \]
 
 Donde:
 
 \begin{description}
- \item $Create(actorId)$ es un proceso parametrizado.
- \item $CreateAsk!actorId?m$ sincroniza en el canal $CreateAsk$. Envía $actorId$ y recibe la lista de valores $m$
- \item $\Interleave_{actor : ActorID}$ pone en paralelo todos los actores definidos en $ActorId$ utilizando $create$. 
+ \item $Create(mailboxId)$ es un proceso parametrizado.
+ \item $CreateAsk?actorId!mailboxId?m$ sincroniza en el canal $CreateAsk$. Recibe $actorId$, el identificador de actor a crear. Envía el identificador de buzón $MailboxID$ y recibe la lista de valores $m$
+ \item $\Interleave_{mailboxId : MailboxIDS}$ pone en paralelo tantos procesos en paralelos, como elementos definidos en $MailboxIDS$.  
 \end{description}
 
 El canal para comunicarse con esta estructura se define como:
 
 \[
-channel\ CreateAsk:actorid.params
+channel\ CreateAsk:actorid.mailboxId.params
 \]
 
-Donde: $channel\ CreateAsk:actorid.params$ define el canal $CreateAsk$, el primer parámetro es cualquier $ActorID$, representa el actor destino. El segundo parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
+Donde: $channel\ CreateAsk:actorid.mailboxId.params$ define el canal $CreateAsk$, el primer parámetro es cualquier $ActorID$, representa el tipo de actor a ser creado. El segundo parámetro representa la dirección de buzón y el tercer parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
 
-Como puede observarse, tenemos tantos procesos en paralelo como $ActorID$ existan. Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental en la construcción total del sistema, esto tiene que ver con en \CSP se puede elegir los eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando como se compone todo el sistema, esta idea quedará más clara.
+Como puede observarse, tenemos tantos procesos en paralelo como elementos $MailboxIDS$ existan. Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental en la construcción total del sistema, esto tiene que ver con en \CSP se puede elegir los eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando como se compone todo el sistema, esta idea quedará más clara.
 
 \subsection{Definición de comportamientos}
 La idea de comportamiento fue introducida en la sección \ref{actores:beha}, podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida, nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el actor que esta procesando la comunicación.
 
 \begin{align*}
 &CommSend.d!<p_1, p_2, \ldots, p_n> & (Enviar\ Comunicaciones) \\ 
-&CreateAsk!actor_m.d?<p_1, p_2, \ldots, p_m> & (Crear\ nuevos\ actores)\\
+&CreateAsk.actor_m.buzon?<p_1, p_2, \ldots, p_m> & (Crear\ nuevos\ actores)\\
 &K(self, p_1, p_2, \ldots, p_m)  & (Comportamiento\ de\ reemplazo)
 \end{align*}
 
 \begin{description}
 \item [Enviar comunicaciones] En este caso le enviaremos al actor con la dirección buzón $d$ la listas de valores $<p_1, p_2, \ldots p_n>$. 
-\item [Crear nuevos actores] Obtendríamos mediante $actor_m.d$ el identificador de buzón del actor creado, y le asignarían los parámetros $<p_1, p_2, \ldots p_m>$ como \textit{acquaiantence-list}.
+\item [Crear nuevos actores] Se crearía un actor con comportamiento $actor_m$ y obtendríamos mediante $buzon$ el identificador de buzón, y le asignarían los parámetros $<p_1, p_2, \ldots p_m>$ como \textit{acquaiantence-list}.
 \item [Comportamiento de reemplazo] En este caso el comportamiento sería $K$. De no contar con uno sería simplemente $STOP$.
 \end{description}
 
@@ -179,8 +178,8 @@ Factorial(self) = {} \\ \quad
       \end{block} \\
     \Else {} \\ \quad
       \begin{block}
-      CreateAsk?factorialWorker.pid!\langle k, mailboxClient \rangle \then \\
-      CommSend!self.\langle factorialWorker.pid, k - 1 \rangle \then \\
+      CreateAsk.factorialWorker?pid!\langle k, mailboxClient \rangle \then \\
+      CommSend!self.\langle pid, k - 1 \rangle \then \\
       Factorial(self)
       \end{block}
     \end{block}
@@ -192,8 +191,8 @@ Factorial(self) = {} \\ \quad
  \item $CommRecv?self.<mailboxClient, k>$ espera recibir una comunicación con los parámetros de tipo, el primero buzón y el segundo un entero.
  \item $\If (k == 0)$ Compara $k$ con el valor cero.
  \item $CommSend!mailboxClient.\langle 1 \rangle$ envía una comunicación al buzón $mailboxClient$ la lista con el valor $1$.
- \item $CreateAsk?factorialWorker.pid!\langle k, mailboxClient \rangle$ crea un nuevo actor de tipo $FactorialWorker$, guarda en $pid$ la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $k$ y el buzón $mailboxClient$.
- \item $CommSend!self.<factorialWorker.pid, k - 1 >$ Se auto envía un mensaje, con el valor de buzón del actor creado en la linea anterior, y el entero $k$ decrementado en uno.
+ \item $CreateAsk.factorialWorker?pid!\langle k, mailboxClient \rangle$ crea un nuevo actor de tipo $FactorialWorker$, guarda en $pid$ la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $k$ y el buzón $mailboxClient$.
+ \item $CommSend!self.<pid, k - 1 >$ Se auto envía un mensaje, con el valor de buzón del actor creado en la linea anterior, y el entero $k$ decrementado en uno.
  \item $Factorial(self)$ define como siguiente comportamiento, $Factorial$ para el buzón $self$.
 \end{description}
 
@@ -240,8 +239,8 @@ El comportamiento de $node$ está definido de la siguiente forma:
 Node(self, content, link) = {} \\ \quad
 \begin{block}
 CommRecv.self?\langle 'push', newContent \rangle \then \\
-CreateAsk?node.newNode!\langle content, link \rangle \then \\
-Node(self, newContent, node.newNode)
+CreateAsk.node?newNode!\langle content, link \rangle \then \\
+Node(self, newContent, newNode)
 \end{block} \\
 \Extchoice \\ \quad
 \begin{block}
@@ -256,8 +255,8 @@ Donde:
 
 \begin{description}
  \item $CommRecv.self?\langle 'push', newContent \rangle$ espera recibir un mensaje, donde el primer elemento de la lista es la constante $'push'$. Guarda en $newContent$ el valor del segundo elemento de la lista.
- \item $CreateAsk?node.newNode!\langle content, link \rangle$ crea un actor de un tipo $Node$ y guarda en $newNode$ el valor de la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con valor $content$ y el buzón $link$.
- \item $Node(self, newContent, Node.newNode)$ define como comportamiento para el buzón $self$, el mismo comportamiento con los parámetros, $newContent$ y el buzón creado en la linea anterior.
+ \item $CreateAsk.node?newNode!\langle content, link \rangle$ crea un actor de un tipo $Node$ y guarda en $newNode$ el valor de la dirección del buzón. Inicializa los valores \textit{acquaiantence-list} con valor $content$ y el buzón $link$.
+ \item $Node(self, newContent, newNode)$ define como comportamiento para el buzón $self$, el mismo comportamiento con los parámetros, $newContent$ y el buzón creado en la linea anterior.
  \item $CommRecv.self?\langle 'pop', client \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'pop'$, guarda en $client$ el valor del segundo elemento de la lista.
  \item $CommSend.client!\langle content \rangle$ envía una comunicación al buzón $client$ la lista con el valor $content$.
  \item $fwd(self, link)$ se comporta como el proceso $fwd$.
@@ -359,15 +358,15 @@ Código en \CSP:
 EmptyQueue(self) = \\ \quad
   \begin{block}
   CommRecv.self?\langle 'enqueue', value \rangle \then \\ 
-  CreateAsk?node.pid!\langle value, Null\rangle \then \\
-  Queue(self, node.pid, node.pid)
+  CreateAsk.node?pid!\langle value, Null\rangle \then \\
+  Queue(self, pid, pid)
   \end{block}
 \end{process}
 
 \begin{description}
  \item $CommRecv.self?\langle 'enqueue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'enqueue'$, guarda en $value$ el valor del segundo elemento.
- \item $CreateAsk?node.pid!\langle value, Null \rangle$ crea un nuevo actor de tipo $node$, guarda en en $pid$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $value$ y $Null$.
- \item $Queue(self, node.pid, node.pid)$ define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Le pasa como parámetro la dirección del buzón del actor antes creado, se repite por que tanto el primer como el ultimo nodo es el mismo cuando la \textit{cola} tiene un solo nodo.
+ \item $CreateAsk.node?pid!\langle value, Null \rangle$ crea un nuevo actor de tipo $node$, guarda en en $pid$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el entero $value$ y $Null$.
+ \item $Queue(self, pid, pid)$ define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Le pasa como parámetro la dirección del buzón del actor antes creado, se repite por que tanto el primer como el ultimo nodo es el mismo cuando la \textit{cola} tiene un solo nodo.
 \end{description}
 
 \subsubsection*{Comportamiento de queue}
@@ -376,7 +375,7 @@ Este comportamiento es cuando la cola tiene al menos un nodo. Tiene dos operacio
 Código en \SAL:
 
 \begin{lstlisting}[language=sal, style=simple]
-def queue(first, last) match 
+def Queue(first, last) match 
   ['enqueue', value]: 
     let newLast = new node(value, nil) in
       send [insert, newLast] to last
@@ -404,9 +403,9 @@ Código en \CSP:
 Queue(self, first, last) = \\ \quad
   \begin{block}
   CommRecv.self?\langle 'enqueue', value \rangle \then \\
-  CreateAsk?Node.newLast!\langle value, Null \rangle \then \\
-  CommSend.last!\langle 'insert', node.newLast \rangle \then \\
-  Queue(self, first, node.newLast)
+  CreateAsk.node?newLast!\langle value, Null \rangle \then \\
+  CommSend.last!\langle 'insert', newLast \rangle \then \\
+  Queue(self, first, newLast)
   \end{block} \\
 
   \Extchoice \\ \quad
@@ -423,8 +422,8 @@ Donde:
 \begin{description}
  \item $CommRecv.self? \langle 'enqueue', value \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'enqueue'$. Guarda en $value$ el valor del segundo elemento de la lista.
  \item $CreateAsk?node.pid!\langle value, Null \rangle$ crea un nuevo actor de tipo $node$, guarda en en $newLast$ el buzón. Inicializa los valores \textit{acquaiantence-list} con el valor $value$ y $Null$.
- \item $CommSend.first!\langle 'insert', node.newLast \rangle$ Envía una comunicación al buzón $first$, con la lista $'insert'$ y el actor creado en la linea anterior. 
- \item $Queue(self, first, node.newLast)$ Define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Pasa como parámetro la dirección del buzón del actor antes creado como reemplazo del último nodo de la pila.
+ \item $CommSend.first!\langle 'insert', newLast \rangle$ Envía una comunicación al buzón $first$, con la lista $'insert'$ y el actor creado en la linea anterior. 
+ \item $Queue(self, first, newLast)$ Define a $Queue$ como el comportamiento de reemplazo, para el buzón $self$. Pasa como parámetro la dirección del buzón del actor antes creado como reemplazo del último nodo de la pila.
  \item $CommRecv.self?\langle 'dequeue', client \rangle$ espera recibir un mensaje, donde el primer elemento de la lista sea la constante $'dequeue'$, guarda en value el valor del segundo elemento de la lista,.
  \item $CommSend.first!\langle 'delete', self \rangle$ Envía una comunicación al buzón $first$, con la lista $'delete'$ y la dirección del buzón de la actor \textit{cola}. 
  \item $WaitDelete(self, client, last)$ el comportamiento de reemplazo es $WaitDelete$. Este comportamiento será descripto a continuación.
@@ -632,16 +631,16 @@ Código en \CSP:
 Ring(self) = \\ \quad
   \begin{block}
   CommRecv.self?\langle n, m \rangle \then \\
-  CreateAsk?node.first!\langle m, Null \rangle \then \\
-  CreateAsk?buildingRing.builder!\langle node.first, node.first \rangle \then \\
-  CommSend.buildingRing.builder!\langle n - 1, m\rangle \then \\
+  CreateAsk.node?first!\langle m, Null \rangle \then \\
+  CreateAsk.buildingRing?builder!\langle first, first \rangle \then \\
+  CommSend.builder!\langle n - 1, m\rangle \then \\
   Ring(self)
   \end{block}
 \end{process}
 
 \subsubsection*{Comportamiento de BuildingRing}
 
-Esta es una estructura de control, siempre que procese una comunicación con $n$ mayor a uno, crea un nuevo nodo. Le envía al nodo que creó en la iteración anterior un mensaje para que apunte al nuevo nodo creado. Se auto enviá un mensaje decrementando en uno el contador de nodos a crear. El comportamiento de reemplazo cambia el nodo $lastCreated$.
+Esta es una estructura de control, siempre que procese una comunicación con $n$ mayor a uno, crea un nuevo nodo. Le envía al nodo que creó en la iteración anterior un mensaje para que apunte al nuevo nodo creado. Se auto envía un mensaje decrementando en uno el contador de nodos a crear. El comportamiento de reemplazo cambia el nodo $lastCreated$.
 
 Si el contador $n$ era cero, le envía un mensaje al nodo creado en la iteración anterior para que apunte al primer nodo creado ($first$). De esta manera cierra el anillo. Le envía una comunicación al primer nodo, que da inicio al envío de mensajes. 
 
@@ -676,10 +675,10 @@ BuildingRing(self, first, lastCreated) = \\ \quad
     \end{block} \\
   \Else {} \\ \quad
     \begin{block} 
-    CreateAsk?node.newNode!\langle m, Null \rangle \then \\
-    CommSend!lastCreated.\langle 'point\_to', node.newNode \rangle \then \\
-    CommSend!send.\langle n - 1, m \rangle \then \\
-    BuildingRing(self, first, node.newNode) 
+    CreateAsk.node?newNode!\langle m, Null \rangle \then \\
+    CommSend!lastCreated.\langle 'point\_to', newNode \rangle \then \\
+    CommSend!self.\langle n - 1, m \rangle \then \\
+    BuildingRing(self, first, newNode) 
     \end{block} \\
   \end{block} 
 \end{block}
@@ -688,6 +687,7 @@ BuildingRing(self, first, lastCreated) = \\ \quad
 \section{Una semántica en CSP}
 
 En esta sección se describen cómo traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza la gramática definida en \ref{actores:sal}. Las funciones esta definidas de manera inductiva.
+Para notar cuando $x$ tiene la forma gramatical $H$, con la siguiente construcción: $x \equiv H$. 
 
 \subsubsection*{Expresiones}
 
@@ -700,14 +700,14 @@ La función $exp_{tr}$ viene dada de la siguiente forma:
   \setlength{\arraycolsep}{0pt}
   \renewcommand{\arraystretch}{1.2}
   \left\{\begin{array}{l @{\quad} l}
-        iexp_{tr}(exp)    & \text{cuando exp es de tipo iexp} \\
-        bexp_{tr}(exp)    & \text{cuando exp es de tipo bexp} \\
-        mexp_{tr}(exp)    & \text{cuando exp es de tipo mexp} \\
-        sexp_{tr}(exp)    & \text{cuando exp es de tipo sexp} \\
+        iexp_{tr}(exp)    & \text{si $exp \equiv iexp$} \\
+        bexp_{tr}(exp)    & \text{si $exp \equiv bexp$} \\
+        sexp_{tr}(exp)    & \text{si $exp \equiv sexp$} \\
+        idexp_{tr}(exp)   & \text{si $exp \equiv id$} \\
   \end{array}\right.
 \end{equation*}
 
-La función para las expresiones de enteros, $iexp_{tr}$ viene dada de la siguiente forma:
+La función para las expresiones de enteros, $iexp_{tr}$, viene dada de la siguiente forma:
 
 \begin{equation*}
 \begin{array}{l c l}
@@ -715,11 +715,12 @@ iexp_{tr}(iexp_1 + iexp_2) &=& iexp_{tr}(iexp_1) + iexp_{tr}(iexp_2) \\
 iexp_{tr}(iexp_1 - iexp_2) &=& iexp_{tr}(iexp_1) - iexp_{tr}(iexp_2) \\
 iexp_{tr}(iexp_1 * iexp_2) &=& iexp_{tr}(iexp_1) * iexp_{tr}(iexp_2) \\ 
 iexp_{tr}(iexp_1 / iexp_2) &=& iexp_{tr}(iexp_1) / iexp_{tr}(iexp_2) \\
-iexp_{tr}(- iexp) &=& - iexp_{tr}(iexp)
+iexp_{tr}(- iexp) &=& - iexp_{tr}(iexp) \\
+iexp_{tr}(id) &=& id
 \end{array}
 \end{equation*}
 
-La función expresiones booleanas $bexp_{tr}$ es finalmente:
+La función expresiones booleanas, $bexp_{tr}$, es finalmente:
 
 \begin{equation*}
 \begin{array}{l c l}
@@ -727,89 +728,76 @@ bexp_{tr}(bexp_1 \textbf{ or } bexp_2) &=& bexp_{tr}(iexp_1) \vee bexp_{tr}(iexp
 bexp_{tr}(bexp_1 \textbf{ and } bexp_2) &=& bexp_{tr}(iexp_1) \wedge bexp_{tr}(iexp_2) \\
 bexp_{tr}(\textbf{not } bexp) &=& \neg bexp_{tr}(bexp) \\ 
 bexp_{tr}(exp_1 == iexp_2) &=& exp_{tr}(exp_1) == exp_{tr}(exp_2) \\
+bexp_{tr}(id) &=& id
 \end{array}
 \end{equation*}
 
-Tanto $mexp_{tr}$ como $sexp_{tr}$ no tienen una traducción asociada, podrían definirse como la función identidad.
+Tanto $sexp_{tr}$ como $idexp_{tr}$ no tienen una traducción asociada, podrían definirse como la función identidad.
 
 \subsubsection*{Comportamientos}
-En la sección \ref{actores:beha} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las funciones $beha_{tr}$ y $body_{tr}$.
+En la sección \ref{actores:beha} se definió la gramática para los comportamientos. Para traducir estas expresiones se utilizan las funciones $beha_{tr}$ y $body_{tr}$.
 
 La función $beha_{tr}$ viene dada por la forma:
-
 \begin{multline*}
 beha_{tr}(\textbf{def } BehName(p_1, p_2,\ldots, p_n)\ body \textbf{ end def}) = \\
 BehName(self, p_1, p_2,\ldots, p_n) = body_{tr}(body) 
 \end{multline*}
-
 La función $body_{tr}$ viene dada por la forma:
-
 \begin{multline*}
 body_{tr}([ p_1, p_2,\ldots, p_n]\ command) = \\
  CommRecv.self?\langle p_1, p_2,\ldots, p_n \rangle \then cmd_{tr}(command)
 \end{multline*}
-
 \begin{multline*}
 body_{tr}(\textbf{ case } [p_{11}, p_{12},\ldots, p_{1n}]: command_1 \ldots \textbf{ case } [p_{n1}, p_{n2},\ldots, p_{nk}]: command_n ) = \\
-CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(command_1) \ldots \\
-\Extchoice CommRecv.self?\langle p_{n1}, p_{n2},\ldots, p_{nk} \rangle \then cmd_{tr}(command_n) 
+CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(command_1) \Extchoice \ldots \Extchoice \\
+CommRecv.self?\langle p_{n1}, p_{n2},\ldots, p_{nk} \rangle \then cmd_{tr}(command_n) 
 \end{multline*}
 
 \subsubsection*{Comandos}
 
 En la sección \ref{actores:cmd} se definió la gramática para los comandos. Para traducir los comandos se utiliza la función $cmd_{tr}$, que se define de la siguiente forma:
-
 \begin{multline*}
 cmd_{tr} (\textbf{send } exp_1, exp_2, \ldots\ , exp_n \textbf{to } mexp) = \\
 CommSend.mexp. \langle exp_{tr}(exp_1), exp_{tr}(exp_2), \ldots, exp_{tr}(exp_m) \rangle
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr} (\textbf{become}\ B(exp_1, exp_2,\ \ldots, exp_n)) = \\
 B(exp_{tr}(exp_1), exp_{tr}(exp_2), \ldots, exp_{tr}(exp_n)) \rangle
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr} (command_1 \textbf{;} command_2) = cmd_{tr}(command_1) \then cmd_{tr}(command_2)
 \end{multline*}
-
 \begin{multline*}
 cmd_{tr} (\textbf{if } bexp \textbf{ then } command_1 \textbf{ else } command_2 \textbf{ end if }) = \\
 \textbf{if } (bexp_{tr}(bexp))\textbf{ then } cmd_{tr}(command_1) \textbf{ else } cmd_{tr}(command_2)
 \end{multline*}
-
 \begin{multline*}
-cmd_{tr}( \textbf{let}\ mexp_1 = \textbf{new} B_1(exp_{11}, exp_{12},\ \ldots, exp_{1m}), \ldots, \\
-mexp_n = \textbf{ new }B_n(exp_{n1}, exp_{n2},\ldots, exp_{nk}) \textbf{ in }command) = \\
-CreateAsk?b_1.pid_1! \langle exp_{tr}(exp_{11}), exp_{tr}(exp_{12}),\ \ldots, exp_{tr}(exp_{1m}) \rangle \then \ldots \\
-CreateAsk?b_N.pid_n! \langle exp_{tr}(exp_{n1}), exp_{tr}(exp_{n2}),\ \ldots, exp_{tr}(exp_{nk}) \rangle \then  \\ 
+cmd_{tr}( \textbf{let}\ id_1 = \textbf{new} B_1(exp_{11}, exp_{12},\ \ldots, exp_{1m}), \ldots, \\
+id_n = \textbf{ new }B_n(exp_{n1}, exp_{n2},\ldots, exp_{nk}) \textbf{ in }command) = \\
+CreateAsk.b_1?id_1! \langle exp_{tr}(exp_{11}), exp_{tr}(exp_{12}),\ \ldots, exp_{tr}(exp_{1m}) \rangle \then \ldots \\
+CreateAsk.b_N?id_n! \langle exp_{tr}(exp_{n1}), exp_{tr}(exp_{n2}),\ \ldots, exp_{tr}(exp_{nk}) \rangle \then  \\ 
 cmd_{tr}(command)
 \end{multline*}
 
 \subsubsection*{Pasos finales}
 
-El sistema final cuenta de todos los componentes del sistema de actores en paralelo. Los componentes a poner en paralelo son: los buzones vistos en la sección \ref{modelo:buzon}, los procesos que separan la intención de crear de la creación propiamente dicha vistos en la sección \ref{modelo:crear} y los preámbulos vistos en la misma sección.
+El sistema final consiste de todos los componentes del sistema de actores en paralelo. Los componentes a poner en paralelo son: los buzones vistos en la sección \ref{modelo:buzon}, los procesos que separan la intención de crear de la creación propiamente dicha vistos en la sección \ref{modelo:crear} y los preámbulos vistos en la misma sección.
 
-La comunicación que va desde estos preámbulos hacia los buzones es una de las comunicaciones de interés. Los eventos en este caso son todos los generados por los buzones. Es decir el conjunto generado por: $CommSend.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. A estos eventos se le debe unir el conjunto generado por: $CommRecv.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. Este es el conjunto de todos los eventos posible de los buzones. Este conjunto se denomina: $Comm$.
+La comunicación que va desde estos preámbulos hacia los buzones es una de las comunicaciones de interés. Los eventos en este caso son todos los generados por los buzones. Es decir el conjunto generado por $CommSend.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. A estos eventos se le debe unir el conjunto generado por $CommRecv.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. Este es el conjunto de todos los eventos posible de los buzones. Este conjunto se denomina: $Comm$.
 
-Otra forma de comunicación a tener en cuenta, es desde estos preámbulos hacia los procesos que separan la intención de crear de la creación. Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generador por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
+Otra forma de comunicación a tener en cuenta es desde estos preámbulos hacia los procesos que separan la intención de crear de la creación. Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generador por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
 
-Ahora suponiendo que tenemos dos conjunto de actores $ks$ y $js$. Definidos de la siguiente manera:
+Ahora se supone que tenemos dos conjuntos de actores $ks$ y $js$, definidos de la siguiente manera:
 
 \begin{align*}
-ks = \Interleave_{ self : ACTOR_k } & Create!self?<p1, p2> \then \\
-& K(self, p1, p2)  \\ 1
-js = \Interleave_{ self : ACTOR_j } & Create!self?<p1, p2> \then \\
-& J(self, p1, p2) 
+ks = \Interleave_{ i : \{ 0 .. N\_KS \} } & Create.k?self?<p1, p2> \then K(self, p1, p2)  \\ 
+js = \Interleave_{ i : \{ 0 .. N\_JS \} } & Create.j?self?<p1, p2> \then J(self, p1, p2) 
 \end{align*}
-
-donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores se escribe siguiente ecuación:
-
+donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores se escribe la siguiente ecuación:
 \begin{align*}
 SYSTEM =  (ks \Interleave js) \Parallel\limits_{Comm \cup Init} (Mailboxes \Interleave Creates)
 \end{align*}
-
-Donde $Mailboxes$ está definido en la sección \ref{modelo:buzon} y $Creates$ en la sección \ref{modelo:crear}. Entre $ks$ y $js$ nunca existe ningún tipo de comunicación, por eso se usa el operador de entrelazado. Lo mismo ocurre con $Mailboxes$ y $Creates$.
+donde $Mailboxes$ está definido en la sección \ref{modelo:buzon} y $Creates$ en la sección \ref{modelo:crear}. Entre $ks$ y $js$ nunca existe ningún tipo de comunicación, por eso se usa el operador de entrelazado. Lo mismo ocurre con $Mailboxes$ y $Creates$.
 
 \section{Corriendo los modelos en FDR}
 
