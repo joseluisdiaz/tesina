@@ -66,7 +66,7 @@ Por cada actor en la red, existe un \textit{buzón} con el mismo $mailboxId$ aso
 Mailboxes = \Interleave_{ actor : MailboxIDS } Mailbox(actor, \nil) 
 \]
 
-Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}. $MailboxIDS$ es un conjunto de enteros, este representa un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios. Esto se verá en las siguientes secciones. 
+Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}. $MailboxIDS$ es un conjunto de enteros, estos enteros representan un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios.
 
 
 \subsection{Identificadores de actores}\label{model:id}
@@ -76,7 +76,7 @@ Ya que no existe en \CSP el concepto de instancia es necesario contar con todos 
 
 \subsection{Crear nuevos actores}\label{modelo:crear}
 
-Para identificar que actor se está queriendo crear, se utiliza un conjunto con los nombres de los actores que van a ser creados. 
+Para identificar que actor se está queriendo crear, se utiliza el siguiente conjunto: 
 
 \begin{align*}
   ActorID &= { ACTOR_1, ACTOR_2, \ldots, ACTOR_K, MAIN }
@@ -92,7 +92,7 @@ El canal para comunicarse con los procesos que están esperando ser iniciados, s
 channel\ Create:actorid.mailboxid.params
 \]
 
-Donde $channel\ Create:actorid.mailboxid.params$ define el canal $Create$. El primer parámetro es cualquier $ActorID$, representa el actor a ser creado. El segundo parámetro es el identificador de buzón. El tercer parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
+Donde $channel\ Create:actorid.mailboxid.params$ define el canal $Create$. El primer parámetro es cualquier $ActorID$, representa el actor a ser creado. El segundo parámetro es el identificador de buzón. El tercer parámetro, es una lista, representa los identificadores \textit{acquaiantence-list}. 
 
 \begin{align*}
 ks = \Interleave_{i: \{1 .. N\_KS\}} & Create.k?self?<p1, p2> \then \\
@@ -841,15 +841,16 @@ En en modelo se utilizan listas para representar tanto los parámetros de \texti
 La expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
 
 Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creá una unión de tipos llamada $VALUE$. Este tipo codifica todos los posibles valores que se quisieran enviar, buzones, enteros, booleanos y cadenas. Como las tuplas se definen de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera: si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea una lista de tamaño dos, por ejemplo: $[1, client]$. La tupla de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
-
 \[
   datatype\ VALUE = ACTOR.ActorID | INT.SmallInt | BOOL.Bool | ATOM.Atoms | None
 \]
-
 Las cadenas de caracteres se representa utilizando $Atoms$. Las cadenas son inmutables y la única operación que se efectúa sobre ellas es la comparación. La definición de $Atoms$ viene dada de la siguiente forma:
-
 \[
   datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
+\]
+$ActorID$, para reducir el tamaño del conjunto de eventos generados, se unifican tanto el nombre con el que se identifica el actor a crear, como la dirección de buzón en un solo tipo de datos. Si se necesitan cinco actores en total, uno de tipo j, tres de tipo k y un actor main, se escribe de la siguiente forma:
+\[
+  datatype ActorID = j.{1} | k.{1,2,3} | main.{1}
 \]
 
 \subsubsection*{Cota en el buzón}
@@ -910,79 +911,62 @@ La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un
 
 \subsection{Algunos resultados}
 
-A continuación se muestran dos resultados obtenidos utilizando el modelo propuesto en \CSP. Uno explora el gráfico de entrelazado y el otro verifica una afirmación utilizando el modelo de trazas.
+A continuación se muestran dos resultados obtenidos utilizando el modelo propuesto en \CSP. Uno explora el árbol de procesos y el otro verifica una afirmación utilizando el modelo de trazas.
 
-\subsubsection*{Gráfico de interacciones}
+\subsubsection*{Árbol de interacciones}
 
-Utilizando la función \textit{probe} en herramienta \FDR, se puede ver permite ver gráfico de interacciones de los distintos procesos. En el caso del modelo, permite ver como las diferentes interacciones de los actores.
+Utilizando la función \textit{probe} en herramienta \FDR, se puede ver permite ver árbol de interacciones de los distintos procesos. En el caso del modelo, permite ver como las diferentes interacciones de los actores.
+
+Se puede ver en el ejemplo del apéndice \ref{codigo:suma}, una versión extendida para funcionar en \FDR del ejemplo visto en la se cción \ref{preliminares:actores}. Este ejemplo muestra utilizando como se puede desacoplar el inicio del proceso suma, y mejorar sustancialmente la composición en paralelo. 
+
+Esto es muy util, ya que cada proceso que intente iniciar otro debería tener como evento de interés este evento de inicio. Al ir agregando procesos, el cálculo de que eventos de interés deberían utilizarse al ponerse en paralelo se dificulta. 
+
+\verb=SYSTEM2= Utiliza un proceso intermedio como fue visto en la sección \ref{modelo:crear}. Se puede ver en la figura \ref{modelo:suma:system1} el árbol de procesos capturado utilizando \verb=:probe SYSTEM1=. Este sistema pone en paralelo \verb-CLIENTE- y \verb-SUMA- usando paralelismo alfabetizado. Se puede ver en la figura \ref{modelo:suma:system2} el árbol de procesos capturado utilizando \verb=:probe SYSTEM2=. Este sistema pone en paralelo \verb-CLIENTE2- y \verb-SUMA- usando entrelazado, y un proceso auxiliar \verb-INICIA-. Este ultimo proceso reduce a cero los eventos de interés entre \verb-CLIENTE2- y \verb-SUMA-.
 
 \begin{figure}[H]
-
 \begin{center}
-\includegraphics[width=15 cm]{img/fact.png}
-\caption{Calculo del factorial de 3 visto en \ref{fig:factorial}}\label{modelo:grafo}
+\includegraphics[width=15 cm]{img/sumasystem1.png}
+\caption{Árbol de interacciones de SYSTEM1 del apéndice \ref{codigo:suma}}
+\label{modelo:suma:system1}
 \end{center}
 \end{figure}
 
-Se pueden ver en la figura \ref{modelo:grafo} las siguientes acciones:
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=15 cm]{img/sumasystem2.png}
+\caption{Árbol de interacciones de SYSTEM2 del apéndice \ref{codigo:suma}}
+\label{modelo:suma:system2}
+\end{center}
+\end{figure}
 
-\begin{itemize}
-\item $Main$ crea un actor con el comportamiento $Factorial$
-\item $Main$ le envía a $Factorial$, un mensaje con su dirección de buzón y el número 3.
-\item Se crea el actor $Factorial$
-\item $Factorial$ recibe el mensaje con la dirección de $Main$ y el número 3.
+\begin{figure}
+\begin{center}
+\includegraphics[width=24 cm, angle=90]{img/fact.png}
+\caption{Calculo del factorial de 3 visto en la seccion \ref{fig:factorial}}\label{modelo:grafo}
+\end{center}
+\end{figure}
 
-\item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_1$). Está inicializado con los parámetros: el entero 3, y el buzón del actor $Main$.
-\item $Factorial$ se auto envía el mensaje con el valor 2 y la dirección de buzón de $factorialWorker_1$.
-\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_1$ y el número 2.
-\item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_1$.
-
-\item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_2$). Está inicializado con los parámetros: el entero 3, y el buzón del actor $factorialWorker_1$.
-\item $Factorial$ se auto envía el mensaje con el valor 1 y la dirección de buzón de $factorialWorker_2$.
-\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_2$ y el número 1.
-\item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_2$.
-
-\item $Factorial$ crea un actor de tipo $FactorialWorker$ ($factorialWorker_3$). Está inicializado con los parámetros: el entero 1, y el buzón del actor $factorialWorker_2$.
-\item $Factorial$ se auto envía el mensaje con el valor 0 y la dirección de buzón de $factorialWorker_3$.
-\item $Factorial$ recibe el mensaje con la dirección de $factorialWorker_3$ y el número 0.
-\item Se crea el actor $FactorialWorker$ con buzón $factorialWorker_3$.
-
-\item $Factorial$ le envía a $factorialWorker_3$ el entero 1.
-\item $factorialWorker_3$ recibe el valor 1.
-
-\item $factorialWorker_3$ le envía a $factorialWorker_2$ el entero 1.
-\item $factorialWorker_2$ recibe el valor 1.
-
-\item $factorialWorker_2$ le envía a $factorialWorker_1$ el entero 2.
-\item $factorialWorker_1$ recibe el valor 2.
-
-\item $factorialWorker_1$ le envía a $Main$ el entero 6.
-\item $Main$ recibe el valor 6.
-
-\end{itemize}
-
-Esta captura fue realizada utilizando el comando \verb=:probe SYSTEM= en \FDR en el código de factorial del apéndice \ref{codigo:factorial}.
+Un ejemplo mas complejo puede verse en la figura \ref{modelo:grafo}, fue utilizado para comprobar que el ejemplo estaba realmente calculando el factorial de 3. La captura fue realizada utilizando el comando \verb=:probe SYSTEM= en \FDR utilizando el código de factorial del apéndice \ref{codigo:factorial}.
 
 \subsubsection*{Refinamiento}
 
-En \FDR para probar si un proceso P refina en un proceso Q se escribe \verb$assert P [T= Q$. Para hacer una prueba de refinamiento se utiliza el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código en \CSPm de este se encuentra en el apéndice \ref{codigo:cola}. El mismo cuenta con dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=, donde:
-
-El actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
+En \FDR para probar si el conjunto de trazas de \verb=P= es un refinamiento del conjunto de trazas \verb=Q= se escribe \verb$assert P [T= Q$. Para hacer una prueba de refinamiento se utiliza el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código en \CSPm de este se encuentra en el apéndice \ref{codigo:cola}. El mismo cuenta con dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=, donde:
+El actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección interna para:
 \begin{itemize}
- \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 1]$
- \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
- \item enviar a el actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
+ \item enviar al actor \textit{Queue} un mensaje $['enqueue', 1]$
+ \item enviar al actor \textit{Queue} un mensaje $['enqueue', 2]$
+ \item enviar al actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
-El actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección externa para:
+El actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección interna para:
 \begin{itemize}
- \item enviar a el actor \textit{Queue} un mensaje $['enqueue', 1]$, seguido de enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
- \item enviar a el actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
+ \item enviar al actor \textit{Queue} un mensaje $['enqueue', 1]$, seguido de enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
+ \item enviar al actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
 El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=. Esto puede verse en el código de \CSPm.
 
-\begin{figure}[H]
+\begin{figure}
 \begin{center}
 \includegraphics[width=5 cm]{img/trazas.png}
 \caption{Resultado de las afirmaciones}\label{modelo:verifica}
@@ -995,7 +979,7 @@ Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afir
 
 La intuición detrás de por que $SYSTEM1$ refina en $SYSTEM2$, y que $SYSTEM2$ no refina en $SYSTEM1$ tiene que ver con que $SYSTEM1$ es menos restrictivo que $SYSTEM2$. El actor \verb=actor_main1= puede elegir entre entre dos opciones para desencolar, y el actor \verb=actor_main2= solo una y con un orden preestablecido.
 
-\begin{figure}[H]
+\begin{figure}
 \begin{center}
 \includegraphics[width=15 cm]{img/contraejemplo.png}
 \caption{Contraejemplo de SYSTEM2 no refina en SYSTEM1}\label{modelo:contraejemplo}

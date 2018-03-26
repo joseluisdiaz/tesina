@@ -81,7 +81,7 @@ Si $\Sigma$ fueran todos los eventos posibles en un sistema dado podemos definir
  P \parallel Q = P \Parallel\limits_{\Sigma} Q
 \]
 
-\subsubsection*{Actores y CSP}
+\subsubsection*{Actores y CSP}\label{preliminares:actores}
 
 Como vimos en el capítulo anterior, \CSP es sincrónico, mientras que, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si se quiere transmitir entre dos procesos información en \CSP lo escribimos (como vimos en \textit{Paralelismo sincrónico}), de la siguiente forma:
 
@@ -105,7 +105,7 @@ Como la comunicación es desde $P_1$ hacia $BUFFER$ y desde $BUFFER$ hacia $P_2$
 En \CSP no existe el concepto de instancia, y se debe definir la red de procesos desde el comienzo. Para iniciar $n$ procesos de tipo $P$ se escriben los siguientes procesos en \CSP:
 
 \begin{align*}
-P =& \texttt{comportmiento-de-P} \then STOP \\
+P =& \texttt{comportamiento-de-P} \then STOP \\
 P_1 =& Iniciar_1 \then P \\
 P_2 =& Iniciar_2 \then P \\
 &\ldots \\
@@ -118,7 +118,7 @@ Con estas estructuras, se tienen los elementos básicos para poder crear un proc
 \begin{align*}
 BUFFER_1 &= enviar.1?x \then recibir.1!x \then BUFFER_1\\
 BUFFER_2 &= enviar.2?x \then recibir.2!x \then BUFFER_2\\
-SUMA &= inicia_{suma} \then recibir.1?x \then enviar.2?(x + 1) \then STOP \\
+SUMA &= inicia_{suma} \then recibir.1?x \then enviar.2!(x + 1) \then STOP \\
 CLIENTE &= inicia_{suma}\then enviar.1!2 \then recibir.2?x \then STOP \\
 BUFFER &= BUFFER_1 \Interleave BUFFER_2 \\
 SYSTEM &= (SUMA \Parallel\limits_{\{inicia_{suma}\}} CLIENTE) \Parallel\limits_{Y}\ BUFFER

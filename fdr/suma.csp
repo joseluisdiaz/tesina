@@ -1,0 +1,24 @@
+MAX_INT = 3
+datatype SmallInt = SI.{0 .. MAX_INT} | Overflow
+--
+add(SI.a, SI.b) =
+  let sum = a + b within if sum <= MAX_INT then SI.sum else Overflow
+add(_, _) = Overflow
+
+channel inicia_suma, inicia_suma_pregunta
+channel enviar, recibir: {1,2}.SmallInt
+
+BUFFER(x) = enviar.x?msg -> recibir.x!msg -> BUFFER(x)
+
+SUMA = inicia_suma -> recibir.1?x -> enviar.2!add(x, SI.1) -> STOP
+CLIENTE = inicia_suma -> enviar.1!SI.2 -> recibir.2?x -> STOP
+BUFFERS = BUFFER(1) ||| BUFFER(2)
+
+SYSTEM1 = (SUMA [|{ inicia_suma }|] CLIENTE) [|{| enviar, recibir |}|] BUFFERS
+
+INICIA = inicia_suma_pregunta -> inicia_suma -> STOP
+CLIENTE2 = inicia_suma_pregunta -> enviar.1!SI.2 -> recibir.2?x -> STOP
+
+COMUNICACIONES = {| enviar, recibir, inicia_suma, inicia_suma_pregunta |}
+
+SYSTEM2 = (SUMA ||| CLIENTE2) [|COMUNICACIONES|] ( BUFFERS ||| INICIA )
