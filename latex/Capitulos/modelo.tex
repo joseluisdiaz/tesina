@@ -1,50 +1,34 @@
-\chapter{Un modelo en CSP}
-En este capítulo se modela un sistema de actores utilizando \CSP. Este incluye las funciones definidas por \SAL, que se comentaron previamente. Tales como crear nuevos actores, enviar mensajes, y definir un comportamiento de reemplazo. 
+\chapter{El modelo de actores en CSP}
+En este capítulo se modela el sistema de actores utilizando \CSP. Este modela los diferentes funcionalidades definidas por \SAL, Tales como crear nuevos actores, enviar mensajes, y definir un comportamiento de reemplazo. 
 
-Se comienza por una descripción detallada de cada componete, algunos ejemplos de traducción de \SAL a \CSP. Se presenta una función que traduce de \SAL a \CSP. Para terminar con algunas particularidades sobre el modelo propuesto al utilizar la herramienta \FDR.
+Se comienza por una descripción detallada de cada componete, luego se introducen ejemplos escritos en el lenguaje de programación \SAL y su equivalente en \CSP. Se presenta una función que traduce de \SAL a \CSP. Para terminar mostrando algunas particularidades sobre el modelo propuesto al utilizar la herramienta \FDR.
 
 \section{Describiendo el sistema de actores} 
 Dentro de las acciones que un actor efectúa está la de crear otro actor. En \CSP los actores corresponden a procesos, como todos los procesos tienen que estar definidos desde el comienzo, en \CSP no existe la posibilidad de crear dinámicamente un nuevo proceso.
 
-Se simula la creación definiendo cada proceso con la espera de un mensaje que de inicio. Esto podría verse como la palabra reservada $new$ en varios lenguajes de programación orientados a objetos. 
+%Se simula la creación definiendo cada proceso con la espera de un mensaje que de inicio. Esto podría verse como la palabra reservada $new$ en varios lenguajes de programación orientados a objetos. 
 
 \subsection{Buzón}\label{modelo:buzon}
 
-Recodemos que la naturaleza de \CSP es sincrónica y los actores no lo son. Para esto se necesita desacoplar el envío de mensajes de la recepción. Se utiliza una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
+La naturaleza de \CSP es sincrónica y los actores no lo son. Para esto se necesita desacoplar el envío de mensajes de la recepción. Se utiliza una estructura intermedia que actúa de \textit{buzón}, y dos canales que sirven para comunicarse con ella.
+
+Un \textit{buzón} puede guardar más de una comunicación en su interior. Las comunicaciones se agregan al final, y se consumen sobre el principio. En este sentido, es una cola de tipo FIFO, \footnote{del acrónimo inglés de First In, First Out (``primero en entrar, primero en salir'')}.
 
 La ecuación de \textit{buzón} es la siguiente:
 
-\begin{process}
-\begin{block}
-Mailbox(i, \nil) = {} \\ \quad
-CommSend?i.x \then Mailbox(i, \lseq x \rseq) 
-\end{block} \\
-
-\begin{block}
-Mailbox(i, \lseq x \rseq \cat xs ) = {} \\ \quad 
-  \begin{block}
-    CommRecv!i.x \then Mailbox(i, xs) \\
-    \Extchoice \\
-    CommSend?i.y \then Mailbox(i, \lseq x \rseq \cat xs \cat \lseq y \rseq ) 
-  \end{block}
-\end{block} \\
-
-\end{process}
-
-Donde $Mailbox(i, \nil)$ es cuando \textit{buzón} está vacío. $Mailbox(i, \lseq x \rseq \cat xs )$ es cuando tiene al menos un mensaje. Los canales para comunicarse con el buzón se definen de la siguiente forma:
-
 \begin{align*}
-channel\ CommSend:mailboxId.params \\
-channel\ CommRecv:mailboxId.params
+Mai&lbox(mailboxId, \nil) = {} \\
+&CommSend?mailboxId.x \then Mailbox(mailboxId, \lseq x \rseq) \\
+Mai&lbox(i, \lseq x \rseq \cat xs ) = {} \\ 
+   &CommRecv!mailboxId.x \then Mailbox(mailboxId, xs) \\
+   &\Extchoice \\
+   &CommSend?mailboxId.y \then Mailbox(mailboxId, \lseq x \rseq \cat xs \cat \lseq y \rseq ) 
 \end{align*}
-
-Donde:
+donde:
 \begin{description}
- \item $channel\ CommSend:mailboxId.params$ define el canal $CommSend$. El primer parámetro es cualquier $mailboxId$ y representa el mailbox destino. El segundo parámetro, es una lista. Representa las comunicaciones enviadas. 
- \item $channel\ CommRecv:mailboxId.params$ define el canal $CommRecv$. Los parámetros son idénticos a los anteriores.
-\end{description}
-
-Un \textit{buzón} puede guardar más de una comunicación en su interior. Las comunicaciones se agregan al final, y se consumen sobre el principio. En este sentido, es una cola d tipo FIFO, del acrónimo inglés de First In, First Out (``primero en entrar, primero en salir'').
+ \item $Mailbox(i, \nil)$ es cuando \textit{buzón} está vacío. $Mailbox(i, \lseq x \rseq \cat xs )$ es cuando tiene al menos un mensaje. 
+ \item $CommSend.mailboxId.params$  El primer parámetro es cualquier $mailboxId$ y representa el mailbox destino. El segundo parámetro, es una lista. $CommRecv.mailboxId.params$ se interpreta de la misma forma.
+ \end{description}
 
 El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje. 
 
@@ -65,8 +49,7 @@ Por cada actor en la red, existe un \textit{buzón} con el mismo $mailboxId$ aso
 \[
 Mailboxes = \Interleave_{ actor : MailboxIDS } Mailbox(actor, \nil) 
 \]
-
-Donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador \textit{Interleave}. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de \textit{Interleave}. $MailboxIDS$ es un conjunto de enteros, estos enteros representan un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios.
+donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador de entrelazado. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de entrelazado. $MailboxIDS$ es un conjunto de enteros, estos enteros representan un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios.
 
 
 \subsection{Identificadores de actores}\label{model:id}

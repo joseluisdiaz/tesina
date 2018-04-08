@@ -1,12 +1,12 @@
 \chapter{Preliminares}
 
-En este capítulo, en la primera sección se explora algunas particularidades del paralelismo en \CSP, tales como: paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se muestra algunas construcciones en \CSPm que resultan útiles. 
+En en la primera sección de este capítulo se exploran algunas particularidades del paralelismo en \CSP, tales como, paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se muestra algunas construcciones en \CSPm que resultan útiles. 
 
-La sección de \CSP no pretende ser una introducción al lenguaje, se asume que el lector tiene cierta familiaridad con él. Para una introducción se puede consultar \cite{Cristia:CSP}, para una referencia completa \cite{Roscoe:1997:TPC:550448}
+La sección de \CSP no pretende ser una introducción al lenguaje; se asume que el lector tiene cierta familiaridad con él. Para una introducción se puede consultar \cite{Cristia:CSP}, para una referencia completa \cite{Roscoe:1997:TPC:550448}
 
-\section{Paralelismo en CSP}
+\section{Algunas construcciones de CSP}
 
-En esta sección se muestra en \CSP se puede en solo sincronizar algunos eventos. Para estudiar sistemas concurrentes es útil tener un control mas fino de que eventos son de interés. 
+En esta sección se muestran algunos de los operadores de paralelismo de \CSP, seguido de algunos ejemplos de uso y su relación con el modelo de actores.  
 
 \subsubsection*{Paralelismo sincrónico}
 
@@ -17,35 +17,29 @@ P_1 =& a \then P_1\\
 P_2 =& a \then P_2 \\
 SYSTEM =& P_1 \parallel P_2
 \end{align*}
+donde $P_1$ y $P_2$ sincronizan en el evento $a$. 
 
-donde $P_1$ y $P_2$ sincronizan con el evento $a$. Cuando utilizamos procesos parametrizados muchas veces es útil enviar información. El siguiente ejemplo muestra esto:
+Cuando utilizamos procesos parametrizados muchas veces es útil enviar información. El siguiente ejemplo muestra esto:
 
 \begin{align*}
 P_1 =& canal!1 \then STOP \\
 P_2 =& canal?x \then P(x) \\
 SYSTEM =& P_1 \parallel P_2 \\
 \end{align*}
-
-Donde $canal!1$ y que $canal?x$ lo recibe. Para entender un poco más cómo funciona la notación que involucra $\langle ? \rangle$ y $\langle ! \rangle$, supongamos que $x$ puede tomar los valores $1$, $2$ y $3$. La expresión $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
+donde $canal!1$ es quien envía el valor $1$ y $canal?x$ lo recibe. Para entender un poco más cómo funciona la notación que involucra $\langle ? \rangle$ y $\langle ! \rangle$, supongamos que $x$ puede tomar los valores $1$, $2$ y $3$. La expresión $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
 \begin{align*}
 P_2 & =  canal.1 \then STOP \\
       & \Extchoice canal.2 \then STOP \\
       & \Extchoice canal.3 \then STOP 
 \end{align*}
 
-y qué $P_1$ equivale a: 
-
-\begin{align*}
-P_1  = canal.1 \then STOP \\
-\end{align*}
-
-Como $x$ es una variable libre, y el evento que termina sincronizando es $canal.1$ esta toma el valor $1$. En realidad el paso de información es ficticio todo el tiempo se está sincronizando en eventos.
+Como $x$ es una variable libre, y el evento que termina sincronizando es $canal.1$ esta toma el valor $1$. En realidad el paso de información es ficticio; todo el tiempo se está sincronizando en eventos.
 
 \subsubsection*{Paralelismo alfabetizado}
 
-Mientras más procesos combinemos utilizando el operador $\parallel$, más procesos tienen que ponerse de acuerdo en los eventos a sincronizar, ponemos en paralelo los procesos $P$ y $Q$ no necesariamente todas las comunicaciones de $P$ son para $Q$.
+Mientras más procesos combinemos utilizando el operador $\parallel$, más procesos tienen que ponerse de acuerdo en los eventos a sincronizar si se pone en paralelo los procesos $P$ y $Q$ no necesariamente todas las comunicaciones de $P$ son para $Q$.
 
-Si $X$ e $Y$ son dos conjunto de eventos, $P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q$ es la combinación en donde $P$ tiene solo permitido comunicar los eventos $X$ y donde $Q$ tiene sólo permitido comunicar los eventos $Y$, y únicamente tienen que ponerse de acuerdo en la intersección $X \cap Y$. Por ejemplo:
+Si $X$ e $Y$ son dos conjunto de eventos, $P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q$ es la composición paralela en donde $P$ tiene solo permitido comunicar los eventos $X$ y donde $Q$ tiene sólo permitido comunicar los eventos $Y$, y únicamente tienen que ponerse de acuerdo en la intersección $X \cap Y$. Por ejemplo:
 
 \[ 
  ( a \then b \then b \then STOP )\  \textsubscript{\{a, b\}} \parallel \textsubscript{\{b, c\}}\ ( b \then c \then b \then STOP ) 
@@ -58,10 +52,10 @@ Se comporta como:
 \]
 
 \subsubsection*{Entrelazado}
-Los operadores $\parallel$ y $\textsubscript{X}\parallel\textsubscript{Y}$ tienen la propiedad que todos los procesos involucrados tienen que sincronizar algún evento. Utilizando el operador entrelazado, cada proceso corre independiente de cualquier otro. Se nota $P \Interleave Q$.
+Los operadores $\parallel$ y $\textsubscript{X}\parallel\textsubscript{Y}$ tienen la propiedad que todos los procesos involucrados tienen que sincronizar algún evento. Utilizando el operador de entrelazado ($\Interleave$), cada proceso corre independiente de cualquier otro. Se nota $P \Interleave Q$.
 
 \subsubsection*{Paralelismo generalizado}
-Existe una forma general de escribir todos los operadores vistos utilizando el operador de paralelismo generalizado $P \Parallel\limits_{X} Q$. Donde $P$ y $Q$ solo tienen que ponerse de acuerdo en los eventos contenidos en $X$ y los eventos que están por fuera de $X$ se procesan independientemente.
+Existe una forma general de escribir todos los operadores vistos utilizando el operador de paralelismo generalizado $P \Parallel\limits_{X} Q$, donde $P$ y $Q$ solo tienen que ponerse de acuerdo en los eventos pertenecientes a $X$ y los eventos que están por fuera de $X$ se procesan independientemente.
 
 Podemos escribir el operador de entrelazado usando la siguiente equivalencia:
 
@@ -75,24 +69,30 @@ Podemos escribir el operador de paralelismo alfabetizado como:
  P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q = P \Parallel\limits_{X \cap Y} Q
 \]
 
-Si $\Sigma$ fueran todos los eventos posibles en un sistema dado podemos definir el operador de paralelismo sincrónico de la siguiente forma:
+$\Sigma$ son todos los eventos posibles en un sistema dado podemos definir el operador de paralelismo sincrónico de la siguiente forma:
 
 \[
  P \parallel Q = P \Parallel\limits_{\Sigma} Q
 \]
 
+\subsubsection*{Cadena de caracteres}
+\CSP no tiene soporte para cadena de caracteres, en esencia solo son procesos y eventos. Será util en el capitulo que se define el modelo poder utilizar dentro de las secuencias algún tipo de cadena de caracteres. Estas son inmutables y la única operación que se define sobre estas es la comparación. Se representa utilizando una secuencia alfanumérica, encerradas entre comillas simples. Por ejemplo:
+\begin{gather*}
+'cadena1' \\
+'cadena2' \\
+\langle 'cadena1', 'cadena2' \rangle
+\end{gather*}
+
 \subsubsection*{Actores y CSP}\label{preliminares:actores}
 
-Como vimos en el capítulo anterior, \CSP es sincrónico, mientras que, el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si se quiere transmitir entre dos procesos información en \CSP lo escribimos (como vimos en \textit{Paralelismo sincrónico}), de la siguiente forma:
-
+Como vimos en el capítulo anterior, \CSP es sincrónico, mientras que el paso de mensajes o envío de comunicaciones en el sistema de actores no lo es. Si se quiere transmitir información entre dos procesos en \CSP lo escribimos (como vimos en el apartado de paralelismo sincrónico),de la siguiente forma:
 \begin{align*}
 P_1 =& canal!1 \then STOP \\
 P_2 =& canal?x \then STOP \\
 SYSTEM =& P_1 \Parallel P_2  
 \end{align*}
 
-Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, cuya escritura es:
-
+Para poder desacoplar el envío de la recepción del mensaje, se puede utilizar una estructura intermedia de $BUFFER$, cuya especificación es:
 \begin{align*}
 BUFFER =& enviar?x \then recibir!x \then BUFFER \\
 P_1 =& enviar!1 \then STOP \\
@@ -102,19 +102,17 @@ SYSTEM =& ( P_1 \Interleave P_2 ) \Parallel BUFFER \\
 
 Como la comunicación es desde $P_1$ hacia $BUFFER$ y desde $BUFFER$ hacia $P_2$, no hay ninguna comunicación entre $P_1$ y $P_2$. Por esto se utiliza el operador de entrelazado.
 
-En \CSP no existe el concepto de instancia, y se debe definir la red de procesos desde el comienzo. Para iniciar $n$ procesos de tipo $P$ se escriben los siguientes procesos en \CSP:
-
+En \CSP no existe el concepto de instancia, y se debe definir la red de procesos desde el comienzo. Es decir, no podemos crear nuevos procesos desde un proceso. Por lo tanto, simularemos la creación activando cada instancia mediante un evento especial. Para iniciar $n$ procesos de tipo $P$ se escriben los siguientes procesos en \CSP:
 \begin{align*}
 P =& \texttt{comportamiento-de-P} \then STOP \\
-P_1 =& Iniciar_1 \then P \\
-P_2 =& Iniciar_2 \then P \\
+P_1 =& iniciar_1 \then P \\
+P_2 =& iniciar_2 \then P \\
 &\ldots \\
-P_n =& Iniciar_n \then P \\
+P_n =& iniciar_n \then P \\
 SYSTEM =& P_1 \Interleave P_2 \Interleave \ldots \Interleave P_n
 \end{align*}
-
-Con estas estructuras, se tienen los elementos básicos para poder crear un proceso y enviar una comunicación de manera asincrónica. Se puede ver esto en el siguiente ejemplo:
-
+donde $iniciar_i$ es el evento especial que da inicio a $P$. Se utiliza el operador de entrelazado para combinar los procesos $P_1, P_2, \ldots, P_n$, ya que no tiene que haber ninguna comunicación entre ellos. En el caso de existir algún evento compartido, este debería ser desestimado y no generar un encuentro. 
+Con estos elementos podemos crear un proceso y enviar una comunicación de manera asincrónica. Se puede ver esto en el siguiente ejemplo:
 \begin{align*}
 BUFFER_1 &= enviar.1?x \then recibir.1!x \then BUFFER_1\\
 BUFFER_2 &= enviar.2?x \then recibir.2!x \then BUFFER_2\\
@@ -124,9 +122,9 @@ BUFFER &= BUFFER_1 \Interleave BUFFER_2 \\
 SYSTEM &= (SUMA \Parallel\limits_{\{inicia_{suma}\}} CLIENTE) \Parallel\limits_{Y}\ BUFFER
 \end{align*}
 
-En el ejemplo anterior, $CLIENT$ inicia el proceso $SUMA$, y le envía un dos. Este envío es asíncrono por $BUFFER_1$. Cuando $SUMA$ recibe este dos, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo los valores de $Y$ vienen dado por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber que valores puede tomar $x$, asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $recibir.m.n$ con $m = 1 \ldots 2$  y $n = 1 \ldots 3$ unión $enviar.m.n$ con $m = 1 \ldots 2$  y $n = 1 \ldots 3$, es decir todos los eventos inherentes a $BUFFER$.
+Es decir que $CLIENTE$ inicia el proceso $SUMA$, y le envía un $2$. Este envío es asíncrono por $BUFFER_1$. Cuando $SUMA$ recibe este $2$, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo los valores de $Y$ vienen dados por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber qué valores puede tomar $x$. Asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $\{m: [1,2] ,n: [1,2,3] | recibir.m.n \} \cup \{m: [1,2] ,n: [1,2,3] | enviar.m.n \} $, es decir todos los eventos inherentes a $BUFFER$.
 
-Este último ejemplo muestra dos de los aspectos que se desarrollaran en el capitulo siguiente: como desacoplar el envío de mensajes y como simular la creación de un proceso. También puede verse el uso de los distintos operadores paralelo.
+Este último ejemplo muestra dos de los aspectos que se desarrollarán en el capítulo siguiente: cómo desacoplar el envío de mensajes y óomo simular la creación de un proceso. También puede verse el uso de los distintos operadores paralelo.
  
 \section{El lenguaje CSPm}
 
@@ -140,13 +138,13 @@ Permite declarar tipos estructurados, son similares a las declaraciones de tipo 
 datatype ColorSimple = Rojo | Verde | Azul
 \end{verbatim}
 
-Esto declara Rojo, Verde y Azul, como símbolos del tipo Color, y vincula Color al conjunto \{Rojo, Verde, Azul \}. Estos tipos de datos puede tener parámetros. Por ejemplo, se pude agregar un constructor de datos RGB, a saber:
+Esto declara \verb=Rojo=, \verb=Verde= y \verb=Azul==, como símbolos del tipo \verb=ColorSimple=, y vincula \verb=ColorSimple= al conjunto \verb={Rojo, Verde, Azul}=. Estos tipos de datos puede tener parámetros. Por ejemplo, se pude agregar un constructor de datos \verb=RGB=, a saber:
 
 \begin{verbatim}
 datatype ColorComplejo = Nombre.ColorSimple | RGB.{0..255}.{0..255}.{0..255}
 \end{verbatim}
 
-Esto declara Nombre, como un constructor de datos, de tipo $ColorSimple \Rightarrow ColorComplejo$ y a $RGB$ como un constructor de datos de  tipo $Int \Rightarrow Int \Rightarrow Int \Rightarrow ColorComplejo$ y ColorComplejo es el conjunto:
+Esto declara \verb=Nombre=, como un constructor de datos, de tipo \verb=ColorSimple= $\Rightarrow$ \verb$ColorComplejo$ y a \verb$RGB$ como un constructor de datos de tipo \verb$Int$ $\Rightarrow$ \verb$Int$ $\Rightarrow$ \verb$Int$ $\Rightarrow$ \verb$ColorComplejo$ y \verb$ColorComplejo$ es el conjunto:
 \begin{multline*}
 \{ Nombre.c | c \leftarrow  ColorSimple \} \cup \{ RGB.r.g.b |  r \leftarrow \{ 0 \dots 255 \},  g \leftarrow \{ 0 \dots 255 \}, \\  b \leftarrow \{ 0 \dots 255 \} \}  
 \end{multline*}
@@ -162,7 +160,11 @@ channel estaListo
 channel x, y : {0..1}.Bool
 \end{verbatim}
 
-Declara tres canales, uno que no toma parámetros (listo es de tipo Event), y dos que tienen dos componentes. Cualquier valor del conjunto \verb={0,1}= y un booleano. El conjunto de los eventos definidos es el siguiente: \verb={ estaListo, x.0.false, x.1.false, x.0.true, x.1.true, y.0.false, y.1.false, y.0.true, y.1.true }=. Estos eventos pueden ser parte de la declaración de procesos como por ejemplo \verb#{P = x?a?b -> STOP}#.
+Declara tres canales, uno que no toma parámetros (listo es de tipo Event), y dos que tienen dos componentes. Cualquier valor del conjunto \verb={0,1}= y un booleano. El conjunto de los eventos definidos es el siguiente: 
+\begin{verbatim}
+	
+\end{verbatim}
+\verb={ estaListo, x.0.false, x.1.false, x.0.true, x.1.true, y.0.false, y.1.false, y.0.true, y.1.true }=. Estos eventos pueden ser parte de la declaración de procesos como por ejemplo \verb#{P = x?a?b -> STOP}#.
 
 \subsubsection{Búsqueda de patrones}
 
