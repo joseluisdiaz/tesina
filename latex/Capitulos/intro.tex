@@ -49,6 +49,14 @@ En su tesis doctoral Agha\cite{Agha:1986:AMC:7929} define en detalle el modelo d
 
 En el trabajo \textit{An Algebraic Theory of Actors and its Application to a Simple Object-Based Language}\cite{apicalculus}, Gul Agha y Prasanna Thati definen un modelo algebraico del modelo de actores, y sobre el final le dan semántica a \SAL.
 
+En su tesis doctoral Clinger\cite{Clinger:1981} presenta una teoría para una clase de lenguajes no deterministas que incluyen paralelismo, enfocado específicamente en el modelo de actores.
+
+Se puede ver en el trabajo \textit{An algebra of actors}\cite{algebraActors}, que los autores definen un algebra de procesos y proveen una semántica operacional basada en un sistema de transición etiquetado.
+
+En el trabajo \textit{Formalising Actors in Linear Logic}\cite{actorLiniarLogic}, los autores definen un formalismo basado en actores en términos la deducción en lógica lineal.
+
+Otro lenguaje que implementa el modelo de actores es Pony\cite{ponylang}, utiliza memoria compartida para evitar duplicación de memoria cuando se envían mensajes. Esto puede llevar a una o varias \textit{condiciónes de carreras}. Para evitar este tipo de problemas, tiene definido un sistema de permisos, con una prueba formal\cite{Clebsch:2015:DCS:2824815.2824816}. Este sistema de permisos leer, escribir y atravesar referencias únicas evitando este problema.
+
 \section{Organización de este trabajo}
 
 En el capítulo 2 se introduce el modelo de actores y se describe la sintaxis de \SAL. En el capítulo 3 se presentan los conceptos necesarios de \CSP y \CSPm, que serán luego utilizados en el siguiente capítulo. El capítulo 4 construye un modelo de actores utilizando \CSP donde, se presentan varios ejemplos. Se muestra una semántica de \SAL en \CSP. Se termina mostrando como este modelo puede ser utilizado en la herramienta \FDR. Finalmente, el capítulo 5 presenta algunas conclusiones del trabajo y los posibles trabajos futuros.

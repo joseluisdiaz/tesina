@@ -4,7 +4,7 @@ En este capítulo se modela el sistema de actores utilizando \CSP. Este modela l
 Se comienza por una descripción detallada de cada componete, luego se introducen ejemplos escritos en el lenguaje de programación \SAL y su equivalente en \CSP. Se presenta una función que traduce de \SAL a \CSP. Para terminar mostrando algunas particularidades sobre el modelo propuesto al utilizar la herramienta \FDR.
 
 \section{Describiendo el sistema de actores} 
-Dentro de las acciones que un actor efectúa está la de crear otro actor. En \CSP los actores corresponden a procesos, como todos los procesos tienen que estar definidos desde el comienzo, en \CSP no existe la posibilidad de crear dinámicamente un nuevo proceso.
+En esta sección se describe los dos componentes fundamentales para construir el modelo. Primero se verá el buzón, luego dos ecuaciones necesarias para crear la red de actores y para terminar se mostrará como es posible describir comportamientos usando \CSP. 
 
 %Se simula la creación definiendo cada proceso con la espera de un mensaje que de inicio. Esto podría verse como la palabra reservada $new$ en varios lenguajes de programación orientados a objetos. 
 
@@ -16,129 +16,115 @@ Un \textit{buzón} puede guardar más de una comunicación en su interior. Las c
 
 La ecuación de \textit{buzón} es la siguiente:
 
-\begin{align*}
+\begin{align}\label{eq:mailbox}
+\begin{split}
 Mai&lbox(mailboxId, \nil) = {} \\
 &CommSend?mailboxId.x \then Mailbox(mailboxId, \lseq x \rseq) \\
 Mai&lbox(i, \lseq x \rseq \cat xs ) = {} \\ 
    &CommRecv!mailboxId.x \then Mailbox(mailboxId, xs) \\
    &\Extchoice \\
    &CommSend?mailboxId.y \then Mailbox(mailboxId, \lseq x \rseq \cat xs \cat \lseq y \rseq ) 
-\end{align*}
+\end{split}
+\end{align}
 donde:
 \begin{description}
  \item $Mailbox(i, \nil)$ es cuando \textit{buzón} está vacío. $Mailbox(i, \lseq x \rseq \cat xs )$ es cuando tiene al menos un mensaje. 
- \item $CommSend.mailboxId.params$  El primer parámetro es cualquier $mailboxId$ y representa el mailbox destino. El segundo parámetro, es una lista. $CommRecv.mailboxId.params$ se interpreta de la misma forma.
+ \item $CommSend$ canal utilizado para comunicar desde cualquier actor hacia el buzón.
+ \item $CommRecv$ canal utilizado para comunicar del buzón hacia el actor asociado.
+ \item en $mailboxId.x$ y $mailboxId.y$, $mailboxId$ es la dirección del buzón, $y$ es la información que se recibe desde un actor y $x$ es la información que se envía hacia un actor.
  \end{description}
-
-El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje. 
+El comportamiento del proceso $Mailbox$ depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje. 
 
 \begin{itemize}
 \item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
 \item Si tiene algunos mensajes, por los canales $CommSend$ y $CommRecv$.
 \end{itemize}
 
-Puede que los nombre de los canales suenen poco intuitivos, es importante notar que provienen de la acciones vista desde los actores.
-
-\begin{description}
-\item $CommSend$ canal utilizado para comunicar desde cualquier actor hacia el buzón.
-\item $CommRecv$ canal utilizado para comunicar del buzón hacia el actor asociado.
-\end{description}
-
-Por cada actor en la red, existe un \textit{buzón} con el mismo $mailboxId$ asociado. Para esto utilizamos la siguiente ecuación:
-
-\[
+Por cada actor en la red existe un \textit{buzón} con el mismo $mailboxId$ asociado. Para esto utilizamos la siguiente ecuación:
+\begin{equation}\label{eq:mailbox}
 Mailboxes = \Interleave_{ actor : MailboxIDS } Mailbox(actor, \nil) 
-\]
-donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador de entrelazado. Como no existe comunicación entre buzones, siempre la comunicación es desde un actor hacia un buzón es que se elige el operador de entrelazado. $MailboxIDS$ es un conjunto de enteros, estos enteros representan un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios.
+\end{equation}
 
-
-\subsection{Identificadores de actores}\label{model:id}
-
-Ya que no existe en \CSP el concepto de instancia es necesario contar con todos los procesos que van a ser parte de la red definidos desde el principio. El valor $N_i$ corresponde a la cantidad de actores de este tipo que van a ser necesarios. 
-
+donde $Mailboxes$ representa todos los buzones puestos en paralelo utilizando el operador de entrelazado. Como no existe comunicación entre buzones es que se elige este operador. $MailboxIDS$ es un conjunto de enteros, estos enteros representan un identificador único para los buzones. Tendrá que tener tantos elementos, como actores sean necesarios.
 
 \subsection{Crear nuevos actores}\label{modelo:crear}
 
+Dentro de las acciones que un actor efectúa está la de crear otro actor. En \CSP los actores corresponden a procesos, como todos los procesos tienen que estar definidos desde el comienzo, en \CSP no existe la posibilidad de crear dinámicamente un nuevo proceso.
+
 Para identificar que actor se está queriendo crear, se utiliza el siguiente conjunto: 
 
-\begin{align*}
-  ActorID &= { ACTOR_1, ACTOR_2, \ldots, ACTOR_K, MAIN }
-\end{align*}
+\begin{equation}\label{eq:actorid}
+  ActorID = { ACTOR_1, ACTOR_2, \ldots, ACTOR_K, MAIN }
+\end{equation}
 
-En \CSP no existe el concepto de instancia, y debemos tener definida la red de procesos desde el comienzo. Para resolver este problema, se presentan a continuación un dos abstracciones.
+Para resolver el problema asociado a no poder instanciar nuevos procesos en \CSP, se presentan a continuación dos abstracciones.
 
-La primera abstracción es un preámbulo a un comportamiento, le asigna a este los parámetros \textit{acquaiantence-list} y al mismo tiempo le otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un conjunto de procesos puestos en paralelo, y un canal para comunicarse con ella.
-
-El canal para comunicarse con los procesos que están esperando ser iniciados, se define de la siguiente forma:
-
-\[
-channel\ Create:actorid.mailboxid.params
-\]
-
-Donde $channel\ Create:actorid.mailboxid.params$ define el canal $Create$. El primer parámetro es cualquier $ActorID$, representa el actor a ser creado. El segundo parámetro es el identificador de buzón. El tercer parámetro, es una lista, representa los identificadores \textit{acquaiantence-list}. 
-
-\begin{align*}
-ks = \Interleave_{i: \{1 .. N\_KS\}} & Create.k?self?<p1, p2> \then \\
-& K(self, p1, p2) 
-\end{align*}
-
-Donde:
-
+La primera abstracción es un preámbulo a un comportamiento, le asigna a este los parámetros \textit{acquaiantence-list} y al mismo tiempo le otorga al actor su identificador único de \textit{buzón}. Utilizamos para esto un conjunto de procesos puestos en paralelo, y un canal que sincroniza con un evento especial, que da inicio al actor.
+\begin{equation}\label{eq:createactor}
+ks = \Interleave_{i: \{1 .. N_k\}} Create.ACTOR_k?self?<p1, p2> \then K(self, p1, p2) 
+\end{equation}
+donde:
 \begin{itemize}
- \item $ks$ es el conjunto de todos los procesos puestos en paralelo.
- \item $N\_KS$ define la cantidad de actores de tipo $K$ que se van a estar disponibles.
- \item $Create.k?self?<p1, p2>$, sincroniza en el canal $Create.k$ recibe el identificador de buzón $self$ como parámetro y la lista  $<p1, p2>$. En este caso estamos suponiendo que $K$ tiene solo dos parámetros de tipo \textit{acquaiantence-list}.
+ \item $N_k$ define la cantidad de actores de tipo $K$ que se van a estar disponibles.
+ \item $Create.k?self?<p1, p2>$, sincroniza en el canal $Create.ACTOR_k$, donde $ACTOR_k$ es parte del conjunto $ActorID$. Recibe el identificador de buzón $self$ como parámetro y la lista $<p1, p2>$. En este caso se supone que $K$ tiene solo dos parámetros de tipo \textit{acquaiantence-list}. 
  \item $K(self, p1, p2)$ llama al proceso parametrizado definido como $K$ con los parámetros $self$, $p1$ y $p2$. $K$ representa el comportamiento del actor
 \end{itemize}
 
-En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create.k$ para arrancar con el comportamiento definido. 
+En realidad, la creación es algo ficticio, ya que tenemos una red de procesos \CSP esperando al evento $Create.ACTOR_k$ para arrancar con el comportamiento definido. 
 
 %El conjunto definido por $ACTOR_k$ es equivalente a los elementos definidos en $ActorID$. Por esto es que decimos que no sólo define el nombre, sino que al mismo tiempo está estableciendo cuantos actores del tipo $ACTOR_k$ se va a tener.
 
-El proceso que representa a todos los actores que van a ser iniciados en paralelo, utiliza el operador de \textit{Interleave}. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos. 
+El proceso que representa a todos los actores que van a ser iniciados en paralelo, utiliza el operador de entrelazado. Una vez sincronizado en el mensaje $Create$, se ejecuta el comportamiento que obtiene el identificador del buzón y los parámetros recibidos. 
 
-La segunda abstracción es un proceso que vuelve asincrónica el mensaje de creación, de la creación como tal. Para esto se utiliza una estructura intermedia $create$ y un canal para comunicarse con ella. $create$ se define de la siguiente forma: 
+La segunda abstracción es un proceso que vuelve asincrónica el mensaje de creación, de la creación como tal. Para esto se utiliza una estructura intermedia $create$ y un canal para comunicarse con ella. $create$ se define de la siguiente 
 
-\[
-\begin{array}{l}
-Create(mailboxId) = CreateAsk?actorId!mailboxId?m \then Create.actorId?mailboxId!m \then STOP \\
-Creates = \Interleave_{mailboxId : MailboxIDS} create(mailboxId)
-\end{array}
-\]
+\begin{equation}\label{eq:create}
+\begin{split}
+Create&(mailboxId) = \\
+&CreateAsk?actorId!mailboxId?m \then \\
+&Create.actorId?mailboxId!m \then \\
+&STOP
+\end{split}
+\end{equation}
 
-Donde:
-
+donde:
 \begin{description}
- \item $Create(mailboxId)$ es un proceso parametrizado.
- \item $CreateAsk?actorId!mailboxId?m$ sincroniza en el canal $CreateAsk$. Recibe $actorId$, el identificador de actor a crear. Envía el identificador de buzón $MailboxID$ y recibe la lista de valores $m$
- \item $\Interleave_{mailboxId : MailboxIDS}$ pone en paralelo tantos procesos en paralelos, como elementos definidos en $MailboxIDS$.  
+ \item $CreateAsk?actorId!mailboxId?m$ sincroniza en el canal $CreateAsk$. Recibe $actorId$, el identificador de actor a crear. Envía el identificador de buzón $MailboxID$ y recibe la lista de valores $m$.
+ \item $Create.actorId?mailboxId!m$ sincroniza en el canal $Create.actorId$, vista en la ecuación \ref{eq:createactor}. Envía el identificador de buzón $MailboxID$ y la lista de valores $m$.
+
 \end{description}
-
-El canal para comunicarse con esta estructura se define como:
-
-\[
-channel\ CreateAsk:actorid.mailboxId.params
-\]
-
-Donde: $channel\ CreateAsk:actorid.mailboxId.params$ define el canal $CreateAsk$, el primer parámetro es cualquier $ActorID$, representa el tipo de actor a ser creado. El segundo parámetro representa la dirección de buzón y el tercer parámetro, es una lista. Representa los identificadores \textit{acquaiantence-list}. 
-
-Como puede observarse, tenemos tantos procesos en paralelo como elementos $MailboxIDS$ existan. Tal vez esta abstracción podría haber sido omitida, pero juega un papel fundamental en la construcción total del sistema, esto tiene que ver con en \CSP se puede elegir los eventos \cite[chap.~2,p.~55]{Roscoe:1997:TPC:550448} que se van a sincronizar, cuando como se compone todo el sistema, esta idea quedará más clara.
+Es necesario crear tantos procesos como elementos existan en el conjunto $MailboxIDS$. Para esto se utiliza la siguiente ecuación:
+\begin{equation}\label{eq:creates}
+Creates = \Interleave_{mailboxId : MailboxIDS} Create(mailboxId)
+\end{equation}
 
 \subsection{Definición de comportamientos}
-La idea de comportamiento fue introducida en la sección \ref{actores:beha}, podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida, nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el actor que esta procesando la comunicación.
+La idea de comportamiento fue introducida en la sección \ref{actores:beha}. Podemos pensar a un comportamiento como una función que procesa una comunicación y tiene como salida: nuevas comunicaciones, nuevos actores y el comportamiento de reemplazo para el actor que esta procesando la comunicación. A continuación se muestra como realizar estas operaciones en \CSP utilizando las construcciones anteriores.
 
+\subsubsection*{Enviar nuevas comunicaciones}
+ Para enviar la comunicación al actor con dirección de buzón $d$, y la lista de valores $<p_1, p_2, \ldots p_n>$, utilizamos la siguiente termino de \CSP:
 \begin{align*}
-&CommSend.d!<p_1, p_2, \ldots, p_n> & (Enviar\ Comunicaciones) \\ 
-&CreateAsk.actor_m.buzon?<p_1, p_2, \ldots, p_m> & (Crear\ nuevos\ actores)\\
-&K(self, p_1, p_2, \ldots, p_m)  & (Comportamiento\ de\ reemplazo)
+CommSend.d!<p_1, p_2, \ldots, p_n> 
 \end{align*}
 
-\begin{description}
-\item [Enviar comunicaciones] En este caso le enviaremos al actor con la dirección buzón $d$ la listas de valores $<p_1, p_2, \ldots p_n>$. 
-\item [Crear nuevos actores] Se crearía un actor con comportamiento $actor_m$ y obtendríamos mediante $buzon$ el identificador de buzón, y le asignarían los parámetros $<p_1, p_2, \ldots p_m>$ como \textit{acquaiantence-list}.
-\item [Comportamiento de reemplazo] En este caso el comportamiento sería $K$. De no contar con uno sería simplemente $STOP$.
-\end{description}
+Este evento sincronizará con el evento correspondiente al proceso $Mailbox$, visto en la ecuación \ref{eq:mailbox}. El cual almacena $<p_1, p_2, \ldots, p_n>$ en una lista. Mas tarde $Mailbox$ tomará este mensaje y lo enviará a otro actor. 
 
+Como se verá en los ejemplos de la sección siguiente, todos los comportamiento de los diferentes actores comienzan con una construcción similar a $CommRecv$.
+
+\subsubsection*{Crear nuevos actores}
+Para crear un actor de tipo $actor_m$  con una lista de parametros $<p_1, p_2, \ldots p_m>$, se utiliza el siguiente termino de \CSP: 
+\begin{equation*}
+CreateAsk.actor_m?buzon!<p_1, p_2, \ldots, p_m> 
+\end{equation*}	
+donde $buzon$ es la dirección de buzón recibida y que corresponde a la dirección del actor creado.
+
+\subsubsection*{Comportamiento de reemplazo}
+Para definir un comportamiento de reemplazo $K$ con una lista de parámetros $<p_1, p_2, \ldots p_m>$, se deberá utilizar el siguiente termino: 
+\begin{align*}
+K(self, p_1, p_2, \ldots, p_m) 
+\end{align*}	
+donde $K$ es un proceso \CSP que define el comportamiento y $self$ es una variable definida por el preludio visto en la ecuación \ref{eq:createactor}.
+En caso de no querer especificar comportamiento de reemplazo, se deberá usar el termino $STOP$ de \CSP para indicar que este actor finalizó.
 \section{Ejemplos}
 
 En esta sección se muestran cuatro ejemplos. Los dos primeros son los vistos en la sección \ref{sal:factorial} y \ref{sal:pila} modelados en \CSP en vez de \SAL. Los siguientes dos son nuevos, uno es la estructura de datos \textbf{cola} y el otro un ejercicio tomado del libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}.
@@ -153,17 +139,16 @@ El primero de los comportamientos, es el de $Factorial$ que viene dado por la si
 Factorial(self) = {} \\ \quad
   \begin{block}
   CommRecv?self.\langle mailboxClient, k \rangle \then {} \\ \quad
-    \begin{block}
-    \If (k == 0) \Then {} \\ \quad
+    \begin{block} \quad
       \begin{block} 
-      CommSend!mailboxClient.\langle 1 \rangle \then \\
-      Factorial(self) 
+      ( CommSend!mailboxClient.\langle 1 \rangle \then \\
+      Factorial(self) )
       \end{block} \\
-    \Else {} \\ \quad
+     {} \lceil\ k == 0\ \rceil  \\ \quad
       \begin{block}
-      CreateAsk.factorialWorker?pid!\langle k, mailboxClient \rangle \then \\
+      ( CreateAsk.factorialWorker?pid!\langle k, mailboxClient \rangle \then \\
       CommSend!self.\langle pid, k - 1 \rangle \then \\
-      Factorial(self)
+      Factorial(self) )
       \end{block}
     \end{block}
   \end{block}
@@ -205,7 +190,7 @@ En este caso no cuenta con comportamiento de reemplazo, entonces termina con $ST
 
 Tanto para $Factorial$ y para $FactorialWorker$ faltan definir los procesos que van a dar inicio a los actores. Los cuales se encuentran definidas en la sección \ref{modelo:crear}. 
 
-\subsection{Ejemplo: Una pila}
+\subsection{Ejemplo: una pila}
 En este ejemplo se construye una estructura de datos de tipo \textbf{pila}, la cual está compuesta de un solo comportamiento $node$ que es el que se encarga de recibir las operaciones $'push'$ y $'pop'$. En este caso se agrega al modelo $fwd$ que como veremos, está encargado de modelar el comportamiento $\textbf{become}\ buzon$.
 
 El comportamiento de $fwd$ está definido de la siguiente forma:
@@ -503,7 +488,7 @@ Supongamos que queremos remover el primer nodo ($'dequeue'$), y enviarle el cont
 \end{itemize}
 
 
-\subsection{Ejemplo: Un anillo de actores}
+\subsection{Ejemplo: un anillo de actores}
 Este ejemplo propuesto como ejercicio en el libro \textit{Programming Erlang}\cite{Cesarini:2009:EP:1717841}\footnote{Página 115, Ejercicio 4-2: The Process Ring}. El ejercicio propone crear una red de $n$ procesos como muestra la figura \ref{fig:anillo}. Una vez terminada de establecerse, el primero de estos nodos envía un mensaje al siguiente nodo en su red.  Una vez enviados $m$ mensajes dentro del anillo, los nodos deberían terminar su ejecución.
 
 \begin{figure}[H]
@@ -667,23 +652,26 @@ BuildingRing(self, first, lastCreated) = \\ \quad
 \end{block}
 \end{process}
 
-\section{Una semántica en CSP}
+\section{La semántica en CSP}
 
-En esta sección se describen cómo traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza la gramática definida en \ref{actores:sal}. Las funciones esta definidas de manera inductiva.
-Para notar cuando $x$ tiene la forma gramatical $H$, con la siguiente construcción: $x \equiv H$. 
+En esta sección se describe cómo traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza como punto de partida la gramática definida en \ref{actores:sal}. Se utilizará como mecanismo de traducción unas funciones que estan definidas de manera inductiva.
+
+Se utiliza en la descripción de las funciones de traducción la notación $x \equiv H$ cuando fuese necesario especificar que $x$ tiene la forma gramatical $H$.
 
 \subsubsection*{Expresiones}
-En la sección \ref{actores:exp} se definió la gramática para las expresiones. Para traducir estas expresiones se utilizan las siguientes funciones:
-La función $exp_{tr}$ viene dada de la siguiente forma:
+En la sección \ref{actores:exp} se definió la gramática para las expresiones. Para traducir estas expresiones se utiliza la función, $exp_{tr}$, definida de la siguiente forma:
+\newcommand{\func}[1]{\lbag #1 \rbag}
+
+
 \begin{equation*}
-  exp_{tr}(exp) =
+  exp_{tr} \func{exp} =
   \setlength{\arraycolsep}{0pt}
   \renewcommand{\arraystretch}{1.2}
   \left\{\begin{array}{l @{\quad} l}
-        iexp_{tr}(exp)    & \text{si $exp \equiv iexp$} \\
-        bexp_{tr}(exp)    & \text{si $exp \equiv bexp$} \\
-        sexp_{tr}(exp)    & \text{si $exp \equiv sexp$} \\
-        idexp_{tr}(exp)   & \text{si $exp \equiv id$} \\
+        iexp_{tr}\func{exp}     & \text{si $exp \equiv iexp$} \\
+        bexp_{tr}\func{exp}     & \text{si $exp \equiv bexp$} \\
+        sexp_{tr}\func{exp}     & \text{si $exp \equiv sexp$} \\
+        idexp_{tr}\func{exp}    & \text{si $exp \equiv id$} \\
   \end{array}\right.
 \end{equation*}
 
@@ -691,23 +679,23 @@ La función para las expresiones de enteros, $iexp_{tr}$, viene dada de la sigui
 
 \begin{equation*}
 \begin{array}{l c l}
-iexp_{tr}(iexp_1 + iexp_2) &=& iexp_{tr}(iexp_1) + iexp_{tr}(iexp_2) \\
-iexp_{tr}(iexp_1 - iexp_2) &=& iexp_{tr}(iexp_1) - iexp_{tr}(iexp_2) \\
-iexp_{tr}(iexp_1 * iexp_2) &=& iexp_{tr}(iexp_1) * iexp_{tr}(iexp_2) \\ 
-iexp_{tr}(iexp_1 / iexp_2) &=& iexp_{tr}(iexp_1) / iexp_{tr}(iexp_2) \\
-iexp_{tr}(- iexp) &=& - iexp_{tr}(iexp) \\
-iexp_{tr}(id) &=& id
+iexp_{tr}\func{iexp_1 + iexp_2} &=& iexp_{tr}\func{iexp_1} + iexp_{tr}\func{iexp_2} \\
+iexp_{tr}\func{iexp_1 - iexp_2} &=& iexp_{tr}\func{iexp_1} - iexp_{tr}\func{iexp_2} \\
+iexp_{tr}\func{iexp_1 * iexp_2} &=& iexp_{tr}\func{iexp_1} * iexp_{tr}\func{iexp_2} \\ 
+iexp_{tr}\func{iexp_1 / iexp_2} &=& iexp_{tr}\func{iexp_1} / iexp_{tr}\func{iexp_2} \\
+iexp_{tr}\lbag - iexp \rbag &=& - iexp_{tr}\lbag iexp \rbag \\
+iexp_{tr}\lbag id \rbag &=& id
 \end{array}
 \end{equation*}
 
-La función expresiones booleanas, $bexp_{tr}$, es finalmente:
+La función para traducir las expresiones booleanas, $bexp_{tr}$, es finalmente:
 \begin{equation*}
 \begin{array}{l c l}
-bexp_{tr}(bexp_1 \textbf{ or } bexp_2) &=& bexp_{tr}(iexp_1) \vee bexp_{tr}(iexp_2) \\
-bexp_{tr}(bexp_1 \textbf{ and } bexp_2) &=& bexp_{tr}(iexp_1) \wedge bexp_{tr}(iexp_2) \\
-bexp_{tr}(\textbf{not } bexp) &=& \neg bexp_{tr}(bexp) \\ 
-bexp_{tr}(exp_1 == iexp_2) &=& exp_{tr}(exp_1) == exp_{tr}(exp_2) \\
-bexp_{tr}(id) &=& id
+bexp_{tr}\func{bexp_1 \textbf{ or } bexp_2}    &=& bexp_{tr}\func{iexp_1} \vee bexp_{tr}\func{iexp_2} \\
+bexp_{tr}\func{bexp_1 \textbf{ and } bexp_2}   &=& bexp_{tr}\func{iexp_1} \wedge bexp_{tr}\func{iexp_2} \\
+bexp_{tr}\func{\textbf{not } bexp }            &=& \neg bexp_{tr}\func{bexp} \\ 
+bexp_{tr}\func{ exp_1 == iexp_2}               &=& exp_{tr}\func{exp_1} == exp_{tr}\func{exp_2} \\
+bexp_{tr}\func{id} 							   &=& id
 \end{array}
 \end{equation*}
 
@@ -718,76 +706,76 @@ En la sección \ref{actores:beha} se definió la gramática para los comportamie
 
 La función $beha_{tr}$ viene dada por la forma:
 \begin{multline*}
-beha_{tr}(\textbf{def } BehName(p_1, p_2,\ldots, p_n)\ body \textbf{ end def}) = \\
-BehName(self, p_1, p_2,\ldots, p_n) = body_{tr}(body) 
+beha_{tr}\func{\ \textbf{def } BehName(p_1, p_2,\ldots, p_n)\ body \textbf{ end def}\ } = \\
+BehName(self, p_1, p_2,\ldots, p_n) = body_{tr}\func{body} 
 \end{multline*}
 La función $body_{tr}$ viene dada por la forma:
 \begin{multline*}
-body_{tr}([ p_1, p_2,\ldots, p_n]\ command) = \\
- CommRecv.self?\langle p_1, p_2,\ldots, p_n \rangle \then cmd_{tr}(command)
+body_{tr}\func{\ [ p_1, p_2,\ldots, p_n]\ command\ } = \\
+ CommRecv.self?\langle p_1, p_2,\ldots, p_n \rangle \then cmd_{tr}\func{command}
 \end{multline*}
 \begin{multline*}
-body_{tr}(\textbf{ case } [p_{11}, p_{12},\ldots, p_{1n}]: command_1 \ldots \textbf{ case } [p_{n1}, p_{n2},\ldots, p_{nk}]: command_n ) = \\
-CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}(command_1) \Extchoice \ldots \Extchoice \\
-CommRecv.self?\langle p_{n1}, p_{n2},\ldots, p_{nk} \rangle \then cmd_{tr}(command_n) 
+body_{tr}\func{\ \textbf{ case } [p_{11}, p_{12},\ldots, p_{1n}]: command_1 \ldots \textbf{ case } [p_{n1}, p_{n2},\ldots, p_{nk}]: command_n\ } = \\
+CommRecv.self?\langle p_{11}, p_{12},\ldots, p_{1n} \rangle \then cmd_{tr}\func{command_1} \Extchoice \ldots \Extchoice \\
+CommRecv.self?\langle p_{n1}, p_{n2},\ldots, p_{nk} \rangle \then cmd_{tr}\func{command_n} 
 \end{multline*}
 
 \subsubsection*{Comandos}
 
 En la sección \ref{actores:cmd} se definió la gramática para los comandos. Para traducir los comandos se utiliza la función $cmd_{tr}$, que se define de la siguiente forma:
 \begin{multline*}
-cmd_{tr} (\textbf{send } exp_1, exp_2, \ldots\ , exp_n \textbf{to } mexp) = \\
-CommSend.mexp. \langle exp_{tr}(exp_1), exp_{tr}(exp_2), \ldots, exp_{tr}(exp_m) \rangle
+cmd_{tr}\func{\ \textbf{send } exp_1, exp_2, \ldots\ , exp_n \textbf{to } mexp\ } = \\
+CommSend.mexp. \langle exp_{tr}\func{exp_1}, exp_{tr}\func{exp_2}, \ldots, exp_{tr}\func{exp_m} \rangle
 \end{multline*}
 \begin{multline*}
-cmd_{tr} (\textbf{become}\ B(exp_1, exp_2,\ \ldots, exp_n)) = \\
-B(exp_{tr}(exp_1), exp_{tr}(exp_2), \ldots, exp_{tr}(exp_n)) \rangle
+cmd_{tr} \func{\ \textbf{become}\ B(exp_1, exp_2,\ \ldots, exp_n)\ } = \\
+B(exp_{tr}\func{exp_1}, exp_{tr}\func{exp_2}, \ldots, exp_{tr}\func{exp_n} \rangle
 \end{multline*}
 \begin{multline*}
-cmd_{tr} (command_1 \textbf{;} command_2) = cmd_{tr}(command_1) \then cmd_{tr}(command_2)
+cmd_{tr}\func{command_1 \textbf{;} command_2} = cmd_{tr}\func{command_1} \then cmd_{tr}\func{command_2}
 \end{multline*}
 \begin{multline*}
-cmd_{tr} (\textbf{if } bexp \textbf{ then } command_1 \textbf{ else } command_2 \textbf{ end if }) = \\
-\textbf{if } (bexp_{tr}(bexp))\textbf{ then } cmd_{tr}(command_1) \textbf{ else } cmd_{tr}(command_2)
+cmd_{tr} \func{\ \textbf{if } bexp \textbf{ then } command_1 \textbf{ else } command_2 \textbf{ end if }\ } = \\
+ cmd_{tr}\func{command_1}\ \lceil bexp_{tr}\func{bexp} \rceil\ cmd_{tr}\func{command_2}
 \end{multline*}
 \begin{multline*}
-cmd_{tr}( \textbf{let}\ id_1 = \textbf{new} B_1(exp_{11}, exp_{12},\ \ldots, exp_{1m}), \ldots, \\
-id_n = \textbf{ new }B_n(exp_{n1}, exp_{n2},\ldots, exp_{nk}) \textbf{ in }command) = \\
-CreateAsk.b_1?id_1! \langle exp_{tr}(exp_{11}), exp_{tr}(exp_{12}),\ \ldots, exp_{tr}(exp_{1m}) \rangle \then \ldots \\
-CreateAsk.b_N?id_n! \langle exp_{tr}(exp_{n1}), exp_{tr}(exp_{n2}),\ \ldots, exp_{tr}(exp_{nk}) \rangle \then  \\ 
-cmd_{tr}(command)
+cmd_{tr}\func{\ \textbf{let}\ id_1 = \textbf{new} B_1(exp_{11}, exp_{12},\ \ldots, exp_{1m}), \ldots, \\
+id_n = \textbf{ new }B_n(exp_{n1}, exp_{n2},\ldots, exp_{nk}) \textbf{ in }command\ } = \\
+CreateAsk.b_1?id_1! \langle exp_{tr}\func{exp_{11}}, exp_{tr}\func{exp_{12}},\ \ldots, exp_{tr}\func{exp_{1m}} \rangle \then \ldots \then \\
+CreateAsk.b_N?id_n! \langle exp_{tr}\func{exp_{n1}}, exp_{tr}\func{exp_{n2}},\ \ldots, exp_{tr}\func{exp_{nk}} \rangle \then  \\ 
+cmd_{tr}\func{command}
 \end{multline*}
 
 \subsubsection*{Pasos finales}
 
 El sistema final consiste de todos los componentes del sistema de actores en paralelo. Los componentes a poner en paralelo son: los buzones vistos en la sección \ref{modelo:buzon}, los procesos que separan la intención de crear de la creación propiamente dicha vistos en la sección \ref{modelo:crear} y los preámbulos vistos en la misma sección.
 
-La comunicación que va desde estos preámbulos hacia los buzones es una de las comunicaciones de interés. Los eventos en este caso son todos los generados por los buzones. Es decir el conjunto generado por $CommSend.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. A estos eventos se le debe unir el conjunto generado por $CommRecv.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. Este es el conjunto de todos los eventos posible de los buzones. Este conjunto se denomina: $Comm$.
+La comunicación que va desde estos preámbulos hacia los buzones es una de las comunicaciones de interés. Los eventos en este caso son todos los generados por los buzones. Es decir el conjunto generado por $CommSend.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. A estos eventos se le debe unir el conjunto generado por $CommRecv.i.j$ donde $i$ son todos los posibles actores y $j$ son los mensajes a enviar. Este es el conjunto de todos los eventos posibles de los buzones. Este conjunto se denomina: $Comm$.
 
-Otra forma de comunicación a tener en cuenta es desde estos preámbulos hacia los procesos que separan la intención de crear de la creación. Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generador por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
+Otra forma de comunicación a tener en cuenta es desde estos preámbulos hacia los procesos que separan la intención de crear de la creación. Es decir el conjunto generado por $CreateAsk.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. A estos eventos se le debe unir el conjunto generado por $Create.i.j$ donde $i$ son todos los posibles actores y $j$ son todos los posibles valores de \textit{acquaiantence-list}. Este conjunto se denomina $Init$.
 
-Ahora se supone que tenemos dos conjuntos de actores $ks$ y $js$, definidos de la siguiente manera:
+Ahora se supone que tenemos dos redes concurrentes de actores $ks$ y $js$, definidos de la siguiente manera:
 
 \begin{align*}
-ks = \Interleave_{ i : \{ 0 .. N\_KS \} } & Create.k?self?<p1, p2> \then K(self, p1, p2)  \\ 
-js = \Interleave_{ i : \{ 0 .. N\_JS \} } & Create.j?self?<p1, p2> \then J(self, p1, p2) 
+ks = \Interleave_{ i : \{ 0 .. N_k \} } & Create.k?self?<p1, p2> \then K(self, p1, p2)  \\ 
+js = \Interleave_{ i : \{ 0 .. N_j \} } & Create.j?self?<p1, p2> \then J(self, p1, p2) 
 \end{align*}
 
 donde $J$ y $K$ son dos definiciones de comportamiento. Para integrar todo el sistema de actores se escribe la siguiente ecuación:
 \begin{align*}
 SYSTEM =  (ks \Interleave js) \Parallel\limits_{Comm \cup Init} (Mailboxes \Interleave Creates)
 \end{align*}
-donde $Mailboxes$ está definido en la sección \ref{modelo:buzon} y $Creates$ en la sección \ref{modelo:crear}. Entre $ks$ y $js$ nunca existe ningún tipo de comunicación, por eso se usa el operador de entrelazado. Lo mismo ocurre con $Mailboxes$ y $Creates$.
+donde $Mailboxes$ está definido en la ecuación \ref{eq:mailbox} y $Creates$ en la ecuación \ref{eq:creates} . Entre $ks$ y $js$ nunca existe ningún tipo de comunicación, por eso se usa el operador de entrelazado. Lo mismo ocurre con $Mailboxes$ y $Creates$.
 
 \section{Corriendo los modelos en FDR}
 
 Esta sección muestra algunas modificaciones necesarias que fueron hechas al modelo para poderlo correr utilizando \FDR. \FDR es un verificador de refinamiento para \CSP. Permite definir procesos de \CSP utilizando el lenguaje \CSPm. Se pueden verificar varias afirmaciones sobre estos procesos. A continuación se cuentan algunas de estas características.
 
-\textit{probe} puede utilizarse para explorar manualmente las transiciones de un proceso como si fuera un árbol, es muy útil para al depurar una definición de proceso. Esto fue particularmente útil al explorar la creación del modelo antes propuesto. Se mostrará un caso donde se puede ver el gráfico de todas las ejecuciones de uno de los ejemplos. 
+La herramienta cuenta de la palabra reservada \textit{probe}, está sirve para explorar manualmente las transiciones de un proceso como si fuera un árbol, es muy útil para al depurar una definición de proceso. Esto fue particularmente útil al explorar la creación del modelo antes propuesto. Se mostrará un caso donde se puede ver el gráfico de todas las ejecuciones de uno de los ejemplos. 
  
-También es posible verificar refinamiento utilizando el modelo de trazas o el modelo divergencias. Se verá un ejemplo de como es posible verificar este tipo de afirmaciones.
+También es posible verificar refinamiento utilizando el modelo de trazas o el modelo de fallas y divergencias. Se verá un ejemplo de cómo es posible verificar este tipo de afirmaciones.
 
-Esta son algunas de las posibles pruebas que se pueden hacer utilizando la herramienta, pero no son exhaustivas. Para mayor información sobre la herramienta se puede consultar su manual\cite{fdrmanual}.
+Estas son algunas de las posibles pruebas que se pueden hacer utilizando la herramienta. Este conjunto de pruebas no pretende comprender un uso exhaustivo de la herramienta, para mayor información sobre la herramienta se puede consultar su manual\cite{fdrmanual}.
 
 \subsection{Restricciones sobre el modelo}
 
@@ -800,8 +788,9 @@ Para evitar la explosión de estados que causa utilizar el rango de enteros de \
 \begin{align*}
 datatype\ SmallInt =&\ SI.\{0 \ldots MAX\_INT\} | Overflow \\
 \end{align*}
+donde, $MAX\_INT$ es el entero más grande a representar. 
 
-Donde, $MAX\_INT$ es el entero más grande que se quisiera representar. Aparte de esta representación de los enteros, se construyeron las operaciones básicas sobre ellos:
+Aparte de esta representación de los enteros, se construyeron las operaciones básicas sobre ellos:
 
 \begin{align*}
 add(SI.a, SI.b)\ =&\ let\ sum\ = a + b \\
@@ -815,26 +804,34 @@ mult(SI.a, SI.b) =&\ let\ mult\ = a * b \\
 eq(SI.a, SI.b)\ =&\ a == b \\
 eq(\_, \_)\ =&\ false
 \end{align*}
-
-Donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación excede el entero máximo el resultado de esta es $Overflow$.
+donde $add$ es la suma, $sub$ la resta, $mult$ la multiplicación y $eq$ la igualdad. Si alguna operación excede el entero máximo el resultado de esta es $Overflow$.
 
 \subsubsection*{Listas de parámetros y valores}
-En en modelo se utilizan listas para representar tanto los parámetros de \textit{acquaiantence-list} y los de \textit{communication-list}. Las listas son potencialmente infinitas, pare evitar que el modelo explore todos estos estados, se limita el tamaño de las listas. Se utilizan tuplas de tamaño fijo. Para esto es necesario conocer el tamaño máximo del mensaje que se va a enviar, esta es una limitación del modelo presentado.
+En en modelo se utilizan listas para representar tanto los parámetros de \textit{acquaiantence-list} y los de \textit{communication-list} dado que las listas son potencialmente infinitas, para evitar que la herramienta entre en un ciclo infinito, se limita el tamaño de las listas. Con este fin se utilizan tuplas de tamaño fijo. Para esto es necesario conocer el tamaño máximo del mensaje que se va a enviar; esta es una limitación con respecto al modelo presentado.
 
-La expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
+%La expresividad de los mensajes es grande. Un actor podría recibir un mensaje del tipo $['transferir', buz\acute{o}n_1, buz\acute{o}n_2]$, donde el primer buzón representa la caja de ahorro origen y el segundo la de destino. El siguiente mensaje que procese el mismo actor podría ser $['depositar', monto, buz\acute{o}n]$ donde monto es un entero con el monto a depositar y el buzón representa la caja de ahorro a la cual depositar. 
 
-Para poder tener cierta flexibilidad en el momento de enviar mensajes, se creá una unión de tipos llamada $VALUE$. Este tipo codifica todos los posibles valores que se quisieran enviar, buzones, enteros, booleanos y cadenas. Como las tuplas se definen de tamaño fijo, es necesario agregar un tipo con la funcionalidad de marcar la posición. Esto funciona de la siguiente manera: si las listas son de tamaño tres, no necesariamente todos los mensajes son de esta longitud, podría existir un mensaje que sea una lista de tamaño dos, por ejemplo: $[1, client]$. La tupla de tamaño tres sería $(1, None, None)$. Se define $VALUE$ de la siguiente forma:
+Para poder tener cierta flexibilidad en el momento de enviar mensajes, se crea una unión de tipos llamada $VALUE$. Este tipo codifica todos los posibles valores que son posible utilizar en el modelo: buzones, enteros, booleanos y cadenas. 
+
 \[
   datatype\ VALUE = ACTOR.ActorID | INT.SmallInt | BOOL.Bool | ATOM.Atoms | None
 \]
-Las cadenas de caracteres se representa utilizando $Atoms$. Las cadenas son inmutables y la única operación que se efectúa sobre ellas es la comparación. La definición de $Atoms$ viene dada de la siguiente forma:
+
+Como las tuplas se definen de tamaño fijo, es necesario agregar elemento que permite marcar que un elemento de la lista no se usa. Por ejemplo si las listas son de tamaño tres, no necesariamente todos los mensajes que intercambien los actores serán de esta longitud. Por caso podría existir un mensaje que sea una lista de tamaño dos ($[1, client]$). La tupla de tamaño tres sería $(1, None, None)$. 
+
+Ya qué las cadenas son inmutables, estas son representadas utilizando un tipo enumeración, donde cada elemento de este nuevo tipo de datos es una cadena. La definición viene dada de la siguiente forma:
 \[
-  datatype\ Atoms = ATOM_1 | ATOM_2 | \ldots | ATOM_n
+  datatype\ Atoms = CADENA_1 | CADENA_2 | \ldots | CADENA_n
 \]
-$ActorID$, para reducir el tamaño del conjunto de eventos generados, se unifican tanto el nombre con el que se identifica el actor a crear, como la dirección de buzón en un solo tipo de datos. Si se necesitan cinco actores en total, uno de tipo j, tres de tipo k y un actor main, se escribe de la siguiente forma:
+
+donde $Atoms$ es el nuevo tipo.
+
+Para simplificar como se especifica la cantidad de actores que se necesitan se extiende la definición \ref{eq:actorid}. Al conjunto de nombre de actores se agrega el conjunto de enteros que representa la cantidad, por ejemplo:
+
 \[
-  datatype ActorID = j.{1} | k.{1,2,3} | main.{1}
+  datatype ActorID = j.{1,2} | k.{1,2,3} | main.{1}
 \]
+donde $ActorID$ representa dos actor $j$, tres actores $k$ y un actor $main$
 
 \subsubsection*{Cota en el buzón}
 
@@ -884,7 +881,7 @@ MailboxFull(i, \lseq x \rseq \cat xs ) = {} \\ \quad
 \end{block} \\
 \end{process}
 
-La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un límite definido por $MAILBOX\_SIZE$. El comportamiento del proceso buzón depende de su estado, si no tiene ningún mensaje, o si tiene al menos algún mensaje o si está completo.
+La ecuación anterior le agrega a la ecuación \ref{eq:mailbox}, un límite definido por $MAILBOX\_SIZE$. El comportamiento del proceso buzón depende de su estado de la siguiente forma:
 
 \begin{itemize}
 \item Si no tiene ningún mensaje, solo sincroniza mensajes por el canal $CommSend$.
@@ -894,17 +891,17 @@ La ecuación anterior le agrega a la vista en la sección \ref{modelo:buzon}, un
 
 \subsection{Algunos resultados}
 
-A continuación se muestran dos resultados obtenidos utilizando el modelo propuesto en \CSP. Uno explora el árbol de procesos y el otro verifica una afirmación utilizando el modelo de trazas.
+A continuación se muestran dos resultados obtenidos utilizando el modelo propuesto en \CSPm. Uno explora el árbol de procesos y el otro verifica una afirmación utilizando el modelo de trazas.
 
 \subsubsection*{Árbol de interacciones}
 
-Utilizando la función \textit{probe} en herramienta \FDR, se puede ver permite ver árbol de interacciones de los distintos procesos. En el caso del modelo, permite ver como las diferentes interacciones de los actores.
+Utilizando la función \textit{probe} de la herramienta \FDR, se puede ver permite ver árbol de interacciones de los distintos procesos. En el caso de este modelo, permite ver cómo las diferentes interacciones de los actores.
 
-Se puede ver en el ejemplo del apéndice \ref{codigo:suma}, una versión extendida para funcionar en \FDR del ejemplo visto en la se cción \ref{preliminares:actores}. Este ejemplo muestra utilizando como se puede desacoplar el inicio del proceso suma, y mejorar sustancialmente la composición en paralelo. 
+En el proceso de desacoplar los componentes vistos en las secciones \ref{modelo:buzon} y \ref{modelo:crear}, fue necesario analizar la interacción que tienen los diferentes procesos para entender que efectivamente funcionaba de la forma esperada. Se puede ver en el ejemplo del apéndice \ref{codigo:suma}, una versión extendida para funcionar en \FDR del ejemplo de la ecuación \ref{eq:smallactor}. Este ejemplo muestra como utilizando como es posible desacoplar utilizando dos eventos, uno para la intensión de crear y otro para iniciar el actor, se puede desacoplar el inicio del proceso suma, y mejorar sustancialmente la composición en paralelo. 
 
 Esto es muy util, ya que cada proceso que intente iniciar otro debería tener como evento de interés este evento de inicio. Al ir agregando procesos, el cálculo de que eventos de interés deberían utilizarse al ponerse en paralelo se dificulta. 
 
-\verb=SYSTEM2= Utiliza un proceso intermedio como fue visto en la sección \ref{modelo:crear}. Se puede ver en la figura \ref{modelo:suma:system1} el árbol de procesos capturado utilizando \verb=:probe SYSTEM1=. Este sistema pone en paralelo \verb-CLIENTE- y \verb-SUMA- usando paralelismo alfabetizado. Se puede ver en la figura \ref{modelo:suma:system2} el árbol de procesos capturado utilizando \verb=:probe SYSTEM2=. Este sistema pone en paralelo \verb-CLIENTE2- y \verb-SUMA- usando entrelazado, y un proceso auxiliar \verb-INICIA-. Este ultimo proceso reduce a cero los eventos de interés entre \verb-CLIENTE2- y \verb-SUMA-.
+En el ejemplo, \verb=SYSTEM2=, utiliza un proceso intermedio como fue visto en la sección \ref{modelo:crear}. Se puede ver en la figura \ref{modelo:suma:system1} el árbol de procesos capturado utilizando \verb=:probe SYSTEM1=. Este sistema pone en paralelo \verb-CLIENTE- y \verb-SUMA- usando paralelismo alfabetizado. Se puede ver en la figura \ref{modelo:suma:system2} el árbol de procesos capturado utilizando \verb=:probe SYSTEM2=. Este sistema pone en paralelo \verb-CLIENTE2- y \verb-SUMA- usando entrelazado, y un proceso auxiliar \verb-INICIA-. Este ultimo proceso reduce a cero los eventos de interés entre \verb-CLIENTE2- y \verb-SUMA-.
 
 \begin{figure}[H]
 \begin{center}
@@ -933,21 +930,20 @@ Un ejemplo mas complejo puede verse en la figura \ref{modelo:grafo}, fue utiliza
 
 \subsubsection*{Refinamiento}
 
-En \FDR para probar si el conjunto de trazas de \verb=P= es un refinamiento del conjunto de trazas \verb=Q= se escribe \verb$assert P [T= Q$. Para hacer una prueba de refinamiento se utiliza el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código en \CSPm de este se encuentra en el apéndice \ref{codigo:cola}. El mismo cuenta con dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=, donde:
-El actor \verb=actor_main1=, después de crear un actor \textit{Queue}, hace uso de la selección interna para:
+En \FDR para probar si el conjunto de trazas de \verb=P= es un refinamiento del conjunto de trazas \verb=Q= se escribe \verb$assert P [T= Q$. En caso de querer utilizar fallas y divergencias se debería notar \verb$assert P [T= Q$. Para hacer una prueba de refinamiento se utiliza el ejemplo de la cola visto en la sección \ref{ejemplo:cola}. El código en \CSPm de este se encuentra en el apéndice \ref{codigo:cola}. El mismo cuenta con dos actores ``main'', \verb=actor_main1= y \verb=actor_main2=, donde: el actor \verb=actor_main1=, después de crear un actor \verb=Queue=, hace uso de la selección interna para:
 \begin{itemize}
- \item enviar al actor \textit{Queue} un mensaje $['enqueue', 1]$
- \item enviar al actor \textit{Queue} un mensaje $['enqueue', 2]$
- \item enviar al actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
+ \item enviar al actor \verb=Queue= un mensaje $['enqueue', 1]$
+ \item enviar al actor \verb=Queue= un mensaje $['enqueue', 2]$
+ \item enviar al actor \verb=Queue= un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
 El actor \verb=actor_main2=, después de crear un actor \textit{Queue}, hace uso de la selección interna para:
 \begin{itemize}
- \item enviar al actor \textit{Queue} un mensaje $['enqueue', 1]$, seguido de enviar a el actor \textit{Queue} un mensaje $['enqueue', 2]$
- \item enviar al actor \textit{Queue} un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
+ \item enviar al actor \verb=Queue= un mensaje $['enqueue', 1]$, seguido de enviar al actor \textit{Queue} un mensaje $['enqueue', 2]$
+ \item enviar al actor \verb=Queue= un mensaje $['dequeue', buzonDeMain]$, seguido de esperar recibir un entero.
 \end{itemize}
 
-El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=. Esto puede verse en el código de \CSPm.
+El resultado de poner en paralelo todos los componentes del sistema utilizando \verb=actor_main1= se llama \verb=SYSTEM1=. En el caso de \verb=actor_main2= se llama \verb=SYSTEM2=. Esto puede verse en el código de \CSPm en el apéndice \ref{codigo:cola}.
 
 \begin{figure}
 \begin{center}
@@ -956,11 +952,13 @@ El resultado de poner en paralelo todos los componentes del sistema utilizando \
 \end{center}
 \end{figure}
 
-Para probar si $SYSTEM1$, refina en $SYSTEM2$ se utiliza la siguiente afirmación: \verb$assert SYSTEM1 [T= SYSTEM2$. Para probar si $SYSTEM2$, refina en $SYSTEM1$ se utiliza la siguiente afirmación: \verb$assert SYSTEM2 [T= SYSTEM1$.
+Para probar si \verb$SYSTEM1$, refina en \verb$SYSTEM2$ se utiliza la siguiente afirmación: \verb$assert$ \verb$SYSTEM1 [T= SYSTEM2$. Para probar si \verb$SYSTEM2$, refina en \verb$SYSTEM1$ se utiliza la siguiente afirmación: \verb$assert SYSTEM2 [T= SYSTEM1$.
 
-Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afirmaciones. Utilizando la herramienta se encuentra un contraejemplo donde $SYSTEM2$ no refina en $SYSTEM1$ como muestra la figura \ref{modelo:contraejemplo}.
+Puede verse en la figura \ref{modelo:verifica} el resultado de correr ambas afirmaciones. Utilizando la herramienta se encuentra un contraejemplo donde \verb$SYSTEM2$ no refina en \verb$SYSTEM1$ como muestra la figura \ref{modelo:contraejemplo}.
 
-La intuición detrás de por que $SYSTEM1$ refina en $SYSTEM2$, y que $SYSTEM2$ no refina en $SYSTEM1$ tiene que ver con que $SYSTEM1$ es menos restrictivo que $SYSTEM2$. El actor \verb=actor_main1= puede elegir entre entre dos opciones para desencolar, y el actor \verb=actor_main2= solo una y con un orden preestablecido.
+La intuición detrás de por qué \verb$SYSTEM1$ refina en \verb$SYSTEM2$, y que \verb$SYSTEM2$ no refina en \verb$SYSTEM1$ tiene que ver con que \verb$SYSTEM1$ es menos restrictivo que \verb$SYSTEM2$. El actor \verb=actor_main1= puede elegir entre entre dos opciones para desencolar, y el actor \verb=actor_main2= solo una y con un orden preestablecido.
+
+Si bien la descripción anterior solo contempla el caso del chequeo de refiniamiento utilizando el modelo de trazas, en el apéndice \ref{codigo:cola} pueden verse ambas aserciones.
 
 \begin{figure}
 \begin{center}

@@ -113,14 +113,17 @@ SYSTEM =& P_1 \Interleave P_2 \Interleave \ldots \Interleave P_n
 \end{align*}
 donde $iniciar_i$ es el evento especial que da inicio a $P$. Se utiliza el operador de entrelazado para combinar los procesos $P_1, P_2, \ldots, P_n$, ya que no tiene que haber ninguna comunicación entre ellos. En el caso de existir algún evento compartido, este debería ser desestimado y no generar un encuentro. 
 Con estos elementos podemos crear un proceso y enviar una comunicación de manera asincrónica. Se puede ver esto en el siguiente ejemplo:
-\begin{align*}
+
+\begin{align}\label{eq:smallactor}
+\begin{split}
 BUFFER_1 &= enviar.1?x \then recibir.1!x \then BUFFER_1\\
 BUFFER_2 &= enviar.2?x \then recibir.2!x \then BUFFER_2\\
 SUMA &= inicia_{suma} \then recibir.1?x \then enviar.2!(x + 1) \then STOP \\
 CLIENTE &= inicia_{suma}\then enviar.1!2 \then recibir.2?x \then STOP \\
 BUFFER &= BUFFER_1 \Interleave BUFFER_2 \\
 SYSTEM &= (SUMA \Parallel\limits_{\{inicia_{suma}\}} CLIENTE) \Parallel\limits_{Y}\ BUFFER
-\end{align*}
+\end{split}
+\end{align}
 
 Es decir que $CLIENTE$ inicia el proceso $SUMA$, y le envía un $2$. Este envío es asíncrono por $BUFFER_1$. Cuando $SUMA$ recibe este $2$, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo los valores de $Y$ vienen dados por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber qué valores puede tomar $x$. Asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $\{m: [1,2] ,n: [1,2,3] | recibir.m.n \} \cup \{m: [1,2] ,n: [1,2,3] | enviar.m.n \} $, es decir todos los eventos inherentes a $BUFFER$.
 
