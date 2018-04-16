@@ -21,9 +21,13 @@
 \usepackage{verbatim}
 
 \usepackage{hyperref}
+\usepackage{lmodern}
+
+\newlength\longest
 
 \usepackage{syntax}
 \setlength{\grammarparsep}{0cm}
+\usepackage{epigraph}
 
 \usepackage{lipsum}
 \usepackage{xspace}
@@ -73,14 +77,20 @@
 \thispagestyle{empty}
 
 \include{Capitulos/resumen}
-\thispagestyle{empty}
+
 
 \frontmatter
 
+\clearpage
+
 \tableofcontents
 
-\mainmatter
+\clearpage
+\null
+\vskip 4cm
+\hspace*{0pt}\hfill{\Large A mi viejo.}
 
+\mainmatter
 
 \input{Capitulos/intro} % Introducción
 
@@ -102,3 +112,4 @@
 \end{document}
 
 
+	

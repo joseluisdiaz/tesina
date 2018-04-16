@@ -2,7 +2,7 @@
 
 \section{Motivación}
 
-Debido al incremento de la cantidad de núcleos por microprocesador, las aplicaciones hacen un uso más frecuente de la concurrencia. Una forma de programar este tipo de aplicaciones es el modelo tradicional de concurrencia que se basa en multi-hilos, variables compartidas, locks, etc. Este trabajo propone estudiar un enfoque diferente: el modelo de actores utilizado en la industria, particularmente en lenguajes como Erlang\cite{Cesarini:2009:EP:1717841, Armstrong:1996:CPE:229883} y Scala\cite{scala-overview-tech-report} con la librería Akka\cite{Wyatt:2013:AC:2663429}. 
+Debido al incremento de la cantidad de núcleos por microprocesador, las aplicaciones hacen un uso más frecuente de la concurrencia. Una forma de programar este tipo de aplicaciones es utilizando el modelo tradicional de concurrencia que se basa en multi-hilos, variables compartidas, locks, etc. Este trabajo propone estudiar un enfoque diferente: el modelo de actores utilizado en la industria, particularmente en lenguajes como Erlang\cite{Cesarini:2009:EP:1717841, Armstrong:1996:CPE:229883} y Scala\cite{scala-overview-tech-report} con la librería Akka\cite{Wyatt:2013:AC:2663429}. 
 
 El objetivo de este trabajo es comprender el modelo de actores y su semántica. Con este fin, luego de explorar las características del modelo de actores, se introduce un lenguaje simple de actores llamado \SAL cuya semántica se formalizara en \CSP. Con este modelo se realizan algunas pruebas utilizando la herramienta \FDR, tales como revisión del árbol de ejecución y verificación de refinamiento utilizando el modelo de traza. Se presentan varios ejemplos con el fin de ayudar al lector a comprender el paradigma de programación concurrente basado en actores.
 

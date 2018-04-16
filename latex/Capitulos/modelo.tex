@@ -654,7 +654,7 @@ BuildingRing(self, first, lastCreated) = \\ \quad
 
 \section{La semántica en CSP}
 
-En esta sección se describe cómo traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza como punto de partida la gramática definida en \ref{actores:sal}. Se utilizará como mecanismo de traducción unas funciones que estan definidas de manera inductiva.
+En esta sección se describe cómo traducir las expresiones, los comandos y los comportamientos desde \SAL a \CSP. Para esto se utiliza como punto de partida la gramática definida en la sección \ref{actores:sal}. Se utilizará como mecanismo de traducción unas funciones que estan definidas de manera inductiva.
 
 Se utiliza en la descripción de las funciones de traducción la notación $x \equiv H$ cuando fuese necesario especificar que $x$ tiene la forma gramatical $H$.
 
@@ -824,7 +824,7 @@ Ya qué las cadenas son inmutables, estas son representadas utilizando un tipo e
   datatype\ Atoms = CADENA_1 | CADENA_2 | \ldots | CADENA_n
 \]
 
-donde $Atoms$ es el nuevo tipo.
+donde $Atoms$ representa el conjunto de cadenas en uso.
 
 Para simplificar como se especifica la cantidad de actores que se necesitan se extiende la definición \ref{eq:actorid}. Al conjunto de nombre de actores se agrega el conjunto de enteros que representa la cantidad, por ejemplo:
 
