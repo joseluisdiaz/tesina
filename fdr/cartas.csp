@@ -1,0 +1,5 @@
+Scorepairs = {(x,y) | x  <- {0,15,30,40}, y <- {0,15,30,40}, (x,y) != (40,40)}
+
+datatype cartas = J | Q | K | A
+datatype valores = D | H | S | Q
+datatype color = R | N

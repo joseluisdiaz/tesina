@@ -19,21 +19,25 @@ eq(SI.a, SI.b) = a == b
 eq(_, _) = false
 
 -- Possible actor names
-datatype ActorID = factorial.{1} | factorialWorker.{1,2,3} | main.{1}
+datatype ActorID = factorial | factorialWorker | main
+N_FACTORIAL = 1
+N_FACTORIAL_WORKER = 3
+
+MailboxIDS = { 0 .. N_FACTORIAL + N_FACTORIAL_WORKER }
 
 -- Possible types for actors
-datatype VALUE = ACTOR.ActorID | INT.SmallInt | None
+datatype VALUE = ACTOR.MailboxIDS | INT.SmallInt | None
 
 -- Actor creation decoupling
-channel CreateAsk:ActorID.(VALUE, VALUE)
-channel Create:ActorID.(VALUE, VALUE)
+channel CreateAsk:ActorID.MailboxIDS.(VALUE, VALUE)
+channel Create:ActorID.MailboxIDS.(VALUE, VALUE)
 
-create(actorId) = CreateAsk!actorId?m -> Create.actorId!m -> STOP
-creates = ||| actor: diff(ActorID, {main.1}) @ create(actor)
+create(mailboxId) = CreateAsk?actorId!mailboxId?m -> Create.actorId!mailboxId!m -> STOP
+creates = ||| mailboxId: MailboxIDS @ create(mailboxId)
 
 -- Send ( actor to mailbox ) and Recv ( mailbox to actor ) communication
-channel CommSend:ActorID.(VALUE, VALUE)
-channel CommRecv:ActorID.(VALUE, VALUE)
+channel CommSend:MailboxIDS.(VALUE, VALUE)
+channel CommRecv:MailboxIDS.(VALUE, VALUE)
 MAILBOX_SIZE = 3
 
 buff(left, right, <>) = left?msg -> buff(left, right, <msg>)
@@ -50,10 +54,10 @@ buff_with_space(left, right, <x> ^ xs) =
 
 buff_full(left, right, <x> ^ xs) = right!x -> buff(left, right, xs)
 
-mailboxes = ||| actor: ActorID @ buff(CommSend.actor, CommRecv.actor, <>)
+mailboxes = ||| mailboxId: MailboxIDS @ buff(CommSend.mailboxId, CommRecv.mailboxId, <>)
 
 -- Factorial actor
-Factorials = Create!factorial.1?(None, None) -> Factorial(factorial.1)
+Factorials = Create.factorial?mailboxId?(None, None) -> Factorial(mailboxId)
 Factorial(self) = CommRecv?self.(ACTOR.mailboxClient, INT.k) ->
 if (eq(k,SI.0))
   then
@@ -62,13 +66,13 @@ if (eq(k,SI.0))
     let
       newK = sub(k, SI.1)
     within
-      CreateAsk?factorialWorker.pid!(INT.k, ACTOR.mailboxClient) ->
-      CommSend!self.(ACTOR.factorialWorker.pid, INT.newK) ->
+      CreateAsk.factorialWorker?pid!(INT.k, ACTOR.mailboxClient) ->
+      CommSend!self.(ACTOR.pid, INT.newK) ->
       Factorial(self)
 
 -- FactorialWorker actor
 FactorialWorkers =
-  ||| actorId : {|factorialWorker|} @ Create!actorId?(INT.k, ACTOR.client) ->
+  ||| i : { 1 .. N_FACTORIAL_WORKER } @ Create.factorialWorker?actorId?(INT.k, ACTOR.client) ->
   FactorialWorker(actorId, k, client)
 
 FactorialWorker(self, k, client) = CommRecv.self?(INT.n, None) ->
@@ -80,9 +84,9 @@ FactorialWorker(self, k, client) = CommRecv.self?(INT.n, None) ->
 
 -- Main
 Main =
-  CreateAsk?factorial.pid!(None, None) ->
-  CommSend!factorial.pid.(ACTOR.main.1, INT.SI.3) ->
-  CommRecv?main.1.(INT.v, None) ->
+  CreateAsk!factorial?pid!(None, None) ->
+  CommSend!pid.(ACTOR.0, INT.SI.3) ->
+  CommRecv?0.(INT.v, None) ->
   STOP
 --
 COMM = {|CommSend, CommRecv|}
@@ -91,5 +95,5 @@ INIT = {|Create, CreateAsk|}
 
 SYSTEM =
   (Factorials ||| FactorialWorkers ||| Main)
-    [|union(COMM,INIT)|] 
+    [|union(COMM,INIT)|]
   (mailboxes ||| creates)
