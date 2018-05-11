@@ -4,15 +4,15 @@
 
 Debido al incremento de la cantidad de núcleos por microprocesador, las aplicaciones hacen un uso más frecuente de la concurrencia. Una forma de programar este tipo de aplicaciones es utilizando el modelo tradicional de concurrencia que se basa en multi-hilos, variables compartidas, locks, etc. Este trabajo propone estudiar un enfoque diferente: el modelo de actores utilizado en la industria, particularmente en lenguajes como Erlang\cite{Cesarini:2009:EP:1717841, Armstrong:1996:CPE:229883} y Scala\cite{scala-overview-tech-report} con la librería Akka\cite{Wyatt:2013:AC:2663429}. 
 
-El objetivo de este trabajo es comprender el modelo de actores y su semántica. Con este fin, luego de explorar las características del modelo de actores, se introduce un lenguaje simple de actores llamado \SAL cuya semántica se formalizara en \CSP. Con este modelo se realizan algunas pruebas utilizando la herramienta \FDR, tales como revisión del árbol de ejecución y verificación de refinamiento utilizando el modelo de traza. Se presentan varios ejemplos con el fin de ayudar al lector a comprender el paradigma de programación concurrente basado en actores.
+El objetivo de este trabajo es comprender el modelo de actores y su semántica. Con este fin, luego de explorar las características del modelo de actores, se introduce un lenguaje simple de actores llamado \SAL cuya semántica se formalizará en \CSP. Con este modelo se realizan algunas pruebas utilizando la herramienta \FDR, tales como revisión del árbol de ejecución y verificación de refinamiento utilizando el modelo de traza. Se presentan varios ejemplos con el fin de ayudar al lector a comprender el paradigma de programación concurrente basado en actores.
 
-La diferencia entre ambos modelos se puede notar mediante el problema del jardín ornamental. El enunciado del problema es el siguiente: supongamos que tenemos dos entradas a un parque y se requiere saber cuanta gente ingresa. Para eso se instala un molinete en cada entrada. Se utiliza una computadora para registrar la información de ingreso.
+La diferencia entre ambos modelos se puede notar mediante el problema del jardín ornamental. El enunciado del problema es el siguiente: supongamos que tenemos dos entradas a un parque y se requiere saber cuánta gente ingresa. Para eso se instala un molinete en cada entrada. Se utiliza una computadora para registrar la información de ingreso.
 
 Siguiendo el modelo tradicional de concurrencia, se incluiría una variable global que guarde la cantidad de visitantes y dos hilos representando los molinetes que incrementan esta variable. Sin ningún tipo de protección en la región crítica planteada por la actualización de la variable global podrían perderse incrementos, ya que cada hilo carga localmente el valor de la variable global, efectúa un incremento y finalmente guarda el valor en la variable global. 
 
-El mismo problema se puede escribir utilizando el modelo de actores, que tiene como único mecanismo de comunicación entre entidades el paso de mensajes. En este caso, el problema puede ser representado utilizando un actor que realiza la tarea de contador. Este incrementará su valor cuando reciba un mensaje \emph{inc}. Otros dos actores emitirán los mensajes \emph{inc} (los molinetes). En este caso el problema de la pérdida de la actualización no ocurre.
+El mismo problema se puede escribir utilizando el modelo de actores, que tiene como único mecanismo de comunicación entre entidades el paso de mensajes. En este caso, el problema puede ser representado utilizando un actor que realiza la tarea de contador. Éste incrementará su valor cuando reciba un mensaje \emph{inc}. Otros dos actores emitirán los mensajes \emph{inc} (los molinetes). En este caso el problema de la pérdida de la actualización no ocurre.
 
-El modelo de actores fue originalmente propuesto por C. Heweeit\cite{Wyatt:2013:AC:2663429}. Es un enfoque diferente a cómo estructurar programas concurrentes. Según este modelo un actor es una entidad computacional que puede:
+El modelo de actores fue originalmente propuesto por C. Hewitt\cite{Hewitt:1973:UMA:1624775.1624804}. Es un enfoque diferente a cómo estructurar programas concurrentes. Según este modelo un actor es una entidad computacional que puede:
 
 \begin{itemize}
 \item Enviar y recibir un número finito de mensajes a otros actores.
@@ -31,9 +31,9 @@ El objetivo de este trabajo es comprender el modelo de actores y su semántica. 
 
 \subsubsection*{FDR}
 
-Es una herramienta para el análisis de los modelos escritos en \CSP. El lenguaje de entrada de \FDR, \CSPm, combina los operadores de \CSP con un lenguaje de programación funcional. \FDR originalmente fue escrito en 1991 por Formal Systems (Europe) Ltd, que también lanzo la versión 2 a mediados de la década de 1990. La versión actual de la herramienta esta disponible gracias a la Universidad de Oxford. Se puede utilizar para fines académicos si necesidad de una licencia, siendo sí necesaria para fines comerciales.
+Es una herramienta para el análisis de los modelos escritos en \CSP. El lenguaje de entrada de \FDR, \CSPm, combina los operadores de \CSP con un lenguaje de programación funcional. \FDR originalmente fue escrito en 1991 por Formal Systems (Europe) Ltd, que también lanzó la versión 2 a mediados de la década de 1990. La versión actual de la herramienta está disponible gracias a la Universidad de Oxford. Se puede utilizar para fines académicos sin necesidad de una licencia, siendo sí necesaria para fines comerciales.
 
-Si bien tanto \CSP como el modelo de actores apuntan al problema de la concurrencia, no lo modelos tienen entidades concurrentes que intercambian eventos o mensajes. Sin embargo, los dos modelos toman algunas decisiones fundamentalmente diferentes con respecto a las primitivas que proporcionan:
+Si bien tanto \CSP como el modelo de actores apuntan al problema de la concurrencia, ambos modelos tienen entidades concurrentes que intercambian eventos o mensajes. Sin embargo, los dos modelos toman algunas decisiones fundamentalmente diferentes con respecto a las primitivas que proporcionan:
 
 \begin{itemize}
 \item Los procesos de \CSP son anónimos, mientras que los actores tienen identidades.
@@ -45,18 +45,18 @@ Estos enfoques pueden ser considerados duales el uno al otro, en el sentido de q
 
 \section{Trabajos Relacionados}
 
-En su tesis doctoral Agha\cite{Agha:1986:AMC:7929} define en detalle el modelo de actores. También define dos lenguajes \SAL y \ACT. Da una semántica denotacional a \SAL. Este trabajo sigue de cerca este lenguaje, y construye una semántica en \CSP.
+En su tesis doctoral Agha\cite{Agha:1986:AMC:7929} define en detalle el modelo de actores. También define dos lenguajes \SAL y \ACT, dando una semántica denotacional a \SAL. Este trabajo sigue de cerca este lenguaje y construye una semántica en \CSP.
 
-En el trabajo \textit{An Algebraic Theory of Actors and its Application to a Simple Object-Based Language}\cite{apicalculus}, Gul Agha y Prasanna Thati definen un modelo algebraico del modelo de actores, y sobre el final le dan semántica a \SAL.
+En el trabajo \textit{An Algebraic Theory of Actors and its Application to a Simple Object-Based Language}\cite{apicalculus}, Gul Agha y Prasanna Thati definen un modelo algebraico del modelo de actores, y sobre el final cimientan semántica a \SAL.
 
 En su tesis doctoral Clinger\cite{Clinger:1981} presenta una teoría para una clase de lenguajes no deterministas que incluyen paralelismo, enfocado específicamente en el modelo de actores.
 
-Se puede ver en el trabajo \textit{An algebra of actors}\cite{algebraActors}, que los autores definen un algebra de procesos y proveen una semántica operacional basada en un sistema de transición etiquetado.
+Se puede ver en el trabajo \textit{An algebra of actors}\cite{algebraActors}, que los autores definen un álgebra de procesos y proveen una semántica operacional basada en un sistema de transición etiquetado.
 
-En el trabajo \textit{Formalising Actors in Linear Logic}\cite{actorLiniarLogic}, los autores definen un formalismo basado en actores en términos la deducción en lógica lineal.
+En el trabajo \textit{Formalising Actors in Linear Logic}\cite{actorLiniarLogic}, los autores definen un formalismo basado en actores en términos de la deducción en lógica lineal.
 
-Otro lenguaje que implementa el modelo de actores es Pony\cite{ponylang}, utiliza memoria compartida para evitar duplicación de memoria cuando se envían mensajes. Esto puede llevar a una o varias \textit{condiciónes de carreras}. Para evitar este tipo de problemas, tiene definido un sistema de permisos, con una prueba formal\cite{Clebsch:2015:DCS:2824815.2824816}. Este sistema de permisos leer, escribir y atravesar referencias únicas evitando este problema.
+Otro lenguaje que implementa el modelo de actores es Pony\cite{ponylang}, utiliza memoria compartida para evitar duplicación de memoria cuando se envían mensajes. Esto puede llevar a una o varias \textit{condiciones de carreras}. Para evitar este tipo de problemas, tiene definido un sistema de permisos con una prueba formal\cite{Clebsch:2015:DCS:2824815.2824816}. Este sistema permite leer, escribir y atravesar referencias únicas evitando dicho problema.
 
 \section{Organización de este trabajo}
 
-En el capítulo 2 se introduce el modelo de actores y se describe la sintaxis de \SAL. En el capítulo 3 se presentan los conceptos necesarios de \CSP y \CSPm, que serán luego utilizados en el siguiente capítulo. El capítulo 4 construye un modelo de actores utilizando \CSP donde, se presentan varios ejemplos. Se muestra una semántica de \SAL en \CSP. Se termina mostrando como este modelo puede ser utilizado en la herramienta \FDR. Finalmente, el capítulo 5 presenta algunas conclusiones del trabajo y los posibles trabajos futuros.
+En el capítulo 2 se introduce el modelo de actores y se describe la sintaxis de \SAL. En el capítulo 3 se presentan los conceptos necesarios de \CSP y \CSPm, que serán luego utilizados en el siguiente capítulo. El capítulo 4 construye un modelo de actores utilizando \CSP, donde se presentan varios ejemplos. Se muestra una semántica de \SAL en \CSP. Se termina mostrando como este modelo puede ser utilizado en la herramienta \FDR. Finalmente, el capítulo 5 presenta algunas conclusiones del trabajo y los posibles trabajos futuros.

@@ -1,6 +1,6 @@
 \chapter{Preliminares}
 
-En en la primera sección de este capítulo se exploran algunas particularidades del paralelismo en \CSP, tales como, paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se muestra algunas construcciones en \CSPm que resultan útiles. 
+En en la primera sección de este capítulo se exploran algunas particularidades del paralelismo en \CSP, tales como, paralelismo sincrónico, alfabetizado, entrelazado y generalizado. En la segunda sección se muestran algunas construcciones en \CSPm que resultan útiles. 
 
 La sección de \CSP no pretende ser una introducción al lenguaje; se asume que el lector tiene cierta familiaridad con él. Para una introducción se puede consultar \cite{Cristia:CSP}, para una referencia completa \cite{Roscoe:1997:TPC:550448}
 
@@ -33,13 +33,13 @@ P_2 & =  canal.1 \then STOP \\
       & \Extchoice canal.3 \then STOP 
 \end{align*}
 
-Como $x$ es una variable libre, y el evento que termina sincronizando es $canal.1$ esta toma el valor $1$. En realidad el paso de información es ficticio; todo el tiempo se está sincronizando en eventos.
+Como $x$ es una variable libre y el evento que termina sincronizando es $canal.1$, ésta toma el valor $1$. En realidad el paso de información es ficticio; todo el tiempo se está sincronizando en eventos.
 
 \subsubsection*{Paralelismo alfabetizado}
 
 Mientras más procesos combinemos utilizando el operador $\parallel$, más procesos tienen que ponerse de acuerdo en los eventos a sincronizar si se pone en paralelo los procesos $P$ y $Q$ no necesariamente todas las comunicaciones de $P$ son para $Q$.
 
-Si $X$ e $Y$ son dos conjunto de eventos, $P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q$ es la composición paralela en donde $P$ tiene solo permitido comunicar los eventos $X$ y donde $Q$ tiene sólo permitido comunicar los eventos $Y$, y únicamente tienen que ponerse de acuerdo en la intersección $X \cap Y$. Por ejemplo:
+Si $X$ e $Y$ son dos conjunto de eventos, $P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q$ es la composición paralela en donde $P$ tiene sólo permitido comunicar los eventos $X$ y donde $Q$ tiene sólo permitido comunicar los eventos $Y$, y únicamente tienen que ponerse de acuerdo en la intersección $X \cap Y$. Por ejemplo:
 
 \[ 
  ( a \then b \then b \then STOP )\  \textsubscript{\{a, b\}} \parallel \textsubscript{\{b, c\}}\ ( b \then c \then b \then STOP ) 
@@ -69,14 +69,13 @@ Podemos escribir el operador de paralelismo alfabetizado como:
  P\ \textsubscript{X}\parallel\textsubscript{Y}\ Q = P \Parallel\limits_{X \cap Y} Q
 \]
 
-$\Sigma$ son todos los eventos posibles en un sistema dado podemos definir el operador de paralelismo sincrónico de la siguiente forma:
-
+Se puede definir el operador de paralelismo sincrónico de la siguiente forma, donde $\Sigma$ son todos los eventos posibles en un sistema dado.
 \[
  P \parallel Q = P \Parallel\limits_{\Sigma} Q
 \]
 
 \subsubsection*{Cadena de caracteres}
-\CSP no tiene soporte para cadena de caracteres, en esencia solo son procesos y eventos. Será util en el capitulo que se define el modelo poder utilizar dentro de las secuencias algún tipo de cadena de caracteres. Estas son inmutables y la única operación que se define sobre estas es la comparación. Se representa utilizando una secuencia alfanumérica, encerradas entre comillas simples. Por ejemplo:
+\CSP no tiene soporte para cadena de caracteres, en esencia solo son procesos y eventos. Será util en el capítulo que se define el modelo poder utilizar dentro de las secuencias algún tipo de cadena de carácteres. Estas son inmutables y la única operación que se define sobre ellas es la comparación. Se representan utilizando una secuencia alfanumérica, encerradas entre comillas simples. Por ejemplo:
 \begin{gather*}
 'cadena1' \\
 'cadena2' \\
@@ -125,9 +124,9 @@ SYSTEM &= (SUMA \Parallel\limits_{\{inicia_{suma}\}} CLIENTE) \Parallel\limits_{
 \end{split}
 \end{align}
 
-Es decir que $CLIENTE$ inicia el proceso $SUMA$, y le envía un $2$. Este envío es asíncrono por $BUFFER_1$. Cuando $SUMA$ recibe este $2$, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo los valores de $Y$ vienen dados por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber qué valores puede tomar $x$. Asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $\{m: [1,2] ,n: [1,2,3] | recibir.m.n \} \cup \{m: [1,2] ,n: [1,2,3] | enviar.m.n \} $, es decir todos los eventos inherentes a $BUFFER$.
+Es decir que $CLIENTE$ inicia el proceso $SUMA$, y le envía un $2$. Este envío es asíncrono por $BUFFER_1$. Cuando $SUMA$ recibe este $2$, crea una nuevo mensaje y se lo envía a $CLIENTE$ de manera asincrónica, con el valor que recibió incrementado en uno. En la composición de $SYSTEM$ se puede ver que el único evento que se sincroniza entre $SUMA$ y $CLIENTE$ es $inicia_{suma}$. En el otro operador paralelo, los valores de $Y$ vienen dados por los eventos en los que la composición de $SUMA$ y $CLIENT$ sincronizan con $BUFFER$. Para esto deberíamos saber qué valores puede tomar $x$. Asumiendo que toma los valores $1$, $2$ y $3$. Los eventos a sincronizar serían el conjunto generado por $\{m: [1,2] ,n: [1,2,3] | recibir.m.n \} \cup \{m: [1,2] ,n: [1,2,3] | enviar.m.n \} $, es decir todos los eventos inherentes a $BUFFER$.
 
-Este último ejemplo muestra dos de los aspectos que se desarrollarán en el capítulo siguiente: cómo desacoplar el envío de mensajes y óomo simular la creación de un proceso. También puede verse el uso de los distintos operadores paralelo.
+Este último ejemplo muestra dos de los aspectos que se desarrollarán en el capítulo siguiente: cómo desacoplar el envío de mensajes y cómo simular la creación de un proceso. También puede verse el uso de los distintos operadores paralelo.
  
 \section{El lenguaje CSPm}
 
@@ -141,7 +140,7 @@ Permite declarar tipos estructurados, son similares a las declaraciones de tipo 
 datatype ColorSimple = Rojo | Verde | Azul
 \end{verbatim}
 
-Esto declara \verb=Rojo=, \verb=Verde= y \verb=Azul==, como símbolos del tipo \verb=ColorSimple=, y vincula \verb=ColorSimple= al conjunto \verb={Rojo, Verde, Azul}=. Estos tipos de datos puede tener parámetros. Por ejemplo, se pude agregar un constructor de datos \verb=RGB=, a saber:
+Esto declara \verb=Rojo=, \verb=Verde= y \verb=Azul=, como símbolos del tipo \verb=ColorSimple=, y vincula \verb=ColorSimple= al conjunto \verb={Rojo, Verde, Azul}=. Estos tipos de datos puede tener parámetros. Por ejemplo, se pude agregar un constructor de datos \verb=RGB=, a saber:
 
 \begin{verbatim}
 datatype ColorComplejo = Nombre.ColorSimple | RGB.{0..255}.{0..255}.{0..255}
@@ -171,7 +170,7 @@ Declara tres canales, uno que no toma parámetros (listo es de tipo Event), y do
 
 \subsubsection{Búsqueda de patrones}
 
-Es posible en \CSP que los valores puedan ser buscados por coincidencia de patrones. Por ejemplo, la siguiente función toma un entero, se puede usar la búsqueda de patrones para especificar un comportamiento diferente dependiendo de este argumento:
+Es posible en \CSP que los valores puedan ser buscados por coincidencia de patrones. Por ejemplo, la siguiente función toma un entero, se puede usar en la búsqueda de patrones para especificar un comportamiento diferente dependiendo de este argumento:
 
 \begin{verbatim}
 f(0) = True
@@ -182,7 +181,7 @@ f(_) = error("Error")
 Funciona de manera similar a Haskell, también se pueden utilizar otras construcciones como secuencias o algún tipo algebraico.
 
 \subsubsection{Operadores replicados}
-\FDR tiene una versión replicada o indexada de alguno de sus operadores. Estos proveen una forma simple de construir un proceso que consiste en una serie de procesos compuestos utilizando el mismo operador. Por ejemplo se define P de la siguiente manera:, \verb=P :: (Int) -> Proc= luego, \verb=||| x: { 0..2 } @ P(x)= evalúa P para cada valor de x en el conjunto dado y los compone utilizando el operador de entrelazado. Por lo tanto, lo anterior es equivalente a \verb=P (0) ||| P (1) ||| P (2)=.
+\FDR tiene una versión replicada o indexada de alguno de sus operadores. Estos proveen una forma simple de construir un proceso que consiste en una serie de procesos compuestos utilizando el mismo operador. Por ejemplo se define P de la siguiente manera, \verb=P :: (Int) -> Proc= luego, \verb=||| x: { 0..2 } @ P(x)= evalúa P para cada valor de x en el conjunto dado y los compone utilizando el operador de entrelazado. Por lo tanto, lo anterior es equivalente a \verb=P (0) ||| P (1) ||| P (2)=.
 
 
 La forma general de un operador replicado es:
@@ -193,7 +192,7 @@ op <declaraciones> @ P
 
 donde op es un operador que puede ser el de entrelazado, selección interna, etc. P es la definición de un proceso, puede hacer uso de las variables definidas por las declaraciones. Cada uno de los operadores evalúa P para cada valor que toman las declaraciones antes de componerlas juntas usando op.
 
-En \CSPm las declaraciones puede ser construcciones por comprensión, por ejemplo las que generan nuevos conjuntos basados en conjuntos existentes. Por ejemplo, el conjunto por comprensión: \verb={x + 1 | x <- xs}= incrementa cada elemento del conjunto xs en 1. 
+En \CSPm las declaraciones puede ser construcciones por comprensión, cómo las que generan nuevos conjuntos basados en conjuntos existentes. Por ejemplo, el conjunto por comprensión: \verb={x + 1 | x <- xs}= incrementa cada elemento del conjunto xs en 1. 
 
 Otra forma de construcción por compresión es utilizar la siguiente expresión: \verb={| CANAL |}=, que genera el conjunto de todos los elementos del canal. Por ejemplo, dada la siguiente definición de canal \verb=channel X : {0..1}.Bool=, el conjunto generado por \verb={| X |}=es: \verb={X.0.false, X.0.true, X.1.false, X.1.true}=.
 
