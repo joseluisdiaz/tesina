@@ -1,10 +1,10 @@
 \chapter{Conclusiones}
 
-La primera motivación de este trabajo consistió comprender los elementos básicos del modelo de actores. En segunda instancia fue generar un modelo en \CSP, y hacer con este algunas pruebas en \FDR. Fue interesante explorar los distintos mecanismos de paralelismo que tiene \CSP a la hora de componer procesos. 
+La primera motivación de este trabajo consistió comprender los elementos básicos del modelo de actores. En segunda instancia fue generar un modelo en \CSP, y hacer con éste algunas pruebas en \FDR. Fue interesante explorar los distintos mecanismos de paralelismo que tiene \CSP a la hora de componer procesos. 
 
 El mayor esfuerzo involucrado tiene que ver con lograr que el modelo de actores corriera en \FDR, de ahí vienen las restricciones enunciadas en el capítulo anterior. Sin dudar el aporte de \FDR permitió entender que el modelo realmente funcionaba. Fue interesante poder observar el árbol de ejecución utilizando el comando \verb=probe= de \FDR. 
 
-El trabajo original de Agha\cite{Agha:1986:AMC:7929}, modelaba los mensajes como una 3-tupla. Además del actor destino y el mensaje este agregaba un \textit{TAG} que después utilizaba en el modelo denotacional que construyó para prefijar la creación de las nuevas direcciones de buzón, esto servia para crear una dirección de buzón que no existía antes. Como crear una dirección no existente, no fue un problema simple de resolver en este modelo. Diferentes modelos fueron construidos y probados hasta llegar el propuesto en la sección \ref{modelo:crear}. El momento de creación y el paso inicial de mensajes es uno de los puntos fuertes del modelo de actores.
+El trabajo original de Agha\cite{Agha:1986:AMC:7929}, modelaba los mensajes como una 3-tupla. Además del actor destino y el mensaje este agregaba un \textit{TAG} que después utilizaba en el modelo denotacional que construyó para prefijar la creación de las nuevas direcciones de buzón, esto servía para crear una dirección de buzón que no existía antes. Como crear una dirección no existente, no fue un problema simple de resolver en este modelo. Diferentes modelos fueron construidos y probados hasta llegar el propuesto en la sección \ref{modelo:crear}. El momento de creación y el paso inicial de mensajes es uno de los puntos fuertes del modelo de actores.
 
 Otro de los puntos más interesantes a resaltar del modelo, es la conclusión de que la fuerza que impulsa el modelo son los mensajes sin procesar. Este concepto es fundamental para cualquier trabajo relacionado con la exploración del grafo de entrelazado ya que dado que los actores son deterministas, recorrer este grafo está relacionado con el orden en el que se procesan los mensajes.
 
@@ -12,6 +12,6 @@ Otro de los puntos más interesantes a resaltar del modelo, es la conclusión de
 
 \subsubsection*{Trabajos futuros}
 
-Se podría utilizar el modelo propuesto para implementar con otros lenguajes que implementan el modelo de actores, como Erlang \cite{Armstrong:1996:CPE:229883, Cesarini:2009:EP:1}, PonyLang\cite{ponylang} o la biblioteca akka\cite{Wyatt:2013:AC:2663429}.
+Se podría utilizar el modelo propuesto para implementar con otros lenguajes que implementan el modelo de actores, como Erlang \cite{Armstrong:1996:CPE:229883, Cesarini:2009:EP:1717841}, PonyLang\cite{ponylang} o la biblioteca akka\cite{Wyatt:2013:AC:2663429}.
 
 El modelo de buzón que se utilizó tiene solo disponible para ser consumido el mensaje que está primero en el buzón. Se podría usar el presente modelo para analizar las diferencias con el modelo en el cual todos los mensajes que están dentro del buzón están disponibles para ser consumidos.

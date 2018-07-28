@@ -23,10 +23,10 @@ Cuando utilizamos procesos parametrizados muchas veces es útil enviar informaci
 
 \begin{align*}
 P_1 =& canal!1 \then STOP \\
-P_2 =& canal?x \then P(x) \\
+P_2 =& canal?x \then Q(x) \\
 SYSTEM =& P_1 \parallel P_2 \\
 \end{align*}
-donde $canal!1$ es quien envía el valor $1$ y $canal?x$ lo recibe. Para entender un poco más cómo funciona la notación que involucra $\langle ? \rangle$ y $\langle ! \rangle$, supongamos que $x$ puede tomar los valores $1$, $2$ y $3$. La expresión $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
+donde $canal!1$ es quien envía el valor $1$,  $canal?x$ lo recibe y $Q$ es un proceso parametrizado. Para entender un poco más cómo funciona la notación que involucra $\langle ? \rangle$ y $\langle ! \rangle$, supongamos que $x$ puede tomar los valores $1$, $2$ y $3$. La expresión $canal?x$ equivale a un proceso que está dispuesto a sincronizar con todos estos potenciales valores:
 \begin{align*}
 P_2 & =  canal.1 \then STOP \\
       & \Extchoice canal.2 \then STOP \\
@@ -75,7 +75,7 @@ Se puede definir el operador de paralelismo sincrónico de la siguiente forma, d
 \]
 
 \subsubsection*{Cadena de caracteres}
-\CSP no tiene soporte para cadena de caracteres, en esencia solo son procesos y eventos. Será util en el capítulo que se define el modelo poder utilizar dentro de las secuencias algún tipo de cadena de carácteres. Estas son inmutables y la única operación que se define sobre ellas es la comparación. Se representan utilizando una secuencia alfanumérica, encerradas entre comillas simples. Por ejemplo:
+\CSP no tiene soporte para cadena de caracteres, en esencia solo son procesos y eventos. Será útil en el capítulo que se define el modelo poder utilizar dentro de las secuencias algún tipo de cadena de carácteres. Estas son inmutables y la única operación que se define sobre ellas es la comparación. Se representan utilizando una secuencia alfanumérica, encerradas entre comillas simples. Por ejemplo:
 \begin{gather*}
 'cadena1' \\
 'cadena2' \\
@@ -117,10 +117,10 @@ Con estos elementos podemos crear un proceso y enviar una comunicación de maner
 \begin{split}
 BUFFER_1 &= enviar.1?x \then recibir.1!x \then BUFFER_1\\
 BUFFER_2 &= enviar.2?x \then recibir.2!x \then BUFFER_2\\
-SUMA &= inicia_{suma} \then recibir.1?x \then enviar.2!(x + 1) \then STOP \\
-CLIENTE &= inicia_{suma}\then enviar.1!2 \then recibir.2?x \then STOP \\
+INC &= inicia_{inc} \then recibir.1?x \then enviar.2!(x + 1) \then STOP \\
+CLIENTE &= inicia_{inc}\then enviar.1!2 \then recibir.2?x \then STOP \\
 BUFFER &= BUFFER_1 \Interleave BUFFER_2 \\
-SYSTEM &= (SUMA \Parallel\limits_{\{inicia_{suma}\}} CLIENTE) \Parallel\limits_{Y}\ BUFFER
+SYSTEM &= (INC \Parallel\limits_{\{inicia_{inc}\}} CLIENTE) \Parallel\limits_{Y}\ BUFFER
 \end{split}
 \end{align}
 
@@ -162,11 +162,15 @@ channel estaListo
 channel x, y : {0..1}.Bool
 \end{verbatim}
 
-Declara tres canales, uno que no toma parámetros (listo es de tipo Event), y dos que tienen dos componentes. Cualquier valor del conjunto \verb={0,1}= y un booleano. El conjunto de los eventos definidos es el siguiente: 
+Declara tres canales, uno que no toma parámetros (\verb=estáListo= es de tipo Event), y dos que tienen dos componentes. Cualquier valor del conjunto \verb={0,1}= y un booleano. El conjunto de los eventos definidos es el siguiente: 
 \begin{verbatim}
-	
+{ estaListo, x.0.false, x.1.false, x.0.true, x.1.true, y.0.false, 
+y.1.false, y.0.true, y.1.true }	
 \end{verbatim}
-\verb={ estaListo, x.0.false, x.1.false, x.0.true, x.1.true, y.0.false, y.1.false, y.0.true, y.1.true }=. Estos eventos pueden ser parte de la declaración de procesos como por ejemplo \verb#{P = x?a?b -> STOP}#.
+Estos eventos pueden ser parte de la declaración de procesos como por ejemplo:
+\begin{verbatim}
+{P = x?a?b -> STOP}
+\end{verbatim}
 
 \subsubsection{Búsqueda de patrones}
 
@@ -192,7 +196,7 @@ op <declaraciones> @ P
 
 donde op es un operador que puede ser el de entrelazado, selección interna, etc. P es la definición de un proceso, puede hacer uso de las variables definidas por las declaraciones. Cada uno de los operadores evalúa P para cada valor que toman las declaraciones antes de componerlas juntas usando op.
 
-En \CSPm las declaraciones puede ser construcciones por comprensión, cómo las que generan nuevos conjuntos basados en conjuntos existentes. Por ejemplo, el conjunto por comprensión: \verb={x + 1 | x <- xs}= incrementa cada elemento del conjunto xs en 1. 
+En \CSPm las declaraciones pueden ser construcciones por comprensión, cómo las que generan nuevos conjuntos basados en conjuntos existentes. Por ejemplo, el conjunto por comprensión: \verb={x + 1 | x <- xs}= incrementa cada elemento del conjunto xs en 1. 
 
 Otra forma de construcción por compresión es utilizar la siguiente expresión: \verb={| CANAL |}=, que genera el conjunto de todos los elementos del canal. Por ejemplo, dada la siguiente definición de canal \verb=channel X : {0..1}.Bool=, el conjunto generado por \verb={| X |}=es: \verb={X.0.false, X.0.true, X.1.false, X.1.true}=.
 
@@ -245,3 +249,4 @@ Tabla de conversión para la definición de procesos:
   \end{tabular}
 \end{center}
 
+ 	

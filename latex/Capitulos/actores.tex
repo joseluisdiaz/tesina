@@ -20,7 +20,7 @@
 En este capítulo se explica cómo funciona la estructura computacional en el modelo de actores. En la primera sección se introduce el funcionamiento de las comunicaciones y el comportamiento de los actores. En la segunda, se define la sintaxis de un lenguaje mínimo de actores para terminar con algunos ejemplos utilizando este lenguaje.
 
 \section{Describiendo un sistema de actores}
-Un sistema de actores consiste de configuraciones. Una configuración viene dada por una colección de actores concurrentes y una colección de comunicaciones en tránsito. Cada actor tiene un nombre único y un comportamiento. Se comunica con otros actores a través de mensajes asíncronos. Los actores son reactivos, es decir, ejecutan solo en respuesta a los mensajes recibidos. El comportamiento de un actor es determinista, ya que la respuesta está determinada por el contenido del mensaje que procesa. 
+Un sistema de actores consiste de configuraciones. Una configuración viene dada por una colección de actores concurrentes y una colección de comunicaciones en tránsito. Cada actor tiene un nombre único y un comportamiento. Se comunica con otros actores a través de mensajes asíncronos. Los actores son reactivos, es decir, ejecutan solo en respuesta a los mensajes recibidos. El comportamiento de un actor es determinista, ya que la respuesta está determinada por el contenido del mensaje que procesa.
 
 \subsection{Comunicaciones}
 
@@ -41,7 +41,10 @@ El \textit{destino} debe ser una dirección de buzón válida, es decir, un acto
  \item El \textit{destino} es una dirección de buzón creada como resultado de aceptar la comunicación $\COMUNICACION$.
 \end{itemize}
 
+Las únicas restricciones que se tienen para el envío de mensajes son las anteriormente mencionadas, esto permite tener una gran flexibilidad al momento de establecer cualquier tipo de red de comunicaciones entre los diferentes actores.
+
 Es probable que más de un actor al mismo tiempo quiera enviar una comunicación a un buzón. Para esto es necesario alguna estructura intermedia que guarde todas las comunicaciones creadas y que aún no fueron procesadas. Esta estructura tiene que tener la capacidad para guardar todas las comunicaciones hasta ser procesadas por el actor destino. 
+
 
 %En realidad Agha\ [chap.~3,p.~35]\cite{Agha:1986:AMC:7929} lo define como una 3-tupla incluye un \textit{tag} para diferenciar una tarea de la otra en el sistema. Define que un \textit{tag} puede tener una representación arbitraria. Como los \textit{tag} son únicos en todo el sistema, hace uso de esta propiedad para construir la direcciones de buzón de los nuevos actores creados esto puede verse en \cite[chap.~5,p.~104]{Agha:1986:AMC:7929}. 
 
@@ -326,7 +329,7 @@ En el caso de \textit{communication-list}, esta asume que todas las comunicacion
 Se presenta a continuación una gramática que contempla el caso en el cual \textit{communication}\textit{-list} sea sólo una lista de identificadores (se usará en la sección \ref{sal:factorial} el ejemplo del cálculo del factorial). También se presenta una forma de bifurcación ante diferentes ramas dependiendo del contenido de la comunicación (el ejemplo de una pila en la sección \ref{sal:pila} hace uso de esto). La gramática de los comportamientos es la siguiente:
 
 \begin{grammar}
-<BDef> :== `def' $NombreComportamiento$ `(' <acquaiantence-list> `)' <body> `end def'
+<BDef> :== `def' $BehaviorName$ `(' <acquaiantence-list> `)' <body> `end def'
 
 <acquaiantence-list> :== <id> | <id> `,' <acquaiantence-list> 
 
@@ -344,7 +347,7 @@ Se presenta a continuación una gramática que contempla el caso en el cual \tex
 \end{grammar}
 donde: 
 \begin{description}
- \item $NombreComportamiento$ identifica un comportamiento. Tiene alcance a todo el programa. 
+ \item $BehaviorName$ identifica un comportamiento. Tiene alcance a todo el programa. 
  \item \textit{static-list} son completados al momento de procesar una comunicación, y su alcance es todo \textit{command}. 
  \item \textit{communication-list} se utiliza para definir una lista de identificadores.
  \item \textit{case-exp} puede ser de tipo booleana, un número o un identificador. 
@@ -376,12 +379,12 @@ Los actores son creados usando un comando de tipo \textit{new}, que devuelve una
 
   <new_expr_list> ::= <new_expr> | <new_expr> `,' <new_expr_list>
   
-  <new_expr> ::= $mexp$ `=' `new' $NombreComportamiento$ `(' <expr_list> `)'
+  <new_expr> ::= $mexp$ `=' `new' $BehaviorName$ `(' <expr_list> `)'
   
   <LET> ::=  `let' <new_expr_list> `in' <command> 
 \end{grammar}
 
-$NombreComportamiento$ hace referencia a un identificador vinculado con un comportamiento específico, declarado utilizando una definición de comportamiento. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciados con los valores de las expresiones entre paréntesis, o sea una $expr_list$. Utilizando el léxico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El identificador $mexp$ es el valor de la dirección del buzón. Este identificador puede ser destino de nuevas comunicaciones. 
+$NombreComportamiento$ hace referencia a un identificador vinculado con un comportamiento específico, declarado utilizando una definición de comportamiento. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciados con los valores de las expresiones entre paréntesis, o sea una $expr\_list$. Utilizando el léxico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El identificador $mexp$ es el valor de la dirección del buzón. Este identificador puede ser destino de nuevas comunicaciones. 
 
 Los actores son creados de manera concurrente, estos pueden conocer entre sí la dirección de buzón. Esta es una forma de definición mutuamente recursiva que es perfectamente válida en el modelo de actores. 
 
@@ -401,7 +404,7 @@ Donde $expr\_list$ es una lista de expresiones, que puede ser vacía. Las expres
 El propósito de los comandos es especificar las acciones que pueden ocurrir. Se mostraron los comandos para crear nuevos actores y para crear nuevas comunicaciones. También se necesita un comando para definir el comportamiento de reemplazo. La sintaxis para este último tiene la forma:
 
 \begin{grammar}
-  <BECOME> ::= `become' $NombreComportamiento$ `(' <expr_list> `)'
+  <BECOME> ::= `become' $BehaviorName$ `(' <expr_list> `)'
   \alt `become' $mexp$
 \end{grammar}
 
@@ -489,9 +492,9 @@ Esto establece una red de actores que multiplican el valor indicado y enviarán 
 En la figura \ref{fig:factorial} se puede ver que el actor $Factorial()$ recibe como comunicación la lista $[3,c]$, esto hace que ocurran dos cosas:
 
 \begin{itemize}
-\item Se cree un actor nuevo $FactorialWorker$ con buzón $c1$, este recibe dos parámetros en la inicialización: el valor $3$ y el buzón inicial que recibió como comunicación, es decir quien pidió originalmente la computación del factorial de $3$.
+\item Se cree un actor nuevo $FactorialWorker$ con buzón $c1$, éste recibe dos parámetros en la inicialización: el valor $3$ y el buzón inicial que recibió como comunicación, es decir quien pidió originalmente la computación del factorial de $3$.
 
-\item Se envíe a sí mismo el mensaje $[2,c1]$, este inicia el cálculo del factorial de $2$, es decir el cálculo de $fact(n-1)$, el paso recursivo.
+\item Se envíe a sí mismo el mensaje $[2,c1]$, éste inicia el cálculo del factorial de $2$, es decir el cálculo de $fact(n-1)$, el paso recursivo.
 \end{itemize}
 
 Ahora $c1$ es quien pide el cálculo del factorial de $2$. Esto se repite hasta que el factorial a calcular sea el de $0$.
@@ -598,7 +601,7 @@ end
 
 \begin{description}
 
-\item [Línea 1] $Node$ recibe dos parámetros, $content$ que es el entero a guardar y $link$ que es una dirección de buzón, es el siguiente actor en la pila.
+\item [Línea 1] $Node$ recibe dos parámetros, $content$ que es el entero a guardar y $link$ que es una dirección de buzón de un actor, que es el siguiente nodo en la pila.
 \item [Línea 2] Si la operación es $'pop'$, guarda en $customer$ la dirección de buzón.
 \item [Línea 3] Envía el contenido del nodo a la dirección de buzón $customer$
 \item [Línea 4] La instrucción $become$, en este caso, hace que se reenvíen todos los mensajes a la dirección de buzón $link$. 
