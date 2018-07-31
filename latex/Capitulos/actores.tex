@@ -384,7 +384,7 @@ Los actores son creados usando un comando de tipo \textit{new}, que devuelve una
   <LET> ::=  `let' <new_expr_list> `in' <command> 
 \end{grammar}
 
-$NombreComportamiento$ hace referencia a un identificador vinculado con un comportamiento específico, declarado utilizando una definición de comportamiento. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciados con los valores de las expresiones entre paréntesis, o sea una $expr\_list$. Utilizando el léxico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El identificador $mexp$ es el valor de la dirección del buzón. Este identificador puede ser destino de nuevas comunicaciones. 
+$BehaviorName$ hace referencia a un identificador vinculado con un comportamiento específico, declarado utilizando una definición de comportamiento. Se crea un nuevo actor con el comportamiento descripto en la definición del comportamiento y sus parámetros son instanciados con los valores de las expresiones entre paréntesis, o sea una $expr\_list$. Utilizando el léxico de actores, corresponde a los valores denominados como \textit{acquaintance-list}. El identificador $mexp$ es el valor de la dirección del buzón. Este identificador puede ser destino de nuevas comunicaciones. 
 
 Los actores son creados de manera concurrente, estos pueden conocer entre sí la dirección de buzón. Esta es una forma de definición mutuamente recursiva que es perfectamente válida en el modelo de actores. 
 
